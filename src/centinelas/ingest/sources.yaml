@@ -1,0 +1,87 @@
+feeds:
+  # ── Military & Aerospace ──────────────────────────────
+  - name: "The Drive - War Zone"
+    url: "https://www.thedrive.com/the-war-zone/feed"
+    tier: "T1"
+
+  - name: "FlightGlobal"
+    url: "https://www.flightglobal.com/rss"
+    tier: "T1"
+
+  - name: "Defense News"
+    url: "https://www.defensenews.com/arc/outboundfeeds/rss/"
+    tier: "T1"
+
+  - name: "Space News"
+    url: "https://spacenews.com/feed/"
+    tier: "T1"
+
+  # ── Environmental ─────────────────────────────────────
+  - name: "NOAA News"
+    url: "https://www.noaa.gov/news-release/feed"
+    tier: "T1"
+
+  - name: "Inside Climate News"
+    url: "https://insideclimatenews.org/feed/"
+    tier: "T1"
+
+  - name: "Yale Environment 360"
+    url: "https://e360.yale.edu/feed"
+    tier: "T1"
+
+  # ── Geology & Geography ───────────────────────────────
+  - name: "USGS Earthquakes"
+    url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.atom"
+    tier: "T1"
+
+  - name: "Volcano Discovery"
+    url: "https://www.volcanodiscovery.com/volcanoes/rss.xml"
+    tier: "T2"
+
+  - name: "AGU EOS"
+    url: "https://eos.org/feed"
+    tier: "T1"
+
+  # ── Anomalous ─────────────────────────────────────────
+  - name: "The Black Vault"
+    url: "https://www.theblackvault.com/documentdb/feed/"
+    tier: "T3"
+
+  - name: "Earthfiles"
+    url: "https://www.earthfiles.com/feed/"
+    tier: "T3"
+
+  - name: "MUFON"
+    url: "https://www.mufon.com/blog-feed.xml"
+    tier: "T3"
+
+  # ── Financial ─────────────────────────────────────────
+  - name: "Reuters Business"
+    url: "https://feeds.reuters.com/reuters/businessNews"
+    tier: "T1"
+
+  - name: "Financial Times"
+    url: "https://www.ft.com/rss/home"
+    tier: "T1"
+
+  # ── Political / Geopolitical ──────────────────────────
+  - name: "Associated Press Top News"
+    url: "https://rsshub.app/apnews/topics/apf-topnews"
+    tier: "T1"
+
+  - name: "Reuters World"
+    url: "https://feeds.reuters.com/reuters/worldNews"
+    tier: "T1"
+
+  - name: "Foreign Policy"
+    url: "https://foreignpolicy.com/feed/"
+    tier: "T1"
+
+  # ── Cross-domain / Wire ───────────────────────────────
+  - name: "BBC World"
+    url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+    tier: "T1"
+
+  - name: "Science Daily"
+    url: "https://www.sciencedaily.com/rss/all.xml"
+    tier: "T2"

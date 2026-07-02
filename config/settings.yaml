@@ -1,0 +1,25 @@
+centinelas:
+  # Anthropic API key — loaded from env at runtime
+  anthropic_api_key: "${ANTHROPIC_API_KEY}"
+
+  # Base directory where sibling repos live (e.g. ~/Developer)
+  repos_dir: "${CENTINELAS_REPOS_DIR:-~/Developer}"
+
+  # Logging
+  log_level: "INFO"
+
+  # Classification
+  classifier:
+    model: "claude-haiku-4-5-20251001"
+    keyword_confidence_threshold: 0.85
+    llm_confidence_threshold: 0.5
+
+  # Ingest
+  ingest:
+    sources_file: "src/centinelas/ingest/sources.yaml"
+    default_evidence_tier: "T2"
+
+  # Routing
+  routing:
+    dry_run: false
+    always_log_to_hub: true
