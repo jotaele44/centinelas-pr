@@ -1,0 +1,46 @@
+{
+  "schema_version": "repo_federation_manifest_v1",
+  "program_id": "centinelas-pr",
+  "repository_full_name": "jotaele44/centinelas-pr",
+  "repository_legacy_name": "centinelas-pr",
+  "federation_role": "pre_officialization_signal_producer",
+  "hub_parent": "thehub-pr",
+  "jurisdiction": "Puerto Rico",
+  "active_vector": "CENTINELAS_FEDERATION_BOOTSTRAP",
+  "production_status": "NON_PRODUCTION_DIAGNOSTIC",
+  "pause_lock_required": true,
+  "source_truth": {
+    "role_note": "Upstream early-signal monitor: emits pre-officialization public-interest signals that the parent hub (thehub-pr) discovers, validates, and aggregates; officialized matters hand off to moneysweep-pr.",
+    "signal_schema": "schemas/signal.schema.json",
+    "source_registry": "data/reference/source_registry.csv",
+    "seed_ledger": "data/signals/example_signals.jsonl",
+    "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
+    "intake_doctrine": "The seed ledger is synthetic and used only to exercise the export contract; production promotion requires real (non-synthetic) signal intake."
+  },
+  "hub_callable_commands": {
+    "setup": "python -m pip install pytest jsonschema",
+    "validate_grid": "python3 scripts/validate_pr_grid.py --require-sha",
+    "test_suite": "python -m pytest -q",
+    "export_canonical": "python3 scripts/federation_export.py --mode test"
+  },
+  "canonical_outputs": {
+    "signal_schema": "schemas/signal.schema.json",
+    "source_registry": "data/reference/source_registry.csv",
+    "seed_ledger": "data/signals/example_signals.jsonl",
+    "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
+    "canonical_export_dir": "exports/federation"
+  },
+  "federation_readiness_gate": {
+    "ready_for_hub_discovery": true,
+    "ready_for_hub_live_execution": false,
+    "resolved_conditions": [
+      "root federation.json manifest present and Hub-schema conformant",
+      "canonical export adapter (scripts/federation_export.py) emits sources/entities/relationships/observations + manifest.json",
+      "source registry and signal schema defined; CI manifest gate present"
+    ],
+    "blocking_conditions": [
+      "no real (non-synthetic) signal ledger yet; the seed ledger is synthetic and production export is refused until real intake exists",
+      "the parent hub (thehub-pr) must validate this producer's canonical package before live execution"
+    ]
+  }
+}

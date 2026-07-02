@@ -1,0 +1,13 @@
+source_id,name,language,source_family,reliability_default,scrape_method,active,notes
+CENT-SRC-LEGIS-CAL,Legislative calendars and committee agendas,es,legislative_calendar,0.9,manual,manual,P0 earliest legislative movement; automation pending
+CENT-SRC-MUNI-AGENDA,Municipal assembly agendas,es,municipal_agenda,0.9,manual,manual,P0 local projects/ordinances/procurements before award
+CENT-SRC-AGENCY-PR,Agency press releases,es,agency_press_release,0.85,manual,manual,P0 early government project announcements
+CENT-SRC-PROCUREMENT,Procurement notices and RFPs,es,procurement_rfp,0.9,manual,manual,P0 pre-contract signals
+CENT-SRC-HEARING,Public hearing notices,es,public_hearing_notice,0.9,manual,manual,P0 regulatory/permit/infrastructure signals
+CENT-SRC-BOARD,Public-board agendas (PREPA/AAA/Ports/UPR/COR3),es,public_board_agenda,0.85,manual,manual,P0 board-level pre-final actions
+CENT-SRC-SOCIAL,Official social media,es,official_social_media,0.6,manual,manual,P1 fast-moving public statements
+CENT-SRC-MEDIA,Local media,es,local_media,0.6,manual,manual,P1 narrative detection and leak discovery
+CENT-SRC-ENV-COMMENT,Environmental and public-comment notices,es,environmental_comment,0.8,manual,manual,P1 permits/impact statements/objections
+CENT-SRC-BUDGET,Budget documents,es,budget_document,0.8,manual,manual,P1 funding signals before execution
+CENT-SRC-NGO,Community groups and NGOs,es,community_ngo,0.5,manual,manual,P2 impact and local-concern signals
+CENT-SRC-ACADEMIC,Academic and technical reports,en,academic_technical,0.6,manual,manual,P2 context and validation
