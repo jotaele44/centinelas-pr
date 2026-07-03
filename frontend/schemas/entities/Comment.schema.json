@@ -1,0 +1,19 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "law_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "law_id",
+    "text"
+  ]
+}

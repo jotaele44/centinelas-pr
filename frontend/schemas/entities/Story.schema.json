@@ -1,0 +1,112 @@
+{
+  "name": "Story",
+  "type": "object",
+  "properties": {
+    "story_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "headline": {
+      "type": "string"
+    },
+    "dek": {
+      "type": "string"
+    },
+    "body_markdown": {
+      "type": "string"
+    },
+    "beat": {
+      "type": "string",
+      "enum": [
+        "government",
+        "legislature",
+        "courts",
+        "contracts",
+        "infrastructure",
+        "energy",
+        "water",
+        "environment",
+        "health",
+        "education",
+        "public_safety",
+        "economy",
+        "housing",
+        "permits",
+        "transportation",
+        "disaster_recovery",
+        "federal_funds",
+        "municipal_government",
+        "elections",
+        "culture",
+        "universities",
+        "caribbean_diaspora",
+        "other"
+      ],
+      "default": "government"
+    },
+    "municipality_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entity_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "assigned",
+        "researching",
+        "drafting",
+        "fact_check",
+        "legal_review",
+        "ready_to_publish",
+        "published",
+        "archived"
+      ],
+      "default": "lead"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "legal_review_required"
+      ],
+      "default": "medium"
+    },
+    "publication_channels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "published_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "story_id",
+    "headline"
+  ]
+}

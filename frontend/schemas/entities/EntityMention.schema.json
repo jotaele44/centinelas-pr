@@ -1,0 +1,40 @@
+{
+  "name": "EntityMention",
+  "type": "object",
+  "properties": {
+    "entity_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "signal_id": {
+      "type": "string"
+    },
+    "mention_text": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "actor",
+        "source",
+        "beneficiary",
+        "contractor",
+        "official",
+        "witness",
+        "affected_party",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 60
+    }
+  },
+  "required": [
+    "entity_id",
+    "mention_text"
+  ]
+}

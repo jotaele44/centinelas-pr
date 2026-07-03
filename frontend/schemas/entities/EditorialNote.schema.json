@@ -1,0 +1,42 @@
+{
+  "name": "EditorialNote",
+  "type": "object",
+  "properties": {
+    "matter_id": {
+      "type": "string"
+    },
+    "story_id": {
+      "type": "string"
+    },
+    "note_type": {
+      "type": "string",
+      "enum": [
+        "assignment",
+        "verification",
+        "legal",
+        "editorial",
+        "handoff",
+        "correction"
+      ],
+      "default": "editorial"
+    },
+    "body": {
+      "type": "string"
+    },
+    "author_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "resolved",
+        "archived"
+      ],
+      "default": "open"
+    }
+  },
+  "required": [
+    "body"
+  ]
+}

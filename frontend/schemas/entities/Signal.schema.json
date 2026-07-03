@@ -1,0 +1,198 @@
+{
+  "name": "Signal",
+  "type": "object",
+  "properties": {
+    "signal_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "announcement",
+        "agenda_item",
+        "hearing",
+        "rfp_notice",
+        "draft_bill",
+        "public_notice",
+        "board_meeting",
+        "press_release",
+        "social_statement",
+        "budget_line",
+        "permit_notice",
+        "court_signal",
+        "emergency_notice",
+        "media_report",
+        "community_tip"
+      ],
+      "default": "announcement"
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "source_name": {
+      "type": "string"
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "content_hash": {
+      "type": "string"
+    },
+    "signal_stage": {
+      "type": "string",
+      "enum": [
+        "raw_observation",
+        "announced",
+        "proposed",
+        "scheduled",
+        "under_consideration",
+        "open_for_bids",
+        "pending_vote",
+        "pending_award",
+        "delayed",
+        "developing_matter",
+        "pending_officialization"
+      ],
+      "default": "announced"
+    },
+    "beat": {
+      "type": "string",
+      "enum": [
+        "government",
+        "legislature",
+        "courts",
+        "contracts",
+        "infrastructure",
+        "energy",
+        "water",
+        "environment",
+        "health",
+        "education",
+        "public_safety",
+        "economy",
+        "housing",
+        "permits",
+        "transportation",
+        "disaster_recovery",
+        "federal_funds",
+        "municipal_government",
+        "elections",
+        "culture",
+        "universities",
+        "caribbean_diaspora",
+        "other"
+      ],
+      "default": "government"
+    },
+    "municipalities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "agencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "estimated_value": {
+      "type": "number"
+    },
+    "deadline_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "urgency_score": {
+      "type": "number",
+      "default": 50
+    },
+    "pr_relevance_score": {
+      "type": "number",
+      "default": 100
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 50
+    },
+    "evidence_tier": {
+      "type": "string",
+      "enum": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "default": "T4"
+    },
+    "handoff_status": {
+      "type": "string",
+      "enum": [
+        "not_ready",
+        "watching",
+        "candidate",
+        "ready_for_moneysweep",
+        "matched_to_moneysweep",
+        "archived"
+      ],
+      "default": "watching"
+    },
+    "handoff_triggers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "language_guard_status": {
+      "type": "string",
+      "enum": [
+        "clean",
+        "needs_review",
+        "blocked_official_claim"
+      ],
+      "default": "clean"
+    },
+    "raw_text": {
+      "type": "string"
+    },
+    "canonical_key": {
+      "type": "string"
+    },
+    "language_guard_matches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "moneysweep_record_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "signal_id",
+    "title"
+  ]
+}

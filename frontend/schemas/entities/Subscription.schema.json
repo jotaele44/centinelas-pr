@@ -1,0 +1,19 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "category",
+    "user_email"
+  ]
+}

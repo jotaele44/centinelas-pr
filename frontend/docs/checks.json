@@ -1,0 +1,30 @@
+{
+  "vector": "CENTINELAS_LIFECYCLE_PATCH_VERIFY_AND_DEPLOY_v1",
+  "checks": {
+    "npm_install": "pass",
+    "npm_audit": "pass_0_vulnerabilities_after_fix_and_react_quill_removal",
+    "entity_json_parse": "pass",
+    "lint": "pass",
+    "typecheck": "pass",
+    "build": "pass",
+    "route_smoke": "pass",
+    "base44_whoami": "blocked_not_logged_in_device_code_fetch_failed",
+    "entity_schema_push": "not_executed_auth_blocked",
+    "deploy": "not_executed_auth_blocked"
+  },
+  "routes_checked": [
+    "/",
+    "/monitor",
+    "/signals",
+    "/matters",
+    "/sources",
+    "/handoff",
+    "/tabla",
+    "/autores",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/matters/test-matter"
+  ]
+}

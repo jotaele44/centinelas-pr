@@ -1,0 +1,33 @@
+{
+  "name": "Author",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "party": {
+      "type": "string"
+    },
+    "chamber": {
+      "type": "string",
+      "enum": [
+        "Senado",
+        "C\u00e1mara",
+        "Ambas"
+      ],
+      "default": "Senado"
+    },
+    "district": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
