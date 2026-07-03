@@ -1,10 +1,24 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "repo_federation_manifest_v1",
   "program_id": "centinelas-pr",
-  "federation_role": "MONITOR_INTAKE",
+  "repository_full_name": "jotaele44/centinelas-pr",
+  "repository_legacy_name": "centinelas-pr",
+  "federation_role": "pre_officialization_signal_producer",
   "hub_parent": "thehub-pr",
+  "jurisdiction": "Puerto Rico",
   "active_vector": "CENTINELAS_SIGNAL_STREAM",
-  "production_status": "active",
+  "production_status": "NON_PRODUCTION_DIAGNOSTIC",
+  "pause_lock_required": true,
+  "source_truth": {
+    "role_note": "Upstream early-signal monitor and universal intake engine: ingests, classifies, and routes public-interest items across six domains to sibling producers; the parent hub (thehub-pr) discovers, validates, and aggregates the canonical export; officialized matters hand off to moneysweep-pr.",
+    "signal_schema": "schemas/signal.schema.json",
+    "item_schema": "schemas/centinelas_item.schema.json",
+    "source_registry": "data/reference/source_registry.csv",
+    "engine_sources": "src/centinelas/ingest/sources.yaml",
+    "seed_ledger": "data/signals/example_signals.jsonl",
+    "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
+    "intake_doctrine": "The seed ledger is synthetic and used only to exercise the export contract; production promotion requires real (non-synthetic) signal intake."
+  },
   "domain_routing": {
     "ENVIRONMENTAL": "aguayluz-pr",
     "FINANCIAL": "moneysweep-pr",
@@ -13,6 +27,38 @@
     "ANOMALOUS": "ovnis-pr",
     "MILITARY_AEROSPACE": "skywatcher-pr"
   },
-  "hub_callable_commands": ["ingest", "classify", "route", "run", "status"],
+  "hub_callable_commands": {
+    "setup": "python -m pip install -e .[dev]",
+    "validate_grid": "python3 scripts/validate_pr_grid.py --require-sha",
+    "test_suite": "python -m pytest -q",
+    "export_canonical": "python3 scripts/federation_export.py --mode test",
+    "ingest": "centinelas ingest",
+    "classify": "centinelas classify",
+    "route": "centinelas route",
+    "run_pipeline": "centinelas run",
+    "status": "centinelas status"
+  },
+  "canonical_outputs": {
+    "signal_schema": "schemas/signal.schema.json",
+    "item_schema": "schemas/centinelas_item.schema.json",
+    "source_registry": "data/reference/source_registry.csv",
+    "seed_ledger": "data/signals/example_signals.jsonl",
+    "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
+    "canonical_export_dir": "exports/federation"
+  },
+  "federation_readiness_gate": {
+    "ready_for_hub_discovery": true,
+    "ready_for_hub_live_execution": false,
+    "resolved_conditions": [
+      "root federation.json manifest present and Hub-schema conformant",
+      "canonical export adapter (scripts/federation_export.py) emits sources/entities/relationships/observations + manifest.json",
+      "source registry and signal schema defined; CI manifest gate present",
+      "universal intake engine (src/centinelas) merged: ingest/classify/route across six domains with hub_parent logging"
+    ],
+    "blocking_conditions": [
+      "no real (non-synthetic) signal ledger yet; the seed ledger is synthetic and production export is refused until real intake exists",
+      "the parent hub (thehub-pr) must validate this producer's canonical package before live execution"
+    ]
+  },
   "notes": "Every item is also logged to hub_parent regardless of domain labels."
 }
