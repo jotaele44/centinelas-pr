@@ -1,0 +1,41 @@
+{
+  "name": "AlertRule",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "rule_type": {
+      "type": "string",
+      "enum": [
+        "watchlist",
+        "breaking",
+        "handoff",
+        "source_gap",
+        "contradiction",
+        "deadline"
+      ],
+      "default": "watchlist"
+    },
+    "query": {
+      "type": "string"
+    },
+    "threshold_score": {
+      "type": "number",
+      "default": 70
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "name": "CoverageGap",
+  "type": "object",
+  "properties": {
+    "source_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "gap_type": {
+      "type": "string",
+      "enum": [
+        "not_automated",
+        "broken",
+        "blocked",
+        "stale",
+        "unknown_source",
+        "manual_only",
+        "no_official_feed"
+      ],
+      "default": "not_automated"
+    },
+    "coverage_tier": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "default": "P1"
+    },
+    "impact": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "resolved",
+        "accepted_risk"
+      ],
+      "default": "open"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

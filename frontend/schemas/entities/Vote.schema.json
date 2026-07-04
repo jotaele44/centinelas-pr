@@ -1,0 +1,23 @@
+{
+  "name": "Vote",
+  "type": "object",
+  "properties": {
+    "law_id": {
+      "type": "string"
+    },
+    "vote_type": {
+      "type": "string",
+      "enum": [
+        "pro",
+        "against"
+      ]
+    },
+    "user_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "law_id",
+    "vote_type"
+  ]
+}

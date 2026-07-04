@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --accent: 0 95.6% 92%;
+    --accent-foreground: 217 23% 22.9%;
+    --background: 0 97.5% 98%;
+    --border: 0 80% 88%;
+    --card: 0 85.5% 97.3%;
+    --card-foreground: 217 23% 22.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 97.5% 98%;
+    --font-body: 'Montserrat', system-ui, sans-serif;
+    --font-heading: 'Bebas Neue', system-ui, sans-serif;
+    --foreground: 217 23% 22.9%;
+    --input: 0 80% 88%;
+    --muted: 0 85.5% 97.3%;
+    --muted-foreground: 217 10% 50%;
+    --popover: 0 97.5% 98%;
+    --popover-foreground: 217 23% 22.9%;
+    --primary: 0 68.5% 49.8%;
+    --primary-foreground: 0 97.5% 98%;
+    --radius: 0.75rem;
+    --ring: 0 68.5% 49.8%;
+    --secondary: 0 95.6% 92%;
+    --secondary-foreground: 217 23% 22.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+body { font-family: var(--font-body) !important; }
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading) !important; letter-spacing: 0.03em; }
+
+@layer base {
+  .dark {
+    --background: 217 23% 22.9%;
+    --foreground: 0 97.5% 98%;
+    --card: 217 23% 28%;
+    --card-foreground: 0 97.5% 98%;
+    --popover: 217 23% 28%;
+    --popover-foreground: 0 97.5% 98%;
+    --primary: 0 68.5% 49.8%;
+    --primary-foreground: 0 97.5% 98%;
+    --secondary: 217 15% 35%;
+    --secondary-foreground: 0 97.5% 98%;
+    --muted: 217 15% 35%;
+    --muted-foreground: 0 85.5% 80%;
+    --accent: 0 68.5% 49.8%;
+    --accent-foreground: 0 97.5% 98%;
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 0 97.5% 98%;
+    --border: 217 15% 35%;
+    --input: 217 15% 35%;
+    --ring: 0 68.5% 49.8%;
+  }
+}

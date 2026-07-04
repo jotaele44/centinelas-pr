@@ -122,6 +122,11 @@ def route(
 def run(
     dry_run: bool = typer.Option(False, "--dry-run", help="Run pipeline without writing to repos"),
     limit: int = typer.Option(0, "--limit", "-n", help="Max items per stage"),
+    classified_output: Path = typer.Option(
+        Path(".centinelas/classified"),
+        "--classified-output",
+        help="Directory to write ClassifiedItem JSON files",
+    ),
 ) -> None:
     """Full pipeline: ingest → classify → route."""
     from centinelas.classify.classifier import classify as do_classify
@@ -138,16 +143,19 @@ def run(
     console.print(f"  ingested {len(items)} raw items")
 
     console.print("  [cyan]classify[/cyan]...")
+    classified_output.mkdir(parents=True, exist_ok=True)
     classified: list[ClassifiedItem] = []
     for raw in items:
         labels, confidence, reasoning = do_classify(raw)
-        classified.append(ClassifiedItem(
+        item = ClassifiedItem(
             **raw.model_dump(),
             labels=labels,
             confidence=confidence,
             classifier_reasoning=reasoning,
-        ))
-    console.print(f"  classified {len(classified)} items")
+        )
+        classified.append(item)
+        (classified_output / f"{item.item_id}.json").write_text(item.model_dump_json(indent=2))
+    console.print(f"  classified {len(classified)} items → {classified_output}")
 
     console.print(f"  [cyan]route[/cyan]{'[dim] (dry-run)[/dim]' if dry_run else ''}...")
     ok = sum(1 for item in classified if dispatch(item, dry_run=dry_run).status == "ok")

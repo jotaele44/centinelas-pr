@@ -1,0 +1,67 @@
+{
+  "name": "Watchlist",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "watch_type": {
+      "type": "string",
+      "enum": [
+        "keyword",
+        "entity",
+        "beat",
+        "municipality",
+        "document_type",
+        "risk_trigger",
+        "contradiction_trigger"
+      ],
+      "default": "keyword"
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "beats": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "municipalities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entity_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "alert_frequency": {
+      "type": "string",
+      "enum": [
+        "instant",
+        "daily",
+        "weekly",
+        "manual"
+      ],
+      "default": "daily"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "user_email",
+    "name"
+  ]
+}

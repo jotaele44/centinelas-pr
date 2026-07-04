@@ -1,0 +1,46 @@
+{
+  "name": "Entity",
+  "type": "object",
+  "properties": {
+    "entity_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "person",
+        "agency",
+        "municipality",
+        "contractor",
+        "ngo",
+        "company",
+        "court",
+        "media",
+        "other"
+      ],
+      "default": "other"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "jurisdiction": {
+      "type": "string"
+    },
+    "official_url": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "entity_id",
+    "name"
+  ]
+}

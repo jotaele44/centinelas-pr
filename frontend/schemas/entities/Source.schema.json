@@ -1,0 +1,118 @@
+{
+  "name": "Source",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "central_government",
+        "legislature",
+        "court",
+        "municipal",
+        "procurement",
+        "infrastructure",
+        "emergency",
+        "media",
+        "federal",
+        "ngo",
+        "academic",
+        "corporate",
+        "social",
+        "other"
+      ],
+      "default": "other"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "enum": [
+        "PR",
+        "municipal",
+        "federal",
+        "regional",
+        "international"
+      ],
+      "default": "PR"
+    },
+    "url": {
+      "type": "string"
+    },
+    "feed_url": {
+      "type": "string"
+    },
+    "scrape_method": {
+      "type": "string",
+      "enum": [
+        "rss",
+        "api",
+        "html",
+        "pdf",
+        "manual",
+        "email",
+        "social",
+        "sitemap",
+        "unknown"
+      ],
+      "default": "manual"
+    },
+    "beat_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "refresh_interval": {
+      "type": "string",
+      "enum": [
+        "hourly",
+        "daily",
+        "weekly",
+        "monthly",
+        "manual"
+      ],
+      "default": "daily"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_success_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "broken",
+        "manual",
+        "blocked",
+        "stale",
+        "deprecated"
+      ],
+      "default": "manual"
+    },
+    "coverage_tier": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "default": "P1"
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 70
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

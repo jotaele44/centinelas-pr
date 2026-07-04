@@ -1,0 +1,48 @@
+{
+  "name": "AlertEvent",
+  "type": "object",
+  "properties": {
+    "alert_rule_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "signal_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "watch",
+        "urgent",
+        "breaking"
+      ],
+      "default": "watch"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "sent",
+        "acknowledged",
+        "dismissed"
+      ],
+      "default": "new"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

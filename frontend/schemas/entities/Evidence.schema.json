@@ -1,0 +1,73 @@
+{
+  "name": "Evidence",
+  "type": "object",
+  "properties": {
+    "evidence_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "signal_id": {
+      "type": "string"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "quote_excerpt": {
+      "type": "string"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hash": {
+      "type": "string"
+    },
+    "evidence_tier": {
+      "type": "string",
+      "enum": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "default": "T4"
+    },
+    "reliability_score": {
+      "type": "number",
+      "default": 50
+    },
+    "access_status": {
+      "type": "string",
+      "enum": [
+        "public",
+        "archived",
+        "requested",
+        "unavailable",
+        "restricted"
+      ],
+      "default": "public"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "evidence_id",
+    "title"
+  ]
+}

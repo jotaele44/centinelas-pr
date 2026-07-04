@@ -1,0 +1,105 @@
+{
+  "name": "HandoffCandidate",
+  "type": "object",
+  "properties": {
+    "candidate_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "signal_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "law_number_assigned",
+        "contract_awarded",
+        "signed_contract_published",
+        "payment_issued",
+        "permit_number_issued",
+        "court_case_number_assigned",
+        "audit_report_published",
+        "grant_obligation_published",
+        "appointment_confirmed",
+        "executive_order_published",
+        "manual_review"
+      ],
+      "default": "manual_review"
+    },
+    "target_record_type": {
+      "type": "string",
+      "enum": [
+        "law_record",
+        "contract_record",
+        "payment_record",
+        "permit_record",
+        "audit_record",
+        "court_record",
+        "amendment_record",
+        "grant_award",
+        "official_appointment",
+        "executive_order"
+      ],
+      "default": "contract_record"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "needs_review",
+        "ready",
+        "matched",
+        "rejected",
+        "accepted",
+        "sync_failed"
+      ],
+      "default": "queued"
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 70
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "moneysweep_record_id": {
+      "type": "string"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "official_identifier": {
+      "type": "string"
+    },
+    "official_source_url": {
+      "type": "string"
+    },
+    "canonical_key": {
+      "type": "string"
+    },
+    "duplicate_guard_status": {
+      "type": "string",
+      "enum": [
+        "unique",
+        "duplicate_matter",
+        "duplicate_identifier",
+        "duplicate_canonical_key",
+        "needs_review"
+      ],
+      "default": "needs_review"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "matter_id"
+  ]
+}

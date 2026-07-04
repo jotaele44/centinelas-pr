@@ -1,0 +1,117 @@
+{
+  "name": "Law",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "bill_number": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Proyecto (Senado)",
+        "Proyecto (C\u00e1mara)",
+        "Resoluci\u00f3n (Senado)",
+        "Resoluci\u00f3n (C\u00e1mara)",
+        "Resoluci\u00f3n Conjunta",
+        "Nombramiento"
+      ],
+      "default": "Proyecto (Senado)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "educaci\u00f3n",
+        "salud",
+        "transporte",
+        "seguridad p\u00fablica",
+        "gobierno municipal",
+        "energ\u00eda",
+        "asuntos del consumidor",
+        "justicia",
+        "nominaciones",
+        "medio ambiente",
+        "econom\u00eda",
+        "otro"
+      ],
+      "default": "otro"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Radicada",
+        "En comisi\u00f3n",
+        "En conferencia",
+        "Aprobada por el Senado",
+        "Aprobada por la C\u00e1mara",
+        "Aprobada",
+        "Ley",
+        "Rechazada"
+      ],
+      "default": "Radicada"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "urgente",
+          "en revisi\u00f3n",
+          "aprobada"
+        ]
+      }
+    },
+    "author_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "submission_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_action_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "pros": {
+      "type": "string"
+    },
+    "contras": {
+      "type": "string"
+    },
+    "officials": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lobbyists": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "votes_pro": {
+      "type": "number",
+      "default": 0
+    },
+    "votes_against": {
+      "type": "number",
+      "default": 0
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "name": "Matter",
+  "type": "object",
+  "properties": {
+    "matter_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "matter_type": {
+      "type": "string",
+      "enum": [
+        "law",
+        "contract",
+        "permit",
+        "public_project",
+        "procurement",
+        "budget_allocation",
+        "court_case",
+        "audit",
+        "appointment",
+        "emergency",
+        "infrastructure_event",
+        "policy_change",
+        "grant",
+        "municipal_action",
+        "environmental_notice"
+      ],
+      "default": "public_project"
+    },
+    "status_lifecycle": {
+      "type": "string",
+      "enum": [
+        "raw_observation",
+        "public_signal",
+        "developing_matter",
+        "pending_officialization",
+        "officialized",
+        "execution_amendment",
+        "audit_dispute_impact"
+      ],
+      "default": "public_signal"
+    },
+    "first_seen_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "officialized_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "municipalities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "agencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "organizations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "amount_estimated": {
+      "type": "number"
+    },
+    "amount_confirmed": {
+      "type": "number"
+    },
+    "source_count": {
+      "type": "number",
+      "default": 0
+    },
+    "confidence_score": {
+      "type": "number",
+      "default": 50
+    },
+    "centinelas_signal_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "moneysweep_record_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "official_identifier": {
+      "type": "string"
+    },
+    "official_source_url": {
+      "type": "string"
+    },
+    "handoff_triggers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "canonical_key": {
+      "type": "string"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "default": "PR"
+    },
+    "duplicate_group_key": {
+      "type": "string"
+    },
+    "moneysweep_sync_status": {
+      "type": "string",
+      "enum": [
+        "not_synced",
+        "pending_sync",
+        "synced",
+        "sync_failed",
+        "manual_only"
+      ],
+      "default": "not_synced"
+    },
+    "language_guard_status": {
+      "type": "string",
+      "enum": [
+        "clean",
+        "needs_review",
+        "blocked_official_claim"
+      ],
+      "default": "clean"
+    },
+    "last_handoff_candidate_id": {
+      "type": "string"
+    },
+    "official_record_canonical_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "matter_id",
+    "title"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Municipality",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string"
+    },
+    "source_coverage_status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "manual",
+        "missing"
+      ],
+      "default": "manual"
+    },
+    "latest_signal_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "slug"
+  ]
+}

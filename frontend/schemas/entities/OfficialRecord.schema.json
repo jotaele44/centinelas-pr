@@ -1,0 +1,122 @@
+{
+  "name": "OfficialRecord",
+  "type": "object",
+  "properties": {
+    "record_id": {
+      "type": "string"
+    },
+    "matter_id": {
+      "type": "string"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "law_record",
+        "contract_record",
+        "payment_record",
+        "permit_record",
+        "audit_record",
+        "court_record",
+        "amendment_record",
+        "grant_award",
+        "official_appointment",
+        "executive_order"
+      ],
+      "default": "contract_record"
+    },
+    "title": {
+      "type": "string"
+    },
+    "official_identifier": {
+      "type": "string"
+    },
+    "official_source_url": {
+      "type": "string"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "amount_confirmed": {
+      "type": "number"
+    },
+    "parties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "document_hash": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "amended",
+        "terminated",
+        "completed",
+        "superseded",
+        "unknown"
+      ],
+      "default": "active"
+    },
+    "linked_signal_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "moneysweep_url": {
+      "type": "string"
+    },
+    "canonical_key": {
+      "type": "string"
+    },
+    "source_app": {
+      "type": "string",
+      "enum": [
+        "MoneySweep",
+        "Centinelas",
+        "external_import"
+      ],
+      "default": "MoneySweep"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending_sync",
+        "synced",
+        "sync_failed",
+        "manual_only"
+      ],
+      "default": "pending_sync"
+    },
+    "external_record_id": {
+      "type": "string"
+    },
+    "external_url": {
+      "type": "string"
+    },
+    "linked_candidate_id": {
+      "type": "string"
+    },
+    "duplicate_guard_status": {
+      "type": "string",
+      "enum": [
+        "unique",
+        "duplicate_matter",
+        "duplicate_identifier",
+        "duplicate_canonical_key",
+        "needs_review"
+      ],
+      "default": "needs_review"
+    }
+  },
+  "required": [
+    "record_id",
+    "matter_id",
+    "title",
+    "canonical_key"
+  ]
+}
