@@ -9,7 +9,7 @@ from pathlib import Path
 import feedparser
 import yaml
 
-from centinelas.models import EvidenceTier, RawItem
+from centinelas.models import RawItem
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +51,9 @@ def _entry_to_raw_item(entry: dict, source_name: str, tier: str) -> RawItem | No
         body_text=body,
         published_at=published_at,
         captured_at=datetime.now(timezone.utc),
-        evidence_tier=EvidenceTier(tier),
+        # EvidenceTier is a typing.Literal alias — not callable; pydantic
+        # validates the value against the Literal on the model.
+        evidence_tier=tier,
     )
 
 
