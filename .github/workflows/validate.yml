@@ -1,0 +1,71 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install validation dependencies
+        run: python -m pip install pytest jsonschema
+
+      - name: Federation manifest gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("federation.json").read_text())
+          required = {
+              "schema_version",
+              "program_id",
+              "repository_full_name",
+              "federation_role",
+              "hub_parent",
+              "hub_callable_commands",
+              "canonical_outputs",
+              "federation_readiness_gate",
+          }
+          missing = sorted(required - set(manifest))
+          assert not missing, f"federation.json missing required keys: {missing}"
+          assert manifest["schema_version"] == "repo_federation_manifest_v1"
+          assert manifest["program_id"] == "centinelas-pr"
+          assert manifest["hub_parent"] == "thehub-pr"
+          assert "setup" in manifest["hub_callable_commands"]
+          assert "test_suite" in manifest["hub_callable_commands"]
+          gate = manifest["federation_readiness_gate"]
+          assert isinstance(gate.get("ready_for_hub_discovery"), bool)
+          assert isinstance(gate.get("ready_for_hub_live_execution"), bool)
+          assert isinstance(gate.get("blocking_conditions"), list)
+          print("federation manifest gate passed")
+          PY
+
+      - name: Validate PR spatial grid
+        run: python3 scripts/validate_pr_grid.py --require-sha
+
+      - name: Export canonical package
+        run: python3 scripts/federation_export.py --mode test --out /tmp/centinelas_federation
+
+      - name: Tests
+        run: |
+          set +e
+          pytest -q
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ] && [ "$status" -ne 5 ]; then
+            exit "$status"
+          fi

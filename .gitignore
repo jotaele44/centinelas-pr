@@ -179,6 +179,8 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+# Generated federation canonical export (built by scripts/federation_export.py)
+exports/federation/
 
 # Centinelas local pipeline state (queue/classified/dispatched JSON files)
 .centinelas/

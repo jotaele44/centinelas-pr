@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "centinelas_signal.schema.json",
+  "title": "Centinelas pre-officialization signal",
+  "description": "One early public-interest signal attached to a public matter. Producer-side domain record; projected into the Hub canonical streams by scripts/federation_export.py.",
+  "type": "object",
+  "required": [
+    "signal_id",
+    "matter_id",
+    "signal_type",
+    "title",
+    "source_id",
+    "captured_at",
+    "signal_stage",
+    "beat",
+    "confidence_score",
+    "evidence_tier",
+    "is_synthetic"
+  ],
+  "properties": {
+    "signal_id": {"type": "string"},
+    "matter_id": {"type": "string"},
+    "signal_type": {"type": "string"},
+    "title": {"type": "string"},
+    "summary": {"type": "string"},
+    "source_id": {"type": "string", "description": "References data/reference/source_registry.csv source_id"},
+    "source_url": {"type": "string"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "published_at": {"type": "string", "format": "date-time"},
+    "signal_stage": {
+      "type": "string",
+      "enum": [
+        "raw_observation", "announced", "proposed", "scheduled", "under_review",
+        "hearing_pending", "rfp_open", "bid_pending", "vote_pending",
+        "award_pending", "officialization_pending", "matched_to_moneysweep", "archived"
+      ]
+    },
+    "beat": {"type": "string"},
+    "municipalities": {"type": "array", "items": {"type": "string"}},
+    "agencies": {"type": "array", "items": {"type": "string"}},
+    "entities": {"type": "array", "items": {"type": "string"}},
+    "estimated_value": {"type": ["number", "null"]},
+    "deadline_date": {"type": ["string", "null"]},
+    "urgency_score": {"type": ["number", "null"]},
+    "confidence_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "evidence_tier": {"type": "string", "enum": ["T1", "T2", "T3", "T4"]},
+    "handoff_status": {"type": "string"},
+    "is_synthetic": {"type": "boolean"}
+  }
+}
