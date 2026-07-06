@@ -1,0 +1,16 @@
+version: CENTINELAS_PR_NON_MUNICIPAL_SOURCE_UNIVERSE_v1
+run_log_schema:
+  run_id: uuid
+  started_at: datetime
+  finished_at: datetime
+  sources_checked: int
+  items_captured: int
+  items_new: int
+  items_duplicate: int
+  items_classified: int
+  items_routed: int
+  routes_by_repo: dict
+  failed_sources: list
+  gap_flags: list
+  ledger_paths: dict
+required_delivery: Every source health run and route batch posts/exports a run summary to thehub-pr.
