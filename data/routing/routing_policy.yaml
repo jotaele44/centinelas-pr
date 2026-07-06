@@ -1,0 +1,154 @@
+version: CENTINELAS_PR_NON_MUNICIPAL_SOURCE_UNIVERSE_v1
+locked_at: '2026-07-06'
+repo_routes:
+  aguayluz-pr:
+    labels:
+    - ENVIRONMENTAL_WATER_GRID
+    keywords:
+    - AAA
+    - PRASA
+    - acueductos
+    - alcantarillado
+    - LUMA
+    - AEE
+    - Genera
+    - DRNA
+    - EPA
+    - embalse
+    - sequía
+    - contaminación
+    - agua potable
+    - residuos
+    - reciclaje
+    - MS4
+    - corales
+    - playa
+    - calidad de agua
+    packet_extensions:
+    - waterbody
+    - utility
+    - facility
+    - contaminant
+    - outage
+    - watershed
+    - permit_id
+  moneysweep-pr:
+    labels:
+    - FINANCIAL_POLITICAL_GOVERNANCE
+    keywords:
+    - subasta
+    - contrato
+    - ASG
+    - COR3
+    - AAFAF
+    - presupuesto
+    - hacienda
+    - SUTRA
+    - proyecto de ley
+    - licitación
+    - RFP
+    - Junta de Subastas
+    - federal funds
+    - CDBG
+    - auditoría
+    - Contralor
+    packet_extensions:
+    - agency
+    - contractor
+    - amount
+    - procurement_id
+    - bill_id
+    - budget_line
+    - award_status
+  spiderweb-pr:
+    labels:
+    - GEOGRAPHY_GEOLOGY_INFRASTRUCTURE
+    keywords:
+    - carretera
+    - puente
+    - DTOP
+    - ACT
+    - puerto
+    - aeropuerto
+    - permiso
+    - OGPe
+    - USGS
+    - RSPR
+    - terremoto
+    - deslizamiento
+    - inundación
+    - infraestructura
+    - terreno
+    - canal
+    - costa
+    packet_extensions:
+    - municipality
+    - coordinates
+    - route_id
+    - facility
+    - hazard_type
+    - geology_term
+    - infrastructure_type
+  ovnis-pr:
+    labels:
+    - ANOMALOUS_ACTIVITY
+    keywords:
+    - ovni
+    - uap
+    - uso
+    - avistamiento
+    - objeto extraño
+    - luz extraña
+    - anomalía
+    - fenómeno aéreo
+    packet_extensions:
+    - event_time
+    - location
+    - witness_source_tier
+    - anomaly_type
+    - confidence_language_guard
+  skywatcher-pr:
+    labels:
+    - MILITARY_AEROSPACE_INDUSTRY
+    keywords:
+    - aeropuerto
+    - FAA
+    - CBP
+    - Guardia Nacional
+    - PRANG
+    - DVIDS
+    - 156th Wing
+    - Puertos
+    - aeronave
+    - helicóptero
+    - radar
+    - militar
+    - defensa
+    - aeroespacial
+    - runway
+    - aviation
+    packet_extensions:
+    - aircraft
+    - base
+    - airport
+    - agency
+    - mission_type
+    - contractor
+    - airspace
+  thehub-pr:
+    labels:
+    - FEDERATION_LOG_REPORT
+    keywords:
+    - '*'
+    packet_extensions:
+    - run_id
+    - source_health
+    - routing_decision
+    - gap_reason
+    - delivery_attempt
+multi_label_required: true
+confidence_thresholds:
+  route_default_minimum: 0.55
+  p0_source_fastpath_minimum: 0.5
+  alert_minimum: 0.78
+  human_review_below: 0.55
