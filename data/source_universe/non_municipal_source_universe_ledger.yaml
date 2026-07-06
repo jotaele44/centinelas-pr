@@ -1,0 +1,23 @@
+version: CENTINELAS_PR_P0_INGESTOR_WIRING_PR1_LEDGER_ONLY
+locked_at: '2026-07-06'
+scope: P0 non-municipal source universe baseline
+source_count: 64
+source_families:
+  central_pr_agencies: 12
+  legislature_sutra: 5
+  procurement_recovery: 9
+  utilities_infrastructure: 9
+  emergency_environment: 10
+  courts_legal: 6
+  aerospace_defense: 5
+  local_media_publications: 8
+routing_defaults:
+  required_all_sources:
+  - thehub-pr
+  domain_routes:
+  - aguayluz-pr
+  - moneysweep-pr
+  - spiderweb-pr
+  - ovnis-pr
+  - skywatcher-pr
+boundary: This ledger locks the P0 source universe for PR1. Runtime ingestion and adapter code are deferred to later PRs.
