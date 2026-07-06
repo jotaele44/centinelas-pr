@@ -1,0 +1,84 @@
+version: CENTINELAS_PR_NON_MUNICIPAL_SOURCE_UNIVERSE_v1
+locked_at: '2026-07-06'
+p0_source_queue:
+- batch: P0_OFFICIAL_CONTROL_PLANE
+  goal: Executive/legislative source heartbeat and routing baseline.
+  source_ids:
+  - central-pr-agencies-pr-gov-central-portal
+  - central-pr-agencies-pr-gov-agency-directory
+  - central-pr-agencies-la-fortaleza-oficina-del-gobernador
+  - central-pr-agencies-departamento-de-estado
+  - central-pr-agencies-departamento-de-hacienda
+  - central-pr-agencies-ogp-oficina-de-gerencia-y-presupuesto
+  - central-pr-agencies-aafaf
+  - central-pr-agencies-departamento-de-salud
+  - central-pr-agencies-departamento-de-la-vivienda
+  - central-pr-agencies-departamento-de-justicia
+  - central-pr-agencies-departamento-de-seguridad-p-blica
+  - central-pr-agencies-ogpe-permisos
+  - legislature-sutra-sutra-legislative-measures
+  - legislature-sutra-osl-sutra-overview
+  - legislature-sutra-senado-de-puerto-rico
+  - legislature-sutra-c-mara-de-representantes
+  - legislature-sutra-osl-oficina-de-servicios-legislativos
+- batch: P0_MONEY_RECOVERY_PROCUREMENT
+  goal: Pre-award, award, recovery, budget, and audit signals to MoneySweep.
+  source_ids:
+  - procurement-recovery-asg-portal
+  - procurement-recovery-asg-subastas
+  - procurement-recovery-cor3-transparency-portal
+  - procurement-recovery-cor3-transparency-portal-en
+  - procurement-recovery-vivienda-cdbg-dr-mit-transparency
+  - procurement-recovery-puerto-rico-bonds-official-disclosure
+  - procurement-recovery-aafaf-certified-budgets
+  - procurement-recovery-ocpr-contralor
+  - procurement-recovery-oficina-del-inspector-general
+- batch: P0_UTILITIES_INFRASTRUCTURE_ENVIRONMENT
+  goal: Grid, water, road, weather, seismic, and environmental signals to AguayLuz/Spiderweb.
+  source_ids:
+  - utilities-infrastructure-luma-energy
+  - utilities-infrastructure-luma-outage-map
+  - utilities-infrastructure-genera-pr
+  - utilities-infrastructure-prepa-aee
+  - utilities-infrastructure-prasa-acueductos
+  - utilities-infrastructure-prasa-service-alerts
+  - utilities-infrastructure-dtop
+  - utilities-infrastructure-act-highway-and-transportation-authority
+  - utilities-infrastructure-puerto-rico-ports-authority
+  - emergency-environment-preps-emergency-portal
+  - emergency-environment-nws-san-juan
+  - emergency-environment-nws-sju-area-forecast-discussion
+  - emergency-environment-drna-main-site
+  - emergency-environment-drna-avisos
+  - emergency-environment-epa-puerto-rico
+  - emergency-environment-usgs-puerto-rico-water-data
+  - emergency-environment-usgs-earthquakes-puerto-rico-region
+  - emergency-environment-puerto-rico-seismic-network
+  - emergency-environment-noaa-nhc-atlantic
+- batch: P0_COURTS_AEROSPACE_MEDIA
+  goal: Courts/legal, aviation/defense, and media watchlist coverage.
+  source_ids:
+  - courts-legal-poder-judicial-main
+  - courts-legal-poder-judicial-consulta-de-casos
+  - courts-legal-tribunal-supremo-decisiones
+  - courts-legal-tribunal-supremo-2026-decisions
+  - courts-legal-us-district-court-district-of-puerto-rico
+  - courts-legal-departamento-de-justicia-pr
+  - aerospace-defense-puerto-rico-ports-authority-airports
+  - aerospace-defense-faa-main-data-news
+  - aerospace-defense-cbp-puerto-rico-ports-of-entry
+  - aerospace-defense-156th-wing-puerto-rico-air-national-guard
+  - aerospace-defense-dvids-puerto-rico-national-guard
+  - local-media-publications-el-nuevo-d-a
+  - local-media-publications-centro-de-periodismo-investigativo
+  - local-media-publications-cpi-english
+  - local-media-publications-noticel
+  - local-media-publications-noticel-ltima-hora
+  - local-media-publications-metro-puerto-rico
+  - local-media-publications-metro-lo-ltimo
+  - local-media-publications-wapa-tv
+implementation_order:
+- P0_OFFICIAL_CONTROL_PLANE
+- P0_MONEY_RECOVERY_PROCUREMENT
+- P0_UTILITIES_INFRASTRUCTURE_ENVIRONMENT
+- P0_COURTS_AEROSPACE_MEDIA
