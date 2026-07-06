@@ -1,0 +1,22 @@
+version: CENTINELAS_PR_P0_SOURCE_HEALTH_RUN_v1
+locked_at: '2026-07-06'
+target_count: 64
+health_status_counts:
+  ACTIVE: 52
+  DEGRADED: 11
+  MANUAL_ONLY: 1
+  BLOCKED: 0
+  DEMOTE: 0
+allowed_health_statuses:
+- ACTIVE
+- DEGRADED
+- BLOCKED
+- MANUAL_ONLY
+- DEMOTE
+ingestor_policy:
+  ACTIVE: normal_html_rss_api_ingestion_candidate
+  DEGRADED: repair_endpoint_or_source_specific_adapter_before_ingestion
+  MANUAL_ONLY: replace_scraping_with_bounded_api_or_manual_review
+  BLOCKED: exclude_from_normal_ingestion_until_unblocked
+  DEMOTE: remove_from_p0_or_demote_to_lower_priority
+boundary: HTTP status, final URL, redirect chain, robots policy, and content hash remain pending until a network-enabled source-health run.
