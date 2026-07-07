@@ -184,3 +184,10 @@ exports/federation/
 
 # Centinelas local pipeline state (queue/classified/dispatched JSON files)
 .centinelas/
+
+# Desktop wrapper (see desktop/README.md)
+.venv/
+frontend/node_modules/
+frontend/dist/
+desktop/.setup-complete
+dist-desktop/
