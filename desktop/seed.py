@@ -23,7 +23,17 @@ LEDGERS = [
     REPO_ROOT / "data" / "signals" / "example_signals.jsonl",
 ]
 DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", str(REPO_ROOT / ".centinelas")))
+QUEUE_DIR = DATA_DIR / "queue"
 CLASSIFIED_DIR = DATA_DIR / "classified"
+DISPATCHED_DIR = DATA_DIR / "dispatched"
+SEED_MARKER = DATA_DIR / ".seeded"
+
+
+def pipeline_has_state() -> bool:
+    """True if any pipeline stage already holds items (a real run in progress)."""
+    return any(
+        d.exists() and any(d.glob("*.json")) for d in (QUEUE_DIR, CLASSIFIED_DIR, DISPATCHED_DIR)
+    )
 
 
 def source_name(source_id: str) -> str:
@@ -58,9 +68,14 @@ def item_from_signal(row: dict) -> dict | None:
 
 
 def seed(force: bool = False) -> int:
-    if CLASSIFIED_DIR.exists() and any(CLASSIFIED_DIR.glob("*.json")) and not force:
-        print("Pipeline state already present — not seeding (use --force to reseed).")
-        return 0
+    if not force:
+        if SEED_MARKER.exists():
+            return 0
+        if pipeline_has_state():
+            # A real ingest/classify/dispatch run is in progress — never mix
+            # seeded demo rows into it.
+            print("Live pipeline state present — not seeding.")
+            return 0
     CLASSIFIED_DIR.mkdir(parents=True, exist_ok=True)
     written = 0
     for ledger in LEDGERS:
@@ -81,6 +96,7 @@ def seed(force: bool = False) -> int:
             if not path.exists():
                 path.write_text(json.dumps(item, indent=2), encoding="utf-8")
                 written += 1
+    SEED_MARKER.write_text("seeded from committed ledgers\n", encoding="utf-8")
     print(f"Seeded {written} classified items from the committed ledgers → {CLASSIFIED_DIR}")
     return written
 

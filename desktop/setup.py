@@ -90,18 +90,19 @@ def main() -> None:
     args = set(sys.argv[1:])
     if "--force" in args:
         MARKER.unlink(missing_ok=True)
+    # Repo-specific: give the install something to show — replay the committed
+    # signal ledgers into the local pipeline state. Guarded (no-op once seeded
+    # or when a real run exists), so run it on every path — including installs
+    # that predate seeding and hit the --ensure fast-path below. See seed.py.
+    from desktop import seed
+
+    seed.seed()
     if is_complete():
         if "--ensure" not in args:
             print("Setup already complete (use --force to redo).")
         return
     setup_python()
     setup_frontend()
-    # Repo-specific: give the fresh install something to show — replay the
-    # committed signal ledgers into the local pipeline state (no-op when
-    # real pipeline state already exists). See desktop/seed.py.
-    from desktop import seed
-
-    seed.seed()
     MARKER.write_text("ok\n", encoding="utf-8")
     print("Desktop setup complete.")
 
