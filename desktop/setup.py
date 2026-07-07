@@ -96,6 +96,12 @@ def main() -> None:
         return
     setup_python()
     setup_frontend()
+    # Repo-specific: give the fresh install something to show — replay the
+    # committed signal ledgers into the local pipeline state (no-op when
+    # real pipeline state already exists). See desktop/seed.py.
+    from desktop import seed
+
+    seed.seed()
     MARKER.write_text("ok\n", encoding="utf-8")
     print("Desktop setup complete.")
 
