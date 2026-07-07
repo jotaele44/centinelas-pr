@@ -40,6 +40,17 @@ class ClassifiedItem(RawItem):
     confidence: float        # 0.0–1.0
     classifier_reasoning: str = ""
 
+    # Optional pre-officialization finance/location enrichment. When the
+    # classifier can extract them these travel with the item so the
+    # MoneySweep anchor can build a *located* pre-official finance candidate
+    # without re-parsing. All degrade gracefully to empty — downstream
+    # consumers re-derive municipality from title/body_text when absent.
+    municipalities: list[str] = []
+    agencies: list[str] = []
+    estimated_value: float | None = None
+    signal_stage: str | None = None
+    beat: str | None = None
+
     @field_validator("confidence")
     @classmethod
     def confidence_range(cls, v: float) -> float:

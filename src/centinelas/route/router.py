@@ -7,10 +7,22 @@ from datetime import datetime, timezone
 from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO, DomainLabel
 from centinelas.models import ClassifiedItem
 
+# Targets that consume the pre-officialization finance/location enrichment.
+# MoneySweep is the money anchor; the Hub aggregates every field. Other
+# domain repos keep the lean base payload.
+_FINANCE_ENRICHED_REPOS = {"moneysweep-pr", HUB_REPO}
+
 
 def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
-    """Build the JSON payload for a target repo's intake/ folder."""
-    return {
+    """Build the JSON payload for a target repo's intake/ folder.
+
+    MoneySweep (the finance anchor) and the Hub additionally receive the
+    pre-officialization finance/location enrichment when the classifier
+    populated it, so MoneySweep can build a *located* finance candidate.
+    The fields are always present for those targets (empty when unknown) so
+    the intake contract is stable.
+    """
+    payload = {
         "schema_version": "1.0",
         "item_id": item.item_id,
         "source_url": item.source_url,
@@ -26,6 +38,17 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
         "routed_to": target_repo,
         "routed_at": datetime.now(timezone.utc).isoformat(),
     }
+    if target_repo in _FINANCE_ENRICHED_REPOS:
+        payload.update(
+            {
+                "municipalities": list(item.municipalities),
+                "agencies": list(item.agencies),
+                "estimated_value": item.estimated_value,
+                "signal_stage": item.signal_stage,
+                "beat": item.beat,
+            }
+        )
+    return payload
 
 
 def resolve_targets(item: ClassifiedItem) -> list[str]:
