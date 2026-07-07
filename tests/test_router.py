@@ -86,6 +86,49 @@ def test_payload_contains_required_fields():
             assert field in payload, f"Missing field '{field}' in payload for {repo}"
 
 
+def test_moneysweep_payload_carries_finance_enrichment():
+    # A FINANCIAL item with pre-official finance/location enrichment must
+    # forward those fields to the MoneySweep anchor (and the Hub), while the
+    # lean base payload keeps them off other targets.
+    item = ClassifiedItem(
+        item_id="finenrich001",
+        source_url="https://example.com/rfp",
+        source_name="Test",
+        title="AAA procurement RFP in Ponce",
+        body_text="Autoridad de Acueductos y Alcantarillados opens RFP",
+        published_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        labels=[DomainLabel.FINANCIAL, DomainLabel.GEO_GEOLOGY],
+        confidence=0.9,
+        classifier_reasoning="test",
+        municipalities=["Ponce"],
+        agencies=["Autoridad de Acueductos y Alcantarillados"],
+        estimated_value=1500000.0,
+        signal_stage="rfp_open",
+        beat="contracts",
+    )
+    payloads = route(item)
+    ms = payloads["moneysweep-pr"]
+    assert ms["municipalities"] == ["Ponce"]
+    assert ms["agencies"] == ["Autoridad de Acueductos y Alcantarillados"]
+    assert ms["estimated_value"] == 1500000.0
+    assert ms["signal_stage"] == "rfp_open"
+    assert ms["beat"] == "contracts"
+    # Only the MoneySweep anchor carries the enrichment; every other target —
+    # including the Hub — stays on the base contract shape.
+    assert "estimated_value" not in payloads[HUB_REPO]
+    assert "estimated_value" not in payloads["spiderweb-pr"]
+
+
+def test_finance_enrichment_defaults_empty_when_absent():
+    item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "fin001"))
+    payloads = route(item)
+    ms = payloads["moneysweep-pr"]
+    assert ms["municipalities"] == []
+    assert ms["agencies"] == []
+    assert ms["estimated_value"] is None
+
+
 def test_no_duplicate_repos_in_targets():
     # FINANCIAL and POLITICAL both map to moneysweep — should only appear once
     item = ClassifiedItem(
