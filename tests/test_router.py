@@ -114,9 +114,9 @@ def test_moneysweep_payload_carries_finance_enrichment():
     assert ms["estimated_value"] == 1500000.0
     assert ms["signal_stage"] == "rfp_open"
     assert ms["beat"] == "contracts"
-    # Hub gets the enrichment too (it aggregates every field).
-    assert payloads[HUB_REPO]["municipalities"] == ["Ponce"]
-    # Non-anchor domain repos keep the lean base payload.
+    # Only the MoneySweep anchor carries the enrichment; every other target —
+    # including the Hub — stays on the base contract shape.
+    assert "estimated_value" not in payloads[HUB_REPO]
     assert "estimated_value" not in payloads["spiderweb-pr"]
 
 

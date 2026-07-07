@@ -8,19 +8,22 @@ from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO, DomainLabel
 from centinelas.models import ClassifiedItem
 
 # Targets that consume the pre-officialization finance/location enrichment.
-# MoneySweep is the money anchor; the Hub aggregates every field. Other
-# domain repos keep the lean base payload.
-_FINANCE_ENRICHED_REPOS = {"moneysweep-pr", HUB_REPO}
+# Only the MoneySweep anchor needs it (to build a *located* finance candidate);
+# its intake contract declares the fields. The Hub stays on its base contract
+# (thehub.schema.json) and receives the fused finance/location result later via
+# the canonical federation packages, not this raw enrichment. Other domain repos
+# keep the lean base payload.
+_FINANCE_ENRICHED_REPOS = {"moneysweep-pr"}
 
 
 def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
     """Build the JSON payload for a target repo's intake/ folder.
 
-    MoneySweep (the finance anchor) and the Hub additionally receive the
-    pre-officialization finance/location enrichment when the classifier
-    populated it, so MoneySweep can build a *located* finance candidate.
-    The fields are always present for those targets (empty when unknown) so
-    the intake contract is stable.
+    The MoneySweep anchor additionally receives the pre-officialization
+    finance/location enrichment when the classifier populated it, so it can
+    build a *located* finance candidate. The fields are always present for that
+    target (empty when unknown) so its intake contract is stable. Every other
+    target — including the Hub — keeps the base payload shape.
     """
     payload = {
         "schema_version": "1.0",
