@@ -30,6 +30,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
+from prii_export_utils import fid as _fid, norm as _norm, sha256 as _sha256
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PRODUCER = "centinelas-pr"
 CONTRACT_VERSION = "1.0.0"
@@ -43,15 +45,6 @@ STREAM_SCHEMA = {
     "relationships": "federation_relationship.schema.json",
     "observations": "federation_observation.schema.json",
 }
-
-
-def _fid(prefix: str, *parts: Any) -> str:
-    digest = hashlib.sha256("|".join(str(p) for p in parts).encode()).hexdigest()[:32]
-    return f"{prefix}_{digest}"
-
-
-def _norm(name: str) -> str:
-    return " ".join(str(name).strip().upper().split())
 
 
 def _lineage(phase: str) -> Dict[str, Any]:
@@ -212,10 +205,6 @@ def _relationship(rel_id, source_id, src_ent, tgt_ent, rtype, confidence, synthe
         "created_at": created,
         "extracted_at": now,
     }
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def write_package(streams: Dict[str, List[Dict[str, Any]]], out_dir: Path, mode: str, now: str) -> Path:

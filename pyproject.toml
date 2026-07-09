@@ -29,9 +29,18 @@ server = [
     "fastapi>=0.111.0",
     "uvicorn[standard]>=0.29.0",
 ]
+# Only scripts/federation_export.py needs this — kept out of core dependencies
+# so `pip install -e .[server]` (the desktop wrapper's install path, which
+# doesn't touch federation_export.py) never requires a git checkout.
+export = [
+    "prii-export-utils @ git+https://github.com/jotaele44/thehub-pr.git@c007a728910128efebcda79bdbe6b9b33212551e#subdirectory=packages/prii_export_utils",
+]
 
 [project.scripts]
 centinelas = "centinelas.cli:app"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/centinelas"]
