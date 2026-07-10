@@ -38,7 +38,8 @@
     "route": "centinelas route",
     "run_pipeline": "centinelas run",
     "status": "centinelas status",
-    "build_signal_ledger": "python3 scripts/build_signal_ledger.py"
+    "build_signal_ledger": "python3 scripts/build_signal_ledger.py",
+    "maintenance": "python3 scripts/run_maintenance.py --repo centinelas-pr --mode audit"
   },
   "canonical_outputs": {
     "signal_schema": "schemas/signal.schema.json",
@@ -47,7 +48,8 @@
     "seed_ledger": "data/signals/example_signals.jsonl",
     "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
     "canonical_export_dir": "exports/federation",
-    "live_ledger": "data/signals/live_signals.jsonl"
+    "live_ledger": "data/signals/live_signals.jsonl",
+    "maintenance_report": "reports/maintenance/latest.json"
   },
   "federation_readiness_gate": {
     "ready_for_hub_discovery": true,

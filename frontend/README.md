@@ -1,5 +1,11 @@
 # Centinelas
 
+> **Diagnostic-only surface (ADR 0001, Phase 2).** This repo's frontend is a
+> development and diagnostic tool for this producer only. The supported product
+> surface for the PRII federation is the hub app
+> (`thehub-pr/server/frontend`), which renders this producer's data alongside
+> the other engines. See `thehub-pr/docs/adr/0001-federated-engines-single-hub.md`.
+
 Centinelas is the upstream sibling to MoneySweep.
 
 - **Centinelas** captures early public signals relevant to Puerto Rico before they become official records: announcements, agendas, hearings, RFPs, public notices, board actions, draft bills, social statements, emergency notices, and media reports.
@@ -9,7 +15,7 @@ The shared connective object is `Matter`, identified by `matter_id`.
 
 ## Core routes
 
-- `/` — public product framing
+- `/` — diagnostic overview of the signal pipeline (a dev-only surface, not public product framing)
 - `/monitor` — upstream monitoring command center
 - `/signals` — signal inbox
 - `/matters` — public matter ledger
