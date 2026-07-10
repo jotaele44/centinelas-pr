@@ -195,3 +195,4 @@ desktop/.running
 
 # generated federation maintenance report (audit artifact, not committed)
 reports/maintenance/
+!desktop/pyinstaller.spec
