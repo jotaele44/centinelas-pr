@@ -1,5 +1,11 @@
 # Centinelas PR
 
+> **Diagnostic-only surface (ADR 0001, Phase 2).** This repo's frontend is a
+> development and diagnostic tool for this producer only. The supported product
+> surface for the PRII federation is the hub app
+> (`thehub-pr/server/frontend`), which renders this producer's data alongside
+> the other engines. See `thehub-pr/docs/adr/0001-federated-engines-single-hub.md`.
+
 Centinelas PR is the upstream early-signal monitor for Puerto Rico public-interest information.
 
 It captures announcements, agendas, public notices, hearings, RFPs, press releases, official social statements, proposed projects, draft legislation, public meetings, emergency notices, and other signals that appear before a law, contract, permit, project, payment, audit, or official record is finalized.
@@ -30,10 +36,10 @@ cd centinelas-pr
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Runtime + dev tooling + the export extra (matches CI). The `export` extra pulls
-# the shared prii-export-utils package from the hub at a pinned commit, so this
-# needs network access:
-pip install -e ".[dev,export]" -r server/backend/requirements.txt
+# Runtime + dev tooling (matches CI). The shared prii-export-utils package is a
+# core dependency pulled from the hub at a pinned commit, so this needs network
+# access:
+pip install -e ".[dev]" -r server/backend/requirements.txt
 ```
 
 Run the checks CI runs (`.github/workflows/validate.yml`):
@@ -334,7 +340,10 @@ The grid provides a shared `Cell_ID` spatial key so Centinelas signals can be co
 
 ## Release gate
 
-Centinelas should not be considered production-ready until these gates pass:
+Centinelas should not be considered production-ready until these gates pass.
+Frontend-facing gates (branding, accessibility, frontend observability) apply
+to this repo's diagnostic surface only; the federation's product UI is the hub
+app (ADR 0001).
 
 | Gate | Requirement |
 |---|---|

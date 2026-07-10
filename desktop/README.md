@@ -56,6 +56,5 @@ dashboard build); after that it starts straight away and works offline.
 Because the app is a small self-locating wrapper around `desktop/launch.py`, it
 must stay at the repo root (it finds the repo from its own location). If macOS
 blocks the first open with an "unidentified developer" notice, right-click the
-app → **Open** once to allow it. The standalone app is built locally by running
-`python desktop/setup.py` (which creates the `.venv` and builds the dashboard);
-this repo does not ship a separate `desktop-build` CI workflow.
+app → **Open** once to allow it. No-Python-required standalone builds are still
+produced separately by the `desktop-build` workflow.
