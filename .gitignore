@@ -192,3 +192,6 @@ frontend/dist/
 desktop/.setup-complete
 dist-desktop/
 desktop/.running
+
+# generated federation maintenance report (audit artifact, not committed)
+reports/maintenance/
