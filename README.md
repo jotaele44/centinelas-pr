@@ -20,6 +20,36 @@ Centinelas is a sibling system to MoneySweep PR:
 
 Centinelas should not duplicate MoneySweep. It should create the upstream context that MoneySweep later verifies through official records.
 
+## Setup / Development
+
+Requires **Python 3.10+** (CI tests 3.10–3.12).
+
+```bash
+git clone https://github.com/jotaele44/centinelas-pr.git
+cd centinelas-pr
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Runtime + dev tooling + the export extra (matches CI). The `export` extra pulls
+# the shared prii-export-utils package from the hub at a pinned commit, so this
+# needs network access:
+pip install -e ".[dev,export]" -r server/backend/requirements.txt
+```
+
+Run the checks CI runs (`.github/workflows/validate.yml`):
+
+```bash
+ruff check .                                         # lint
+python scripts/validate_pr_grid.py --require-sha     # spatial-grid gate
+python3 scripts/federation_export.py --ledger data/signals/live_signals.jsonl --mode test
+pytest -q                                            # tests
+```
+
+The `centinelas` CLI (`ingest`, `classify`, `route`, `run`, `status`) drives the
+live pipeline; live RSS intake needs internet and LLM classification needs an
+`ANTHROPIC_API_KEY`. For the double-click desktop app, see
+[`desktop/README.md`](desktop/README.md).
+
 ## Core concept: Public Matter
 
 A public matter is any public-interest item relevant to Puerto Rico that may evolve over time.
