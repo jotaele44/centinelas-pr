@@ -9,4 +9,4 @@ Grid columns: 384
 
 Run:
 
-python scripts/validate_pr_grid.py
+python scripts/validate_pr_grid.py --require-sha

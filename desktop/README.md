@@ -22,7 +22,7 @@ all data, tables, and charts keep working.
 Data caveat: the dashboard is a read-only view over the local pipeline state
 in `.centinelas/` (queue → classified → dispatched). On a fresh clone, setup
 seeds that state from the committed signal ledgers (`data/signals/*.jsonl`,
-~280 real signals) so the app opens with data — see `desktop/seed.py`; real
+274 real signals as of 2026-07-03) so the app opens with data — see `desktop/seed.py`; real
 pipeline state is never overwritten. Fresh signals still require the
 `centinelas` CLI (live RSS intake needs internet and, for LLM classification,
 an `ANTHROPIC_API_KEY`).
