@@ -16,8 +16,34 @@ log = logging.getLogger(__name__)
 _REPOS_BASE = Path(os.environ.get("CENTINELAS_REPOS_DIR", str(Path.home() / "Developer")))
 _DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas"))
 
+# Minimum classifier confidence for an item to be routed/exported. Below this the
+# item is skipped (not dispatched to any repo) — the gate that keeps low-confidence
+# noise out of the downstream MoneySweep/Hub event pipeline. Env-overridable to mirror
+# the repo's existing env-var config style (see CENTINELAS_REPOS_DIR above).
+_DEFAULT_ROUTE_MIN_CONFIDENCE = 0.55
+
+
+def _route_min_confidence() -> float:
+    """Read the route confidence gate at call time so tests/CI can override via env."""
+    try:
+        return float(
+            os.environ.get("CENTINELAS_ROUTE_MIN_CONFIDENCE", _DEFAULT_ROUTE_MIN_CONFIDENCE)
+        )
+    except ValueError:
+        return _DEFAULT_ROUTE_MIN_CONFIDENCE
+
 
 def _repo_intake_dir(repo_name: str) -> Path:
+    """Directory the item payload is written to for a target repo.
+
+    Default: the sibling checkout's ``intake/`` folder (local dev, repos side by side).
+    When ``CENTINELAS_OUTBOUND_DIR`` is set (CI / event-driven mode), payloads are staged
+    under ``<outbound>/<repo>/`` instead — no sibling checkout needed — for a downstream
+    emitter (scripts/emit_dispatches.py) to POST as GitHub repository_dispatch events.
+    """
+    outbound = os.environ.get("CENTINELAS_OUTBOUND_DIR")
+    if outbound:
+        return Path(outbound) / repo_name
     return _REPOS_BASE / repo_name / "intake"
 
 
@@ -41,6 +67,24 @@ def dispatch(item: ClassifiedItem, dry_run: bool = False) -> DispatchRecord:
     Write item payloads to each target repo's intake/ folder.
     Always writes to thehub-pr. Returns a DispatchRecord.
     """
+    threshold = _route_min_confidence()
+    if item.confidence < threshold:
+        log.info(
+            "Skipping %s: confidence %.2f < route minimum %.2f",
+            item.item_id,
+            item.confidence,
+            threshold,
+        )
+        record = DispatchRecord(
+            item_id=item.item_id,
+            dispatched_to=[],
+            dispatched_at=datetime.now(timezone.utc),
+            status="skipped",
+            error=f"confidence {item.confidence:.2f} < route minimum {threshold:.2f}",
+        )
+        _persist_dispatch_record(record)
+        return record
+
     payloads = route(item)
     dispatched_to: list[str] = []
     errors: list[str] = []
