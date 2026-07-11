@@ -29,6 +29,35 @@ def test_build_body_wraps_within_client_payload_key_limit():
     assert body["client_payload"]["item_id"] == "abc123"
 
 
+def test_long_body_text_is_bounded_under_github_limit():
+    # A full-article feed can yield an enormous body_text; the wrapped client_payload
+    # must stay under GitHub's 65,535-char cap so the dispatch is not rejected (HTTP 422).
+    payload = {
+        "item_id": "big001",
+        "source_url": "https://example.com/article",
+        "labels": ["FINANCIAL"],
+        "municipalities": ["San Juan"],
+        "body_text": "x" * 200_000,
+    }
+    body = emit.build_dispatch_body("big001", "moneysweep-pr", payload, "centinelas-signal")
+    serialized = json.dumps(body["client_payload"])
+    assert len(serialized) < 65_535
+    # Structured fields survive; only body_text is trimmed.
+    signal = body["client_payload"]["signal"]
+    assert signal["item_id"] == "big001"
+    assert signal["source_url"] == "https://example.com/article"
+    assert signal["municipalities"] == ["San Juan"]
+    assert len(signal["body_text"]) < len(payload["body_text"])
+    # The caller's payload is not mutated.
+    assert len(payload["body_text"]) == 200_000
+
+
+def test_short_body_text_is_left_intact():
+    payload = {"item_id": "s1", "body_text": "short body"}
+    body = emit.build_dispatch_body("s1", "moneysweep-pr", payload, "centinelas-signal")
+    assert body["client_payload"]["signal"]["body_text"] == "short body"
+
+
 def test_iter_payloads_discovers_staged_files(tmp_path):
     _stage(tmp_path, "moneysweep-pr", "id1", {"item_id": "id1"})
     _stage(tmp_path, "thehub-pr", "id2", {"item_id": "id2"})

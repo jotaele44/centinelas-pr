@@ -33,6 +33,23 @@ DEFAULT_OWNER = "jotaele44"
 DEFAULT_EVENT_TYPE = "centinelas-signal"
 GITHUB_API = "https://api.github.com"
 
+# GitHub caps repository_dispatch client_payload at 65,535 characters. body_text is
+# the only unbounded field (full-article RSS feeds), so trim it — keeping the
+# structured fields + source_url intact so MoneySweep can re-fetch the full text if
+# needed. Cap the wrapped client_payload with headroom below GitHub's hard limit.
+_MAX_BODY_TEXT = 8000
+_MAX_CLIENT_PAYLOAD_CHARS = 60000
+_TRUNCATION_MARKER = "… [truncated]"
+
+
+def _bounded_signal(payload: dict) -> dict:
+    """Copy the intake record with body_text trimmed to a sane length."""
+    signal = dict(payload)
+    body = signal.get("body_text")
+    if isinstance(body, str) and len(body) > _MAX_BODY_TEXT:
+        signal["body_text"] = body[:_MAX_BODY_TEXT] + _TRUNCATION_MARKER
+    return signal
+
 
 def iter_payloads(outbound: Path):
     """Yield (repo_name, item_id, payload) for every staged ``<repo>/<id>.json``."""
@@ -47,11 +64,20 @@ def iter_payloads(outbound: Path):
 
 
 def build_dispatch_body(item_id: str, repo: str, payload: dict, event_type: str) -> dict:
-    """Wrap the intake record so client_payload stays within GitHub's 10-key limit."""
-    return {
-        "event_type": event_type,
-        "client_payload": {"item_id": item_id, "repo": repo, "signal": payload},
-    }
+    """Wrap the intake record so client_payload stays within GitHub's key + size limits.
+
+    client_payload is limited to 10 top-level keys (here: item_id/repo/signal) and to
+    65,535 characters total. body_text is trimmed up front and then hard-bounded so a
+    long signal still delivers (HTTP 422 otherwise) instead of being dropped silently.
+    """
+    signal = _bounded_signal(payload)
+    client_payload = {"item_id": item_id, "repo": repo, "signal": signal}
+    # Hard guard: if many structured fields still push over the cap, halve body_text
+    # until the serialized payload fits (or drop it entirely as a last resort).
+    while len(json.dumps(client_payload)) > _MAX_CLIENT_PAYLOAD_CHARS and signal.get("body_text"):
+        trimmed = signal["body_text"][: max(0, len(signal["body_text"]) // 2)]
+        signal["body_text"] = "" if len(trimmed) < 100 else trimmed + _TRUNCATION_MARKER
+    return {"event_type": event_type, "client_payload": client_payload}
 
 
 def post_dispatch(owner: str, repo: str, body: dict, token: str) -> int:
