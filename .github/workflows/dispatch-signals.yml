@@ -1,0 +1,67 @@
+name: Dispatch signals to MoneySweep
+
+# Event-driven export hop 1: run the Centinelas pipeline (ingest -> classify ->
+# route) and emit a GitHub repository_dispatch to moneysweep-pr for each fresh
+# FINANCIAL/POLITICAL signal above the confidence gate. moneysweep-pr's
+# centinelas-intake.yml listens for these and ingests them.
+#
+# Manual-only (workflow_dispatch), consistent with the federation's operator-triggered
+# egress policy. Emission is dry-run unless confirm=YES, and requires the
+# FEDERATION_DISPATCH_TOKEN secret (a token with contents:write on moneysweep-pr).
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'YES' to actually POST repository_dispatch (else dry-run)"
+        required: true
+        default: "no"
+      limit:
+        description: "Max items to process (0 = no cap)"
+        required: false
+        default: "25"
+
+permissions:
+  contents: read
+
+env:
+  CENTINELAS_OUTBOUND_DIR: .centinelas/outbound
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: python -m pip install -e ".[dev,export]"
+
+      - name: Run pipeline (ingest -> classify -> route, stage to outbound)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          centinelas run --limit "${{ github.event.inputs.limit }}"
+          echo "Staged payloads:"
+          find "$CENTINELAS_OUTBOUND_DIR" -name '*.json' -print 2>/dev/null | sort || true
+
+      - name: Emit repository_dispatch to moneysweep-pr
+        env:
+          FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+        run: |
+          if [ "$(printf '%s' "${{ github.event.inputs.confirm }}" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
+            python3 scripts/emit_dispatches.py --only-repo moneysweep-pr
+          else
+            echo "confirm != YES — dry-run (no POST)."
+            python3 scripts/emit_dispatches.py --only-repo moneysweep-pr --dry-run
+          fi
+
+      - name: Upload staged payloads artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: centinelas-outbound
+          path: .centinelas/outbound
+          if-no-files-found: ignore
