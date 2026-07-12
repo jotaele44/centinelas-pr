@@ -82,6 +82,31 @@ def test_run_persists_classified_and_items_endpoint_reflects_it(client):
     assert any(it["item_id"] == "run-ep-001" for it in items)
 
 
+def test_run_dispatch_records_land_in_server_data_dir(tmp_path, monkeypatch):
+    # Simulate launch from a NON-repo cwd (e.g. the desktop wrapper): the dispatch
+    # module's relative-".centinelas" default would otherwise write records outside
+    # DISPATCHED_DIR, leaving /items and /status showing the run as pending forever.
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    cwd = tmp_path / "elsewhere"
+    cwd.mkdir()
+    monkeypatch.chdir(cwd)
+
+    data_dir = tmp_path / "server_data"
+    monkeypatch.setattr(main, "DATA_DIR", data_dir)
+    monkeypatch.setattr(main, "CLASSIFIED_DIR", data_dir / "classified")
+    monkeypatch.setattr(main, "DISPATCHED_DIR", data_dir / "dispatched")
+    monkeypatch.setattr("centinelas.ingest.rss.poll_all", lambda: [_raw_item("run-ep-002")])
+
+    with TestClient(main.app) as c:
+        c.post("/run", json={"dry_run": True})
+        # Dispatch record lands under the server's DISPATCHED_DIR, not cwd/.centinelas.
+        assert (data_dir / "dispatched" / "run-ep-002.json").exists()
+        assert not (cwd / ".centinelas").exists()
+        # ...so the read endpoints see it as dispatched, not pending.
+        item = next(it for it in c.get("/items").json() if it["item_id"] == "run-ep-002")
+        assert item["dispatch"] is not None
+
+
 def test_run_empty_body_defaults_to_full_run(client):
     # No body → RunRequest defaults (dry_run False, limit 0). Dispatch is dry via
     # sibling-repo absence being irrelevant here: with dry_run False it would write

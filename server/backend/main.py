@@ -178,7 +178,15 @@ def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
     from centinelas.classify.classifier import classify as do_classify
     from centinelas.ingest.rss import poll_all
     from centinelas.models import ClassifiedItem
+    from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch
+
+    # Align the dispatch module's data dir with this server's DATA_DIR before it writes
+    # dispatch records. dispatch defaults to a RELATIVE ".centinelas", so when the
+    # backend runs from a non-repo cwd (e.g. the desktop wrapper) its records would land
+    # under the process cwd instead of DISPATCHED_DIR, and /items and /status would keep
+    # showing freshly-run items as pending. DATA_DIR is the absolute source of truth.
+    dispatch_mod._DATA_DIR = DATA_DIR
 
     req = req or RunRequest()
 
