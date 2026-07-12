@@ -4,7 +4,6 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-import pytest
 
 from centinelas.classify.labels import DomainLabel
 from centinelas.classify.rules import keyword_classify

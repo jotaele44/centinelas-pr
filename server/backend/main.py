@@ -18,6 +18,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from centinelas.ingest.rss import _load_sources
 
@@ -31,7 +32,8 @@ app = FastAPI(title="Centinelas-PR Intake API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET"],
+    # GET for the read-only visibility endpoints; POST so the SPA can trigger /run.
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -147,7 +149,71 @@ def status() -> JSONResponse:
     })
 
 
-# TODO(future): POST /run to trigger a pipeline run. Deferred — it has real side
-# effects (paid Claude Haiku calls + writes into 5 sibling repos' intake/ folders),
-# so it's out of scope for the read-only visibility API. Run `centinelas run` from a
-# terminal instead until a proper trigger mechanism exists.
+class RunRequest(BaseModel):
+    """Body for POST /run. All fields optional — an empty POST runs the full pipeline."""
+
+    dry_run: bool = False
+    limit: int = 0
+
+
+@app.post("/run")
+def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
+    """Trigger a full ingest → classify → route pipeline run.
+
+    This is the HTTP twin of the ``centinelas run`` CLI command and reuses the exact
+    same pipeline path (poll_all → classify → dispatch). Classified items are written
+    into CLASSIFIED_DIR so the read endpoints (/items, /status) reflect the run.
+
+    Degrades gracefully with no network and no ANTHROPIC_API_KEY — the same offline
+    contract the CLI honours:
+      * RSS polling swallows unreachable-feed errors, so ingest yields fewer/zero
+        items rather than raising;
+      * classification falls back to keyword rules when the Claude Haiku tier is
+        unavailable (missing key / no network);
+      * ``dry_run`` skips the cross-repo intake/ writes while still persisting
+        Centinelas's own classified + dispatch bookkeeping.
+
+    Returns a JSON summary of the run (counts + dispatch-status breakdown).
+    """
+    from centinelas.classify.classifier import classify as do_classify
+    from centinelas.ingest.rss import poll_all
+    from centinelas.models import ClassifiedItem
+    from centinelas.route.dispatch import dispatch
+
+    req = req or RunRequest()
+
+    # poll_all already isolates per-feed failures; guard the call itself so a hard
+    # failure surfaces as a clean 502 rather than an unhandled 500.
+    try:
+        items = poll_all()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"ingest failed: {exc}") from exc
+    if req.limit:
+        items = items[: req.limit]
+
+    CLASSIFIED_DIR.mkdir(parents=True, exist_ok=True)
+    classified: list[ClassifiedItem] = []
+    for raw in items:
+        labels, confidence, reasoning = do_classify(raw)
+        item = ClassifiedItem(
+            **raw.model_dump(),
+            labels=labels,
+            confidence=confidence,
+            classifier_reasoning=reasoning,
+        )
+        classified.append(item)
+        (CLASSIFIED_DIR / f"{item.item_id}.json").write_text(item.model_dump_json(indent=2))
+
+    breakdown: dict[str, int] = {}
+    for item in classified:
+        record = dispatch(item, dry_run=req.dry_run)
+        breakdown[record.status] = breakdown.get(record.status, 0) + 1
+
+    return JSONResponse({
+        "status": "ok",
+        "dry_run": req.dry_run,
+        "ingested": len(items),
+        "classified": len(classified),
+        "dispatched": breakdown.get("ok", 0),
+        "dispatch_breakdown": breakdown,
+    })
