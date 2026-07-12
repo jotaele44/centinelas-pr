@@ -35,6 +35,22 @@ These are implemented, tested, and exercised against real data — not stubs.
   classification, routing, dispatch, CLI, federation export/contract-compat, and
   the desktop/API server.
 
+### Live-run record
+
+Concrete evidence the `poll_all → classify → dispatch` path runs end-to-end
+against the live RSS registry, keyword tier only (no `ANTHROPIC_API_KEY`; the
+LLM tier fell back to keyword rules for every item, as designed):
+
+- **2026-07-12** — `python scripts/build_signal_ledger.py` + `centinelas.cli run
+  --dry-run` over the live feeds: **253 ingested / 253 classified / 133 routed
+  (ok) / 120 gated** (sub-threshold `UNCLASSIFIED`). The refreshed real-signal
+  snapshot (`is_synthetic: false`, captured at run time) is committed at
+  `data/signals/live_signals.jsonl` — 253 rows,
+  beats `{military_aerospace: 61, environmental: 23, political: 23, financial: 12,
+  geo_geology: 10, anomalous: 4, unclassified: 120}`.
+  Verifier: `pytest -k "classif or rout or dispatch or run"` → 41 passed /
+  2 skipped; `ruff check .` → clean.
+
 ---
 
 ## Remaining — code (closable here)
