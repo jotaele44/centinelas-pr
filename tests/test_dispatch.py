@@ -2,7 +2,6 @@
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 
 import pytest
 
@@ -53,7 +52,7 @@ def test_dispatch_persists_record_when_not_dry_run(isolated_data_dir):
 def test_dispatch_persists_record_even_under_dry_run(isolated_data_dir):
     """dry_run must skip cross-repo intake/ writes but still persist local bookkeeping."""
     item = _make_item("dryrun001")
-    record = dispatch_module.dispatch(item, dry_run=True)
+    dispatch_module.dispatch(item, dry_run=True)
 
     path = isolated_data_dir / "dispatched" / "dryrun001.json"
     assert path.exists(), "dispatch record must persist locally even under dry_run"

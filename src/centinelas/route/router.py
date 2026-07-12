@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO, DomainLabel
+from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO
 from centinelas.models import ClassifiedItem
 
 # Targets that consume the pre-officialization finance/location enrichment.
