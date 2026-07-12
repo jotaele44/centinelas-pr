@@ -1,0 +1,19 @@
+# Skill activation / dependency model.
+#
+# Edges are "may hand off to". Invariants are hard gates the validator and
+# tests enforce. Every node must be a skill_id in skill-registry.yaml.
+#
+# Seed state: a single conformance skill, so the graph is a single root with no
+# edges yet. Centinelas's domain skills (ingest / classify / route / export)
+# add edges here as they land.
+
+schema_version: prii_dependency_graph_v1
+
+root: prii-check-producer-contract
+
+edges: {}
+
+invariants:
+  - id: contract-check-is-read-only
+    rule: "prii-check-producer-contract is read_only; it compares the local contract against the shared PRII contract and never mutates the manifest, export, or schemas"
+    applies_to: [prii-check-producer-contract]

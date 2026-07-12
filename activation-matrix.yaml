@@ -1,0 +1,28 @@
+# Activation matrix — which skill (or route) a prompt should select.
+#
+# Consumed by scripts/validate_skills.py (activation check) and
+# tests/skill_contract/. Each case names the expected route:
+#   - a skill_id in the registry, OR
+#   - "route_to_moneysweep" (officialized matters hand off to moneysweep-pr), OR
+#   - "route_to_hub" (cross-producer aggregation/correlation → thehub-pr), OR
+#   - "clarify" (ambiguous; operator must ask before routing).
+# Every expected skill must exist in skill-registry.yaml (validator-enforced).
+
+schema_version: prii_activation_matrix_v1
+
+positive:
+  - prompt: "does our signal export still match the Hub contract"
+    expect: prii-check-producer-contract
+
+negative:
+  - prompt: "correlate signals across all producers and the Hub"
+    expect: route_to_hub
+    reason: "cross-producer aggregation/correlation is Hub-owned (thehub-pr)"
+  - prompt: "this signal now has an official financial contract record"
+    expect: route_to_moneysweep
+    reason: "officialized financial/political matters hand off to moneysweep-pr"
+
+ambiguous:
+  - prompt: "fix the feeds"
+    expect: clarify
+    reason: "target unclear — intake config, classification, or routing"
