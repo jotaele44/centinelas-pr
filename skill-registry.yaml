@@ -1,0 +1,66 @@
+# PRII Skill Registry — centinelas-pr
+#
+# Machine-readable skill-to-command map. Each entry conforms to
+# prii_skill_contract_v1 (schemas/prii_skill_contract.schema.json) and is
+# validated by scripts/validate_skills.py (the shared, Hub-owned validator —
+# byte-identical across every federation repo).
+#
+# This is the shared-infrastructure seed: it ships the federation contract, the
+# validator, and one reusable conformance skill (prii-check-producer-contract).
+# Centinelas's domain skill set (ingest / classify / route / export) is added
+# later from its own blueprint; each new skill is one more entry here.
+#
+# Invariants the registry enforces:
+#   - command_ids resolve ONLY through federation.json#hub_callable_commands;
+#     non-hub-callable scripts go in local_scripts (path-checked).
+#   - Skills default to read_only / offline; live_network and promotion modes
+#     require explicit user authorization.
+#   - No skill silently crosses a repository ownership boundary (Hub
+#     aggregation/correlation stays out; officialized matters hand to moneysweep).
+
+schema_version: prii_skill_registry_v1
+owner_repo: jotaele44/centinelas-pr
+federation_role: pre_officialization_signal_producer
+
+# Per-repo configuration for the shared validator. Presence-enables optional
+# checks: export_contract runs (centinelas has a canonical export command);
+# coverage_report is omitted (no readiness-report artifact in this repo).
+packet_config:
+  owner_repo: jotaele44/centinelas-pr
+  boundary_owner: centinelas-pr
+  command_source: federation_json
+  command_source_ref: federation.json
+  command_key: hub_callable_commands
+  activation_routes: [route_to_moneysweep, route_to_hub, clarify]
+  export_contract:
+    command_id: export_canonical
+    required_paths: [scripts/federation_export.py]
+  contract_schema: schemas/prii_skill_contract.schema.json
+
+skills:
+  - schema_version: prii_skill_contract_v1
+    skill_id: prii-check-producer-contract
+    owner_repo: jotaele44/centinelas-pr
+    federation_role: pre_officialization_signal_producer
+    trigger_intents:
+      - "shared PRII manifest/export compatibility check against the Hub"
+    allowed_modes: [read_only]
+    default_mode: read_only
+    command_ids: []
+    local_scripts: []
+    reads:
+      - federation.json
+      - schemas/prii_skill_contract.schema.json
+    outputs:
+      - "manifest, commands, outputs, readiness, schema and boundary checks"
+    stop_conditions:
+      - "local contract diverges from the Hub contract"
+    evidence_requirements:
+      - "cite the manifest key and schema version that diverged"
+    boundary_owner: centinelas-pr
+    forbidden_operations:
+      - "asserting Hub-side compatibility without the Hub schema in hand"
+    synthetic_data_policy: reject_in_production
+    provenance_policy: required
+    confidence_policy: required_when_inferred
+    review_queue_policy: required_for_ambiguity
