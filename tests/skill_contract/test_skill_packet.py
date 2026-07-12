@@ -79,6 +79,34 @@ def test_activation_check_requires_a_matrix(tmp_path):
     assert data["ok"] is False and data["errors"]["activation"]
 
 
+def test_path_resolution_rejects_out_of_repo_paths(tmp_path):
+    # reads/local_scripts are repo-relative by contract; absolute or ../ paths
+    # must be rejected so a packet cannot authorize resources outside the repo.
+    reg = {
+        "schema_version": "prii_skill_registry_v1",
+        "skills": [{"skill_id": "x", "reads": ["/etc/hostname", "../outside.txt"]}],
+    }
+    (tmp_path / "skill-registry.yaml").write_text(yaml.safe_dump(reg), encoding="utf-8")
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/validate_skills.py",
+            "--root",
+            str(tmp_path),
+            "--check",
+            "path-resolution",
+            "--json",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    errors = json.loads(proc.stdout)["errors"]["path-resolution"]
+    assert any("not repo-relative" in e for e in errors), errors
+    assert any("escapes the repo root" in e for e in errors), errors
+
+
 def test_registry_validates_against_declared_schema():
     # The registry declares a schema; it must actually conform to it, including
     # the top-level packet_config block (the pure-Python validator does not
