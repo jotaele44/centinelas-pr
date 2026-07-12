@@ -69,6 +69,39 @@ def test_unclassified_returns_empty_list():
     assert labels == []
 
 
+def test_sec_substring_does_not_trigger_financial():
+    """Regression: 'sec' inside 'Second'/'secret'/'consecutive' must NOT match FINANCIAL.
+
+    The keyword tier matches on word boundaries, so the short finance token
+    'sec' fires only as a standalone word, never as a substring of an unrelated
+    word — otherwise health/science articles pollute the MoneySweep stream.
+    """
+    for text in (
+        "Second pregnancy changes the brain in surprising new ways",
+        "Alzheimer's tau protein has a surprising secret role in memory",
+        "Heavy marijuana smoking and secondhand marijuana smoke",
+        "USS Abraham Lincoln passes 200 consecutive days at sea",
+    ):
+        assert DomainLabel.FINANCIAL not in keyword_classify(text), text
+
+
+def test_standalone_short_finance_tokens_still_match():
+    """Genuine standalone finance tokens must still classify FINANCIAL."""
+    assert DomainLabel.FINANCIAL in keyword_classify("The SEC filed charges today")
+    assert DomainLabel.FINANCIAL in keyword_classify("Company announces IPO next week")
+
+
+def test_word_boundary_avoids_political_substring_collision():
+    """'war' must not match inside 'warehouse'/'toward'."""
+    assert DomainLabel.POLITICAL not in keyword_classify("Warehouse fire spreads toward downtown")
+
+
+def test_plural_keywords_still_match():
+    """Word-boundary matching tolerates a trailing plural 's' for genuine hits."""
+    assert DomainLabel.MILITARY_AEROSPACE in keyword_classify("Rockets and missiles launched")
+    assert DomainLabel.POLITICAL in keyword_classify("Elections and protests grip the nation")
+
+
 def test_item_id_is_deterministic():
     url = "https://example.com/article"
     dt = datetime(2026, 7, 1, tzinfo=timezone.utc)
