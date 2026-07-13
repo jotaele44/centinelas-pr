@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://centinelas.pr/schemas/open_web_discovery.schema.json",
+  "title": "Centinelas PR Open-Web Discovery Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidate", "policy", "relevance", "classification", "provenance"],
+  "properties": {
+    "candidate": {"$ref": "#/$defs/discoveryCandidate"},
+    "policy": {"$ref": "#/$defs/fetchPolicyDecision"},
+    "relevance": {"$ref": "#/$defs/relevanceAssessment"},
+    "classification": {"$ref": "#/$defs/contentClassification"},
+    "deduplication": {"$ref": "#/$defs/deduplicationAssessment"},
+    "provenance": {"$ref": "#/$defs/provenanceChain"},
+    "evidence": {"$ref": "#/$defs/evidenceAssessment"},
+    "coverage": {"$ref": "#/$defs/coverageAttribution"}
+  },
+  "$defs": {
+    "discoveryCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "provider_id", "discovered_at", "original_url", "canonical_url", "query_cell_id"],
+      "properties": {
+        "candidate_id": {"type": "string", "minLength": 1},
+        "provider_id": {"type": "string", "minLength": 1},
+        "provider_result_rank": {"type": ["integer", "null"], "minimum": 1},
+        "discovered_at": {"type": "string", "format": "date-time"},
+        "original_url": {"type": "string", "format": "uri"},
+        "canonical_url": {"type": "string", "format": "uri"},
+        "query_cell_id": {"type": "string", "minLength": 1},
+        "title": {"type": ["string", "null"]},
+        "snippet": {"type": ["string", "null"], "maxLength": 1000},
+        "published_at": {"type": ["string", "null"], "format": "date-time"},
+        "language": {"type": ["string", "null"], "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$"},
+        "media_type": {"type": ["string", "null"]},
+        "archive_snapshot_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "fetchPolicyDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "checked_at", "robots_status", "terms_status", "retention_mode"],
+      "properties": {
+        "decision": {"enum": ["allow", "metadata_only", "manual_review", "deny"]},
+        "checked_at": {"type": "string", "format": "date-time"},
+        "robots_status": {"enum": ["allowed", "disallowed", "not_applicable", "unknown", "unavailable"]},
+        "terms_status": {"enum": ["approved", "restricted", "unknown", "not_applicable"]},
+        "retention_mode": {"enum": ["metadata_only", "bounded_excerpt", "authorized_content", "none"]},
+        "crawl_delay_seconds": {"type": ["number", "null"], "minimum": 0},
+        "reason_codes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "policy_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "relevanceAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "band", "model_version", "signals", "municipalities"],
+      "properties": {
+        "score": {"type": "number", "minimum": 0, "maximum": 100},
+        "band": {"enum": ["rejected", "low_confidence_lead", "review", "pr_relevant", "high_pr_relevance"]},
+        "model_version": {"type": "string", "minLength": 1},
+        "signals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["family", "value", "weight"],
+            "properties": {
+              "family": {"enum": ["explicit_geography", "government_institution", "geospatial", "infrastructure", "semantic_context", "link_source_context", "negative"]},
+              "value": {"type": "string"},
+              "weight": {"type": "number"},
+              "evidence": {"type": ["string", "null"], "maxLength": 500}
+            }
+          }
+        },
+        "municipalities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "barrios": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "agencies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "infrastructure_assets": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "spatial_cell_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "contentClassification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["content_class", "confidence", "classifier_version"],
+      "properties": {
+        "content_class": {
+          "enum": ["official_notice", "agenda_or_calendar", "procurement_or_rfp", "public_hearing", "press_release", "news_reporting", "opinion_or_commentary", "advocacy_statement", "social_statement", "technical_report", "academic_report", "court_or_legal_record", "emergency_notice", "promotional_or_advertorial", "syndicated_wire", "spam_or_irrelevant", "unknown"]
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "classifier_version": {"type": "string", "minLength": 1},
+        "source_attribution": {"enum": ["original", "official_release", "syndicated", "republication", "unknown"]}
+      }
+    },
+    "deduplicationAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cluster_id", "relationship", "dedup_version"],
+      "properties": {
+        "cluster_id": {"type": "string", "minLength": 1},
+        "relationship": {"enum": ["unique", "exact_duplicate", "near_duplicate", "republication", "syndicated_copy", "same_event_distinct_reporting"]},
+        "parent_source_url": {"type": ["string", "null"], "format": "uri"},
+        "canonical_hash": {"type": ["string", "null"]},
+        "metadata_hash": {"type": ["string", "null"]},
+        "near_duplicate_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "dedup_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "provenanceChain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retrieved_at", "publisher_domain", "extractor_version", "events"],
+      "properties": {
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "publisher_domain": {"type": "string", "minLength": 1},
+        "http_status": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+        "etag": {"type": ["string", "null"]},
+        "last_modified": {"type": ["string", "null"]},
+        "extractor_version": {"type": "string", "minLength": 1},
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["event_type", "occurred_at", "actor"],
+            "properties": {
+              "event_type": {"enum": ["discovered", "policy_checked", "fetched", "extracted", "classified", "deduplicated", "reviewed", "corrected", "exported", "suppressed"]},
+              "occurred_at": {"type": "string", "format": "date-time"},
+              "actor": {"type": "string"},
+              "details": {"type": "object"}
+            }
+          }
+        }
+      }
+    },
+    "evidenceAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "verification_state", "single_source_only"],
+      "properties": {
+        "tier": {"enum": ["T1", "T2", "T3", "T4"]},
+        "verification_state": {"enum": ["unverified", "partially_corroborated", "corroborated", "officialized"]},
+        "single_source_only": {"type": "boolean"},
+        "tier_rationale": {"type": "string", "minLength": 1},
+        "independent_source_count": {"type": "integer", "minimum": 0},
+        "promotion_eligible": {"type": "boolean"}
+      }
+    },
+    "coverageAttribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["municipality_cells", "topic_cells", "source_family", "latency_seconds"],
+      "properties": {
+        "municipality_cells": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "topic_cells": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "source_family": {"type": "string"},
+        "latency_seconds": {"type": ["integer", "null"], "minimum": 0},
+        "provider_overlap_count": {"type": "integer", "minimum": 1},
+        "gold_set_item_id": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
