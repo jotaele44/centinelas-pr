@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, ShieldCheck, X } from "lucide-react";
+import { Menu, Moon, ShieldCheck, Sun, X } from "lucide-react";
+import { useTheme } from "@/lib/ThemeContext";
 
 const navItems = [
   { to: "/monitor", label: "Monitor" },
@@ -9,7 +10,6 @@ const navItems = [
   { to: "/sources", label: "Fuentes" },
   { to: "/pipeline", label: "Pipeline" },
   { to: "/handoff", label: "Handoff" },
-  { to: "/tabla", label: "Legislativo" },
 ];
 
 function NavItems({ onNavigate }) {
@@ -23,6 +23,22 @@ function NavItems({ onNavigate }) {
       {item.label}
     </NavLink>
   ));
+}
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      title={isDark ? "Modo claro" : "Modo oscuro"}
+    >
+      {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+    </button>
+  );
 }
 
 export default function Header() {
@@ -42,15 +58,18 @@ export default function Header() {
         <nav className="hidden items-center gap-6 md:flex" aria-label="Navegación principal">
           <NavItems />
         </nav>
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="inline-flex items-center justify-center rounded-lg border p-2 md:hidden"
-          aria-label={open ? "Cerrar navegación" : "Abrir navegación"}
-          aria-expanded={open}
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            className="inline-flex items-center justify-center rounded-lg border p-2 md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={open ? "Cerrar navegación" : "Abrir navegación"}
+            aria-expanded={open}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
       {open ? (
         <nav className="border-t bg-background px-4 py-4 md:hidden" aria-label="Navegación móvil">

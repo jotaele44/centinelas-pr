@@ -45,11 +45,11 @@ export default function Signals() {
       <div className="grid gap-3 md:grid-cols-[1fr_260px]">
         <label className="space-y-1 text-sm font-medium text-foreground">
           Buscar señales
-          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm" placeholder="agencia, municipio, RFP, vista, contrato…" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="agencia, municipio, RFP, vista, contrato…" />
         </label>
         <label className="space-y-1 text-sm font-medium text-foreground">
           Handoff
-          <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm">
+          <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <option value="all">Todos</option>
             <option value="watching">En observación</option>
             <option value="candidate">Candidato</option>

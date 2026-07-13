@@ -11,14 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const HUB_REPO = "thehub-pr";
 
 const dispatchTone = {
-  ok: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800",
-  failed: "border-red-600/30 bg-red-600/10 text-red-800",
-  skipped: "border-slate-500/30 bg-slate-500/10 text-slate-700",
+  ok: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300",
+  failed: "border-red-600/30 bg-red-600/10 text-red-800 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-300",
+  skipped: "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:border-slate-400/40 dark:bg-slate-400/15 dark:text-slate-300",
 };
 
 function DispatchChips({ dispatch }) {
   if (!dispatch) {
-    return <Badge variant="outline" className="border-slate-400/30 bg-slate-400/10 text-slate-600">not yet dispatched</Badge>;
+    return <Badge variant="outline" className="border-slate-400/30 bg-slate-400/10 text-slate-600 dark:border-slate-400/40 dark:bg-slate-400/15 dark:text-slate-300">not yet dispatched</Badge>;
   }
   const tone = dispatchTone[dispatch.status] || dispatchTone.skipped;
   return (
@@ -126,7 +126,7 @@ export default function Pipeline() {
         <button
           type="button"
           onClick={() => setDomain("")}
-          className={`rounded-full border px-3 py-1 text-sm transition-colors ${domain === "" ? "border-primary bg-primary/10 font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          className={`rounded-full border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${domain === "" ? "border-primary bg-primary/10 font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
         >
           All
         </button>
@@ -135,7 +135,7 @@ export default function Pipeline() {
             key={d}
             type="button"
             onClick={() => setDomain(d)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${domain === d ? "border-primary bg-primary/10 font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={`rounded-full border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${domain === d ? "border-primary bg-primary/10 font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             {DOMAIN_META[d].label}
           </button>

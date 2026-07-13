@@ -50,7 +50,7 @@ export default function Sources() {
       </div>
       <label className="block max-w-xl space-y-1 text-sm font-medium text-foreground">
         Buscar fuente
-        <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm" placeholder="legislatura, municipio, subasta, tribunal…" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="legislatura, municipio, subasta, tribunal…" />
       </label>
       <ListState
         loading={loading}
