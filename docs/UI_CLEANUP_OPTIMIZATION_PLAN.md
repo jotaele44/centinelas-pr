@@ -79,8 +79,11 @@ the primary list returns data**. React Query is configured but bypassed.
   filter state in `useState`, so a filtered view can't be shared or restored on
   reload. Sync them to search params (`react-router` `useSearchParams`, or the
   existing `lib/app-params.js`). Bonus: Pipeline currently **refetches from the
-  server on every domain click** — with URL state + React Query cache, most
-  domain switches become instant client-side reads.
+  server on every domain click** — caching each domain query under its own key
+  (`['pipeline-items', domain]`) makes repeat visits to an already-seen domain
+  instant, while still running each domain's filter server-side (see C2 for why
+  client-side filtering a single cached response is unsafe past the `/items`
+  limit).
 
 ---
 
@@ -128,8 +131,18 @@ the sharpest rough edges.
   reflects the new state instead of going stale.
 
 ### C2. Optimistic + guarded pipeline filtering · **S**
-- With A1/A3 in place, keep the full item set in cache and filter by domain
-  client-side; only hit the server when the cache is cold.
+- With A1/A3 in place, prefer serving domain switches from cache. **Caveat:** the
+  `/items` backend applies the `domain` filter *before* slicing to its `limit`
+  (default 500, `server/backend/main.py`), so a cached unfiltered `getItems({})`
+  only holds the newest 500 rows across *all* domains — client-side filtering it
+  would silently drop domain rows that fall outside that window once the
+  classified set exceeds the limit. Therefore, do **one** of:
+  (a) keep **per-domain** server queries, each cached under its own React Query
+  key (`['pipeline-items', domain]`), so each domain's filter runs server-side
+  before the limit; or
+  (b) only filter client-side after fetching the full set with a sufficiently
+  high `limit` (or paginating until exhausted). Default to (a) — it's simpler and
+  correct regardless of set size.
 
 ### C3. Global command palette (optional) · **M** · *defer-friendly*
 - `cmdk` is already a dependency and the `command` primitive exists. A ⌘K palette
