@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const labels = {
   not_ready: "No listo",
@@ -20,9 +21,10 @@ const classNames = {
 };
 
 export default function HandoffStatusBadge({ status = "watching" }) {
+  const { t } = useLanguage();
   return (
     <Badge variant="outline" className={classNames[status] || classNames.watching}>
-      {labels[status] || status}
+      {labels[status] ? t(labels[status]) : status}
     </Badge>
   );
 }

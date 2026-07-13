@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import SignalCard from "@/components/monitor/SignalCard";
 import ListState from "@/components/ListState";
 import { loadLifecycle } from "@/lib/appQuery";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Signals() {
+  const { t } = useLanguage();
   const [signals, setSignals] = useState([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
@@ -39,22 +41,22 @@ export default function Signals() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Bandeja de señales</h1>
-        <p className="mt-2 text-muted-foreground">Información que aparece antes de oficializarse como contrato, ley, pago, permiso, auditoría o expediente.</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("Bandeja de señales")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("Información que aparece antes de oficializarse como contrato, ley, pago, permiso, auditoría o expediente.")}</p>
       </div>
       <div className="grid gap-3 md:grid-cols-[1fr_260px]">
         <label className="space-y-1 text-sm font-medium text-foreground">
-          Buscar señales
-          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="agencia, municipio, RFP, vista, contrato…" />
+          {t("Buscar señales")}
+          <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder={t("agencia, municipio, RFP, vista, contrato…")} />
         </label>
         <label className="space-y-1 text-sm font-medium text-foreground">
-          Handoff
+          {t("Handoff")}
           <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <option value="all">Todos</option>
-            <option value="watching">En observación</option>
-            <option value="candidate">Candidato</option>
-            <option value="ready_for_moneysweep">Listo para MoneySweep</option>
-            <option value="matched_to_moneysweep">Vinculado</option>
+            <option value="all">{t("Todos")}</option>
+            <option value="watching">{t("En observación")}</option>
+            <option value="candidate">{t("Candidato")}</option>
+            <option value="ready_for_moneysweep">{t("Listo para MoneySweep")}</option>
+            <option value="matched_to_moneysweep">{t("Vinculado")}</option>
           </select>
         </label>
       </div>

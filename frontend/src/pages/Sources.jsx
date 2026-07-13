@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ListState from "@/components/ListState";
 import { loadLifecycle } from "@/lib/appQuery";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const seedSources = [
   { name: "Senado de Puerto Rico", source_type: "legislature", coverage_tier: "P0", status: "manual", beat_tags: ["legislature", "hearings", "votes"] },
@@ -14,6 +15,7 @@ const seedSources = [
 ];
 
 export default function Sources() {
+  const { t } = useLanguage();
   const [sources, setSources] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -45,12 +47,12 @@ export default function Sources() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Registro de fuentes</h1>
-        <p className="mt-2 text-muted-foreground">Cobertura upstream: fuentes que anuncian, agendan, notifican o anticipan asuntos antes de oficializarse.</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("Registro de fuentes")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("Cobertura upstream: fuentes que anuncian, agendan, notifican o anticipan asuntos antes de oficializarse.")}</p>
       </div>
       <label className="block max-w-xl space-y-1 text-sm font-medium text-foreground">
-        Buscar fuente
-        <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="legislatura, municipio, subasta, tribunal…" />
+        {t("Buscar fuente")}
+        <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder={t("legislatura, municipio, subasta, tribunal…")} />
       </label>
       <ListState
         loading={loading}
@@ -69,9 +71,9 @@ export default function Sources() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>{source.source_type || "sin tipo"}</p>
-              <p>Estado: <span className="font-medium text-foreground">{source.status || "unknown"}</span></p>
-              <p>Último éxito: {source.last_success_at || "pendiente"}</p>
+              <p>{source.source_type || t("sin tipo")}</p>
+              <p>{t("Estado:")} <span className="font-medium text-foreground">{source.status || "unknown"}</span></p>
+              <p>{t("Último éxito:")} {source.last_success_at || t("pendiente")}</p>
               <div className="flex flex-wrap gap-2">
                 {(source.beat_tags || []).map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>)}
               </div>

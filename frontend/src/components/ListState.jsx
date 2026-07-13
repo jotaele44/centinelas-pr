@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/lib/LanguageContext";
 
 /**
  * Shared async-list state wrapper for the lifecycle pages.
@@ -21,10 +22,12 @@ export default function ListState({
   skeletonCount = 3,
   children,
 }) {
+  const { t } = useLanguage();
+
   if (loading) {
     return (
       <div className="space-y-3" role="status" aria-live="polite" aria-busy="true">
-        <span className="sr-only">{loadingLabel}</span>
+        <span className="sr-only">{t(loadingLabel)}</span>
         {Array.from({ length: skeletonCount }).map((_, index) => (
           <Skeleton key={index} className="h-24 w-full rounded-xl" />
         ))}
@@ -35,13 +38,13 @@ export default function ListState({
   if (error) {
     return (
       <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-foreground">
-        {errorMessage}
+        {t(errorMessage)}
       </p>
     );
   }
 
   if (empty) {
-    return <p className="rounded-xl border p-6 text-muted-foreground">{emptyMessage}</p>;
+    return <p className="rounded-xl border p-6 text-muted-foreground">{t(emptyMessage)}</p>;
   }
 
   return children;

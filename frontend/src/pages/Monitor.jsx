@@ -6,8 +6,10 @@ import SignalCard from "@/components/monitor/SignalCard";
 import ListState from "@/components/ListState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadLifecycle } from "@/lib/appQuery";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Monitor() {
+  const { t } = useLanguage();
   const [signals, setSignals] = useState([]);
   const [matters, setMatters] = useState([]);
   const [sources, setSources] = useState([]);
@@ -48,29 +50,29 @@ export default function Monitor() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Centinelas</p>
-            <h1 className="mt-1 text-3xl font-bold text-foreground">Monitor temprano de información pública de Puerto Rico</h1>
+            <h1 className="mt-1 text-3xl font-bold text-foreground">{t("Monitor temprano de información pública de Puerto Rico")}</h1>
             <p className="mt-3 max-w-3xl text-muted-foreground">
-              Captura señales antes de que se conviertan en ley, contrato, permiso, pago, auditoría o expediente oficial. MoneySweep cataloga el registro oficial posterior.
+              {t("Captura señales antes de que se conviertan en ley, contrato, permiso, pago, auditoría o expediente oficial. MoneySweep cataloga el registro oficial posterior.")}
             </p>
           </div>
           <Link to="/handoff" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-            Ver handoff <ArrowRight className="h-4 w-4" />
+            {t("Ver handoff")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label="Señales capturadas" value={loading ? "…" : signals.length} detail="Upstream: anuncios, agendas, RFP, vistas, avisos." />
-        <MetricCard label="Asuntos públicos" value={loading ? "…" : matters.length} detail="Objetos compartidos con MoneySweep." />
-        <MetricCard label="Listos para MoneySweep" value={loading ? "…" : stats.ready} detail="Oficialización detectada o candidata." />
-        <MetricCard label="Fuentes con brecha" value={loading ? "…" : stats.staleSources} detail="Manual, rota o atrasada." />
+        <MetricCard label={t("Señales capturadas")} value={loading ? "…" : signals.length} detail={t("Upstream: anuncios, agendas, RFP, vistas, avisos.")} />
+        <MetricCard label={t("Asuntos públicos")} value={loading ? "…" : matters.length} detail={t("Objetos compartidos con MoneySweep.")} />
+        <MetricCard label={t("Listos para MoneySweep")} value={loading ? "…" : stats.ready} detail={t("Oficialización detectada o candidata.")} />
+        <MetricCard label={t("Fuentes con brecha")} value={loading ? "…" : stats.staleSources} detail={t("Manual, rota o atrasada.")} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Bandeja de señales</h2>
-            <Link to="/signals" className="text-sm text-primary hover:underline">Ver todas</Link>
+            <h2 className="text-xl font-semibold text-foreground">{t("Bandeja de señales")}</h2>
+            <Link to="/signals" className="text-sm text-primary hover:underline">{t("Ver todas")}</Link>
           </div>
           <ListState
             loading={loading}

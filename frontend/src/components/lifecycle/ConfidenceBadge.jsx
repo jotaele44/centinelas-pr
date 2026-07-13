@@ -1,6 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { getConfidenceBand } from "@/lib/lifecycle";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const toneClass = {
   strong: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300",
@@ -12,10 +13,11 @@ const toneClass = {
 };
 
 export default function ConfidenceBadge({ score }) {
+  const { t } = useLanguage();
   const band = getConfidenceBand(score);
   return (
-    <Badge variant="outline" className={toneClass[band.tone]} title={band.description}>
-      {score ?? 0}% · {band.label}
+    <Badge variant="outline" className={toneClass[band.tone]} title={t(band.description)}>
+      {score ?? 0}% · {t(band.label)}
     </Badge>
   );
 }
