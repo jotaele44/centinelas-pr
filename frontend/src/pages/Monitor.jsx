@@ -1,21 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { appClient } from "@/api/appClient";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight, Database, Newspaper, RadioTower } from "lucide-react";
 import MetricCard from "@/components/monitor/MetricCard";
 import SignalCard from "@/components/monitor/SignalCard";
+import ListState from "@/components/ListState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-captured_at", limit = 100) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import { loadLifecycle } from "@/lib/appQuery";
 
 export default function Monitor() {
   const [signals, setSignals] = useState([]);
@@ -23,25 +13,20 @@ export default function Monitor() {
   const [sources, setSources] = useState([]);
   const [handoffs, setHandoffs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadMonitor() {
-      const [signalRows, matterRows, sourceRows, handoffRows, legacyLaws] = await Promise.all([
-        safeList("Signal", "-captured_at", 100),
-        safeList("Matter", "-first_seen_at", 100),
-        safeList("Source", "name", 200),
-        safeList("HandoffCandidate", "-created_date", 50),
-        safeList("Law", "-last_action_date", 50),
-      ]);
+      const { signals: signalRows, matters: matterRows, sources: sourceRows, handoffs: handoffRows, error: loadError } =
+        await loadLifecycle({ signals: true, matters: true, sources: true, handoffs: true });
 
       if (!active) return;
-      const derivedSignals = signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal);
-      const derivedMatters = matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter);
-      setSignals(derivedSignals);
-      setMatters(derivedMatters);
+      setSignals(signalRows);
+      setMatters(matterRows);
       setSources(sourceRows);
       setHandoffs(handoffRows);
+      setError(loadError);
       setLoading(false);
     }
     loadMonitor();
@@ -87,13 +72,15 @@ export default function Monitor() {
             <h2 className="text-xl font-semibold text-foreground">Bandeja de señales</h2>
             <Link to="/signals" className="text-sm text-primary hover:underline">Ver todas</Link>
           </div>
-          {loading ? (
-            <p className="rounded-xl border p-6 text-muted-foreground">Cargando señales…</p>
-          ) : signals.length === 0 ? (
-            <p className="rounded-xl border p-6 text-muted-foreground">No hay señales todavía. Registra fuentes o importa items para iniciar cobertura.</p>
-          ) : (
-            signals.slice(0, 8).map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)
-          )}
+          <ListState
+            loading={loading}
+            error={error}
+            empty={signals.length === 0}
+            loadingLabel="Cargando señales…"
+            emptyMessage="No hay señales todavía. Registra fuentes o importa items para iniciar cobertura."
+          >
+            {signals.slice(0, 8).map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)}
+          </ListState>
         </div>
 
         <div className="space-y-4">

@@ -1,33 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { appClient } from "@/api/appClient";
 import SignalCard from "@/components/monitor/SignalCard";
-import { mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-captured_at", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import ListState from "@/components/ListState";
+import { loadLifecycle } from "@/lib/appQuery";
 
 export default function Signals() {
   const [signals, setSignals] = useState([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadSignals() {
-      const [signalRows, legacyLaws] = await Promise.all([
-        safeList("Signal", "-captured_at", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
+      const { signals: rows, error: loadError } = await loadLifecycle({ signals: true });
       if (!active) return;
-      setSignals(signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal));
+      setSignals(rows);
+      setError(loadError);
       setLoading(false);
     }
     loadSignals();
@@ -70,9 +59,15 @@ export default function Signals() {
         </label>
       </div>
       <div className="space-y-4">
-        {loading ? <p className="rounded-xl border p-6 text-muted-foreground">Cargando señales…</p> : null}
-        {!loading && filtered.length === 0 ? <p className="rounded-xl border p-6 text-muted-foreground">No hay señales con esos criterios.</p> : null}
-        {filtered.map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)}
+        <ListState
+          loading={loading}
+          error={error}
+          empty={filtered.length === 0}
+          loadingLabel="Cargando señales…"
+          emptyMessage="No hay señales con esos criterios."
+        >
+          {filtered.map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)}
+        </ListState>
       </div>
     </div>
   );

@@ -1,17 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { appClient } from "@/api/appClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-async function safeList(entityName, sort = "name", limit = 300) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import ListState from "@/components/ListState";
+import { loadLifecycle } from "@/lib/appQuery";
 
 const seedSources = [
   { name: "Senado de Puerto Rico", source_type: "legislature", coverage_tier: "P0", status: "manual", beat_tags: ["legislature", "hearings", "votes"] },
@@ -26,13 +17,15 @@ export default function Sources() {
   const [sources, setSources] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadSources() {
-      const rows = await safeList("Source", "name", 300);
+      const { sources: rows, error: loadError } = await loadLifecycle({ sources: true });
       if (!active) return;
       setSources(rows.length > 0 ? rows : seedSources);
+      setError(loadError);
       setLoading(false);
     }
     loadSources();
@@ -59,7 +52,13 @@ export default function Sources() {
         Buscar fuente
         <input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm" placeholder="legislatura, municipio, subasta, tribunal…" />
       </label>
-      {loading ? <p className="rounded-xl border p-6 text-muted-foreground">Cargando fuentes…</p> : null}
+      <ListState
+        loading={loading}
+        error={error}
+        empty={filtered.length === 0}
+        loadingLabel="Cargando fuentes…"
+        emptyMessage="No hay fuentes con esos criterios."
+      >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((source) => (
           <Card key={source.id || source.name}>
@@ -80,6 +79,7 @@ export default function Sources() {
           </Card>
         ))}
       </div>
+      </ListState>
     </div>
   );
 }

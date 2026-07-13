@@ -1,34 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { appClient } from "@/api/appClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
 import HandoffStatusBadge from "@/components/lifecycle/HandoffStatusBadge";
-import { getLifecycleStage, isReadyForMoneySweep, mapLegacyLawToMatter } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-first_seen_at", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import ListState from "@/components/ListState";
+import { getLifecycleStage, isReadyForMoneySweep } from "@/lib/lifecycle";
+import { loadLifecycle } from "@/lib/appQuery";
 
 export default function Matters() {
   const [matters, setMatters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadMatters() {
-      const [matterRows, legacyLaws] = await Promise.all([
-        safeList("Matter", "-first_seen_at", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
+      const { matters: rows, error: loadError } = await loadLifecycle({ matters: true });
       if (!active) return;
-      setMatters(matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter));
+      setMatters(rows);
+      setError(loadError);
       setLoading(false);
     }
     loadMatters();
@@ -45,7 +35,13 @@ export default function Matters() {
         <h1 className="text-3xl font-bold text-foreground">Asuntos públicos</h1>
         <p className="mt-2 text-muted-foreground">Objeto compartido entre Centinelas y MoneySweep. Une la señal temprana con el registro oficial posterior.</p>
       </div>
-      {loading ? <p className="rounded-xl border p-6 text-muted-foreground">Cargando asuntos…</p> : null}
+      <ListState
+        loading={loading}
+        error={error}
+        empty={sorted.length === 0}
+        loadingLabel="Cargando asuntos…"
+        emptyMessage="No hay asuntos todavía. Registra señales o importa items para iniciar cobertura."
+      >
       <div className="grid gap-4">
         {sorted.map((matter) => {
           const stage = getLifecycleStage(matter.status_lifecycle);
@@ -77,6 +73,7 @@ export default function Matters() {
           );
         })}
       </div>
+      </ListState>
     </div>
   );
 }

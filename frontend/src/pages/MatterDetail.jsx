@@ -1,22 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { appClient } from "@/api/appClient";
 import MatterTimeline from "@/components/lifecycle/MatterTimeline";
 import SignalCard from "@/components/monitor/SignalCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
 import HandoffStatusBadge from "@/components/lifecycle/HandoffStatusBadge";
-import { isReadyForMoneySweep, mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-created_date", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import { isReadyForMoneySweep } from "@/lib/lifecycle";
+import { loadLifecycle } from "@/lib/appQuery";
 
 export default function MatterDetail() {
   const { id } = useParams();
@@ -25,22 +15,18 @@ export default function MatterDetail() {
   const [signals, setSignals] = useState([]);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadMatter() {
-      const [matterRows, signalRows, recordRows, legacyLaws] = await Promise.all([
-        safeList("Matter", "-first_seen_at", 200),
-        safeList("Signal", "-captured_at", 200),
-        safeList("OfficialRecord", "-effective_date", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
+      const { matters: matterRows, signals: signalRows, records: recordRows, error: loadError } =
+        await loadLifecycle({ matters: true, signals: true, records: true });
       if (!active) return;
-      const fallbackMatters = matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter);
-      const fallbackSignals = signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal);
-      setMatters(fallbackMatters);
-      setSignals(fallbackSignals);
+      setMatters(matterRows);
+      setSignals(signalRows);
       setRecords(recordRows);
+      setError(loadError);
       setLoading(false);
     }
     loadMatter();
@@ -54,7 +40,11 @@ export default function MatterDetail() {
   const linkedRecords = useMemo(() => records.filter((record) => record.matter_id === matterKey || record.matter_id === matter?.matter_id), [matter?.matter_id, matterKey, records]);
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto px-4 py-8"><p className="rounded-xl border p-6 text-muted-foreground">Cargando asunto…</p></div>;
+    return <div className="max-w-7xl mx-auto px-4 py-8"><p role="status" aria-live="polite" className="rounded-xl border p-6 text-muted-foreground">Cargando asunto…</p></div>;
+  }
+
+  if (error) {
+    return <div className="max-w-7xl mx-auto px-4 py-8"><p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-foreground">No se pudo cargar el asunto. Revisa la conexión con el almacén de datos e inténtalo de nuevo.</p></div>;
   }
 
   if (!matter) {

@@ -4,35 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import HandoffStatusBadge from "@/components/lifecycle/HandoffStatusBadge";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
-import { HANDOFF_TRIGGERS, isReadyForMoneySweep, mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-created_date", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import ListState from "@/components/ListState";
+import { HANDOFF_TRIGGERS, isReadyForMoneySweep } from "@/lib/lifecycle";
+import { loadLifecycle } from "@/lib/appQuery";
 
 export default function Handoff() {
   const [matters, setMatters] = useState([]);
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [actionState, setActionState] = useState({});
 
   useEffect(() => {
     let active = true;
     async function loadHandoff() {
-      const [matterRows, signalRows, legacyLaws] = await Promise.all([
-        safeList("Matter", "-first_seen_at", 200),
-        safeList("Signal", "-captured_at", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
+      const { matters: matterRows, signals: signalRows, error: loadError } =
+        await loadLifecycle({ matters: true, signals: true });
       if (!active) return;
-      setMatters(matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter));
-      setSignals(signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal));
+      setMatters(matterRows);
+      setSignals(signalRows);
+      setError(loadError);
       setLoading(false);
     }
     loadHandoff();
@@ -93,8 +84,13 @@ export default function Handoff() {
           {HANDOFF_TRIGGERS.map((trigger) => <span key={trigger} className="rounded-full border px-3 py-1">{trigger}</span>)}
         </CardContent>
       </Card>
-      {loading ? <p className="rounded-xl border p-6 text-muted-foreground">Evaluando candidatos…</p> : null}
-      {!loading && candidates.length === 0 ? <p className="rounded-xl border p-6 text-muted-foreground">No hay candidatos listos. Esto es correcto si aún no existe identificador oficial, contrato, ley, pago, permiso, auditoría o docket.</p> : null}
+      <ListState
+        loading={loading}
+        error={error}
+        empty={candidates.length === 0}
+        loadingLabel="Evaluando candidatos…"
+        emptyMessage="No hay candidatos listos. Esto es correcto si aún no existe identificador oficial, contrato, ley, pago, permiso, auditoría o docket."
+      >
       <div className="grid gap-4">
         {candidates.map(({ matter, signals: linkedSignals }) => (
           <Card key={matter.matter_id || matter.id}>
@@ -128,6 +124,7 @@ export default function Handoff() {
           </Card>
         ))}
       </div>
+      </ListState>
     </div>
   );
 }
