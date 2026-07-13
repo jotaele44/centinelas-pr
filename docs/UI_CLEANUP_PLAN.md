@@ -168,11 +168,17 @@ work is mechanical and low-risk, and most of it shrinks the codebase.
 ### P1 — Dependency & primitive diet
 
 **Findings**
-- **Unused heavy dependencies** (Base44-template residue): `@stripe/*` (2),
-  `three`, `react-leaflet`, `jspdf`, `html2canvas`, `canvas-confetti`,
-  `embla-carousel-react`, `input-otp`, `@hello-pangea/dnd`. Also **redundant**
+- **Unused heavy dependencies** (Base44-template residue), verified 0-import in
+  `frontend/src`: `@stripe/*` (2), `three`, `react-leaflet`, `jspdf`,
+  `html2canvas`, `canvas-confetti`, `@hello-pangea/dnd`. Also **redundant**
   libraries: `moment` (use the already-present `date-fns`), and **three** toast
   systems (`react-hot-toast`, `sonner`, `@radix-ui/react-toast`) — pick one.
+- **Do NOT remove without first retiring the consuming UI** (these are *not*
+  unused): `input-otp` backs `components/ui/input-otp`, which the **live
+  `/register` route** imports (`pages/Register.jsx:8`); `embla-carousel-react`
+  backs `components/ui/carousel` and can only be dropped **together with** that
+  primitive (same coupling as `react-day-picker`/`calendar` ↔ the dead
+  `LawCalendar`). Prune the primitive first, then the package.
 - **~33 of 49 `components/ui` primitives** are never imported.
 - **5 dead `components/laws` components** and (pending the P0 decision) up to 4
   more once legacy pages are retired.
