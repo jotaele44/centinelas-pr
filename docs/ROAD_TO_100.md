@@ -35,6 +35,31 @@ These are implemented, tested, and exercised against real data — not stubs.
   classification, routing, dispatch, CLI, federation export/contract-compat, and
   the desktop/API server.
 
+### Live-run record
+
+Concrete evidence the `poll_all → classify → dispatch` path runs end-to-end
+against the live RSS registry, keyword tier only (no `ANTHROPIC_API_KEY`; the
+LLM tier fell back to keyword rules for every item, as designed):
+
+- **2026-07-12** — `python scripts/build_signal_ledger.py` + `centinelas.cli run
+  --dry-run` over the live feeds: **254 ingested / 254 classified / 114 routed
+  (ok) / 140 gated** (sub-threshold `UNCLASSIFIED`). The refreshed real-signal
+  snapshot (`is_synthetic: false`, captured at run time) is committed at
+  `data/signals/live_signals.jsonl` — 254 rows,
+  beats `{military_aerospace: 58, political: 21, environmental: 14, geo_geology: 10,
+  financial: 7, anomalous: 4, unclassified: 140}`.
+  This snapshot uses the word-boundary keyword classifier (see below), so it no
+  longer carries the substring-collision false positives (`sec` in "Second",
+  `epa` in "repair", `war` in "toward") that inflated the earlier counts.
+  Verifier: `pytest -k "classif or rout or dispatch or run"` → 45 passed /
+  2 skipped; `ruff check .` → clean.
+  - **Classifier precision fix** — the keyword tier now matches on WORD
+    BOUNDARIES (`\bsec\b`, trailing-plural tolerant) instead of naive substring
+    containment, so short finance tokens no longer misfire inside unrelated
+    words. Regression tests in `tests/test_classifier.py` assert `sec`-in-"Second"
+    (and peers) do not classify FINANCIAL while standalone tokens and plurals
+    still do (`src/centinelas/classify/rules.py`).
+
 ---
 
 ## Remaining — code (closable here)

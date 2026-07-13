@@ -1,8 +1,14 @@
 """Keyword pre-filter — fast path that skips LLM calls for obvious domain hits."""
 
+import re
+
 from centinelas.classify.labels import DomainLabel
 
-# Each entry is (keywords, label). Keywords are lowercased substrings.
+# Each entry is (keywords, label). Keywords are lowercased and matched on WORD
+# BOUNDARIES (not naive substring containment), so a short token like "sec"
+# matches the standalone word "sec"/"SEC" but not the substring inside
+# "Second", "secret", or "consecutive". A single trailing "s" is tolerated so
+# genuine plurals ("rockets", "missiles", "elections") still match.
 # First match wins per label (a title can match multiple labels).
 _RULES: list[tuple[list[str], DomainLabel]] = [
     (
@@ -47,15 +53,31 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
 ]
 
 
+def _compile(keyword: str) -> re.Pattern[str]:
+    r"""Word-boundary matcher for a keyword, tolerating a single trailing plural "s".
+
+    Using ``\b...\b`` prevents substring collisions (e.g. "sec" in "Second",
+    "war" in "warehouse") while a trailing ``s?`` keeps genuine plurals matching
+    ("rocket" -> "rockets"). ``re.escape`` keeps multi-word phrases literal.
+    """
+    return re.compile(rf"\b{re.escape(keyword)}s?\b")
+
+
+# Precompile once: [(patterns, label), ...] mirroring _RULES order.
+_COMPILED_RULES: list[tuple[list[re.Pattern[str]], DomainLabel]] = [
+    ([_compile(kw) for kw in keywords], label) for keywords, label in _RULES
+]
+
+
 def keyword_classify(text: str) -> list[DomainLabel]:
     """Return matched labels from keyword rules. May return multiple labels."""
     lower = text.lower()
     matched: list[DomainLabel] = []
     seen: set[DomainLabel] = set()
-    for keywords, label in _RULES:
+    for patterns, label in _COMPILED_RULES:
         if label in seen:
             continue
-        if any(kw in lower for kw in keywords):
+        if any(pat.search(lower) for pat in patterns):
             matched.append(label)
             seen.add(label)
     return matched
