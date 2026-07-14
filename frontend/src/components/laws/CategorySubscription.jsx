@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { appClient } from "@/api/appClient";
 import { Bell, BellOff } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const CATEGORIES = [
   "educación", "salud", "transporte", "seguridad pública", "gobierno municipal",
@@ -9,6 +10,7 @@ const CATEGORIES = [
 ];
 
 export default function CategorySubscription({ userEmail, userName }) {
+  const { t } = useLanguage();
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,14 +53,14 @@ export default function CategorySubscription({ userEmail, userName }) {
   return (
     <div className="bg-card rounded-xl border border-border p-5">
       <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
-        <Bell className="w-5 h-5" />
-        Categorías que sigues
+        <Bell className="w-5 h-5" aria-hidden="true" />
+        {t("Categorías que sigues")}
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Recibe un correo electrónico cuando se publique una ley en las categorías que te interesan
+        {t("Recibe un correo electrónico cuando se publique una ley en las categorías que te interesan")}
       </p>
       {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando...</p>
+        <p className="text-sm text-muted-foreground">{t("Cargando…")}</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((cat) => {
@@ -73,8 +75,8 @@ export default function CategorySubscription({ userEmail, userName }) {
                     : "bg-background text-foreground border-border hover:border-primary/50"
                 }`}
               >
-                {subscribed ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
-                {cat}
+                {subscribed ? <Bell className="w-3.5 h-3.5" aria-hidden="true" /> : <BellOff className="w-3.5 h-3.5" aria-hidden="true" />}
+                {t(cat)}
               </button>
             );
           })}

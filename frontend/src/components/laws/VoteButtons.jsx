@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { appClient } from "@/api/appClient";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function VoteButtons({ law, onVoteChange }) {
+  const { t } = useLanguage();
   const [userVote, setUserVote] = useState(null);
   const [loading, setLoading] = useState(false);
   const [votesPro, setVotesPro] = useState(law.votes_pro || 0);
@@ -97,8 +99,8 @@ export default function VoteButtons({ law, onVoteChange }) {
         disabled={loading}
         className="flex-1 h-12"
       >
-        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
-        A favor · {votesPro}
+        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ThumbsUp className="w-4 h-4 mr-2" aria-hidden="true" />}
+        {t("A favor")} · {votesPro}
       </Button>
       <Button
         variant={userVote?.vote_type === "against" ? "destructive" : "outline"}
@@ -106,8 +108,8 @@ export default function VoteButtons({ law, onVoteChange }) {
         disabled={loading}
         className="flex-1 h-12"
       >
-        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ThumbsDown className="w-4 h-4 mr-2" />}
-        En contra · {votesAgainst}
+        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ThumbsDown className="w-4 h-4 mr-2" aria-hidden="true" />}
+        {t("En contra")} · {votesAgainst}
       </Button>
     </div>
   );

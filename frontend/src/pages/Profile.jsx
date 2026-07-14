@@ -3,8 +3,10 @@ import { appClient } from "@/api/appClient";
 import { Link } from "react-router-dom";
 import CategorySubscription from "@/components/laws/CategorySubscription";
 import { ThumbsUp, ThumbsDown, MessageCircle, User } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Profile() {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [comments, setComments] = useState([]);
   const [votes, setVotes] = useState([]);
@@ -46,7 +48,7 @@ export default function Profile() {
   };
 
   if (loading) {
-    return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">Cargando...</div>;
+    return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">{t("Cargando…")}</div>;
   }
   if (!user) return null;
 
@@ -70,12 +72,12 @@ export default function Profile() {
       {/* Votes */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <ThumbsUp className="w-5 h-5" />
-          Mis votos ({votes.length})
+          <ThumbsUp className="w-5 h-5" aria-hidden="true" />
+          {t("Mis votos")} ({votes.length})
         </h2>
         <div className="space-y-2">
           {votes.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aún no has votado por ninguna ley.</p>
+            <p className="text-muted-foreground text-sm">{t("Aún no has votado por ninguna ley.")}</p>
           ) : (
             votes.map((v) => {
               const law = laws[v.law_id];
@@ -90,7 +92,7 @@ export default function Profile() {
                     <ThumbsDown className="w-4 h-4 text-red-500 shrink-0" />
                   )}
                   <span className="text-sm font-medium shrink-0">
-                    {v.vote_type === "pro" ? "A favor" : "En contra"}
+                    {v.vote_type === "pro" ? t("A favor") : t("En contra")}
                   </span>
                   {law ? (
                     <Link
@@ -100,7 +102,7 @@ export default function Profile() {
                       {law.bill_number} — {law.title}
                     </Link>
                   ) : (
-                    <span className="text-sm text-muted-foreground flex-1">Ley no disponible</span>
+                    <span className="text-sm text-muted-foreground flex-1">{t("Ley no disponible")}</span>
                   )}
                   <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(v.created_date).toLocaleDateString("es-PR")}
@@ -115,12 +117,12 @@ export default function Profile() {
       {/* Comments */}
       <div>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <MessageCircle className="w-5 h-5" />
-          Mis comentarios ({comments.length})
+          <MessageCircle className="w-5 h-5" aria-hidden="true" />
+          {t("Mis comentarios")} ({comments.length})
         </h2>
         <div className="space-y-2">
           {comments.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aún no has comentado ninguna ley.</p>
+            <p className="text-muted-foreground text-sm">{t("Aún no has comentado ninguna ley.")}</p>
           ) : (
             comments.map((c) => {
               const law = laws[c.law_id];
@@ -135,7 +137,7 @@ export default function Profile() {
                         {law.bill_number} — {law.title}
                       </Link>
                     ) : (
-                      <span className="text-sm text-muted-foreground">Ley no disponible</span>
+                      <span className="text-sm text-muted-foreground">{t("Ley no disponible")}</span>
                     )}
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
                       {new Date(c.created_date).toLocaleDateString("es-PR")}

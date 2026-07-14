@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { appClient } from "@/api/appClient";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Authors() {
+  const { t } = useLanguage();
   const [authors, setAuthors] = useState([]);
   const [laws, setLaws] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,16 +34,16 @@ export default function Authors() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Legisladores y autores</h1>
+      <h1 className="text-3xl font-bold mb-2">{t("Legisladores y autores")}</h1>
       <p className="text-muted-foreground mb-6">
-        Conoce a los legisladores y los proyectos que han presentado
+        {t("Conoce a los legisladores y los proyectos que han presentado")}
       </p>
 
       {loading ? (
-        <p className="text-center text-muted-foreground py-12">Cargando...</p>
+        <p className="text-center text-muted-foreground py-12">{t("Cargando…")}</p>
       ) : authors.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">
-          No hay legisladores registrados.
+          {t("No hay legisladores registrados.")}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -66,7 +68,7 @@ export default function Authors() {
                 <div>
                   <h3 className="font-semibold text-foreground">{author.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {author.party || "Independiente"}
+                    {author.party || t("Independiente")}
                   </p>
                 </div>
               </div>
@@ -76,7 +78,7 @@ export default function Authors() {
                   {author.district ? ` · ${author.district}` : ""}
                 </span>
                 <span className="font-medium text-primary">
-                  {getLawCount(author.id)} proyectos
+                  {getLawCount(author.id)} {t("proyectos")}
                 </span>
               </div>
             </Link>

@@ -5,8 +5,10 @@ import { ArrowLeft, Calendar, Users, Building2, Tag } from "lucide-react";
 import VoteButtons from "@/components/laws/VoteButtons";
 import CommentSection from "@/components/laws/CommentSection";
 import LawTimeline from "@/components/laws/LawTimeline";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function LawDetail() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const [law, setLaw] = useState(null);
   const [authors, setAuthors] = useState([]);
@@ -32,17 +34,17 @@ export default function LawDetail() {
   };
 
   if (loading) {
-    return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">Cargando...</div>;
+    return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">{t("Cargando…")}</div>;
   }
   if (!law) {
-    return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">Ley no encontrada.</div>;
+    return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">{t("Ley no encontrada.")}</div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="w-4 h-4" />
-        Volver al catálogo
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+        {t("Volver al catálogo")}
       </Link>
 
       {/* Header badges */}
@@ -60,18 +62,18 @@ export default function LawDetail() {
             {law.category}
           </span>
         )}
-        {law.tags?.map((t) => (
+        {law.tags?.map((tag) => (
           <span
-            key={t}
+            key={tag}
             className={`text-sm px-3 py-1 rounded-full font-medium ${
-              t === "urgente"
-                ? "bg-red-100 text-red-700"
-                : t === "en revisión"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-green-100 text-green-700"
+              tag === "urgente"
+                ? "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                : tag === "en revisión"
+                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300"
+                : "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300"
             }`}
           >
-            {t}
+            {tag}
           </span>
         ))}
       </div>
@@ -82,14 +84,14 @@ export default function LawDetail() {
       <div className="flex gap-6 text-sm text-muted-foreground mb-6 flex-wrap">
         {law.submission_date && (
           <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            Presentada: {new Date(law.submission_date).toLocaleDateString("es-PR")}
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+            {t("Presentada:")} {new Date(law.submission_date).toLocaleDateString("es-PR")}
           </span>
         )}
         {law.last_action_date && (
           <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            Última acción: {new Date(law.last_action_date).toLocaleDateString("es-PR")}
+            <Calendar className="w-4 h-4" aria-hidden="true" />
+            {t("Última acción:")} {new Date(law.last_action_date).toLocaleDateString("es-PR")}
           </span>
         )}
       </div>
@@ -102,7 +104,7 @@ export default function LawDetail() {
       {/* Description */}
       {law.description && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Descripción</h2>
+          <h2 className="text-lg font-semibold mb-2">{t("Descripción")}</h2>
           <p className="text-foreground whitespace-pre-wrap leading-relaxed">{law.description}</p>
         </div>
       )}
@@ -110,15 +112,15 @@ export default function LawDetail() {
       {/* Pros and Contras */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         {law.pros && (
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-            <h3 className="font-semibold text-green-800 mb-2">Pros</h3>
-            <p className="text-sm text-green-900 whitespace-pre-wrap leading-relaxed">{law.pros}</p>
+          <div className="bg-green-50 dark:bg-green-500/10 rounded-lg p-4 border border-green-200 dark:border-green-500/30">
+            <h3 className="font-semibold text-green-800 dark:text-green-300 mb-2">{t("Pros")}</h3>
+            <p className="text-sm text-green-900 dark:text-green-200 whitespace-pre-wrap leading-relaxed">{law.pros}</p>
           </div>
         )}
         {law.contras && (
-          <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-            <h3 className="font-semibold text-red-800 mb-2">Contras</h3>
-            <p className="text-sm text-red-900 whitespace-pre-wrap leading-relaxed">{law.contras}</p>
+          <div className="bg-red-50 dark:bg-red-500/10 rounded-lg p-4 border border-red-200 dark:border-red-500/30">
+            <h3 className="font-semibold text-red-800 dark:text-red-300 mb-2">{t("Contras")}</h3>
+            <p className="text-sm text-red-900 dark:text-red-200 whitespace-pre-wrap leading-relaxed">{law.contras}</p>
           </div>
         )}
       </div>
@@ -129,8 +131,8 @@ export default function LawDetail() {
           {law.officials?.length > 0 && (
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Oficiales públicos relacionados
+                <Users className="w-4 h-4" aria-hidden="true" />
+                {t("Oficiales públicos relacionados")}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {law.officials.map((o, i) => (
@@ -142,8 +144,8 @@ export default function LawDetail() {
           {law.lobbyists?.length > 0 && (
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Personas y organizaciones influyentes
+                <Building2 className="w-4 h-4" aria-hidden="true" />
+                {t("Personas y organizaciones influyentes")}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {law.lobbyists.map((l, i) => (
@@ -159,8 +161,8 @@ export default function LawDetail() {
       {authors.length > 0 && (
         <div className="mb-8">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Legisladores autores
+            <Users className="w-4 h-4" aria-hidden="true" />
+            {t("Legisladores autores")}
           </h3>
           <div className="flex flex-wrap gap-3">
             {authors.map((a) => (
@@ -178,7 +180,7 @@ export default function LawDetail() {
                 )}
                 <div>
                   <p className="text-sm font-medium text-foreground">{a.name}</p>
-                  <p className="text-xs text-muted-foreground">{a.party || "Independiente"}</p>
+                  <p className="text-xs text-muted-foreground">{a.party || t("Independiente")}</p>
                 </div>
               </Link>
             ))}

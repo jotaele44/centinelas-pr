@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { appClient } from "@/api/appClient";
 import { Link, useParams } from "react-router-dom";
 import { Users, ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function AuthorDetail() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const [author, setAuthor] = useState(null);
   const [laws, setLaws] = useState([]);
@@ -29,14 +31,14 @@ export default function AuthorDetail() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">
-        Cargando...
+        {t("Cargando…")}
       </div>
     );
   }
   if (!author) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center text-muted-foreground">
-        Legislador no encontrado.
+        {t("Legislador no encontrado.")}
       </div>
     );
   }
@@ -47,7 +49,7 @@ export default function AuthorDetail() {
         to="/autores"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
       >
-        <ArrowLeft className="w-4 h-4" /> Volver a legisladores
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" /> {t("Volver a legisladores")}
       </Link>
 
       <div className="flex items-center gap-4 mb-6">
@@ -64,7 +66,7 @@ export default function AuthorDetail() {
         )}
         <div>
           <h1 className="text-3xl font-bold">{author.name}</h1>
-          <p className="text-muted-foreground">{author.party || "Independiente"}</p>
+          <p className="text-muted-foreground">{author.party || t("Independiente")}</p>
           <p className="text-sm text-muted-foreground">
             {author.chamber || "N/A"}
             {author.district ? ` · ${author.district}` : ""}
@@ -79,11 +81,11 @@ export default function AuthorDetail() {
       )}
 
       <h2 className="text-xl font-semibold mb-4">
-        Proyectos presentados ({laws.length})
+        {t("Proyectos presentados")} ({laws.length})
       </h2>
       {laws.length === 0 ? (
         <p className="text-muted-foreground">
-          Este legislador no tiene proyectos registrados.
+          {t("Este legislador no tiene proyectos registrados.")}
         </p>
       ) : (
         <div className="space-y-3">

@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Login() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +24,7 @@ export default function Login() {
       await appClient.auth.loginViaEmailPassword(email, password);
       window.location.href = "/";
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || t("Correo o contraseña inválidos"));
     } finally {
       setLoading(false);
     }
@@ -35,13 +37,13 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title={t("Bienvenido de nuevo")}
+      subtitle={t("Inicia sesión en tu cuenta")}
       footer={
         <>
-          Don't have an account?{" "}
+          {t("¿No tienes una cuenta?")}{" "}
           <Link to="/register" className="text-primary font-medium hover:underline">
-            Create one
+            {t("Crea una")}
           </Link>
         </>
       }
@@ -52,7 +54,7 @@ export default function Login() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        {t("Continuar con Google")}
       </Button>
 
       <div className="relative mb-6">
@@ -60,7 +62,7 @@ export default function Login() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">{t("o")}</span>
         </div>
       </div>
 
@@ -72,7 +74,7 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("Correo electrónico")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -90,9 +92,9 @@ export default function Login() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("Contraseña")}</Label>
             <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
+              {t("¿Olvidaste tu contraseña?")}
             </Link>
           </div>
           <div className="relative">
@@ -113,10 +115,10 @@ export default function Login() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
+              {t("Iniciando sesión…")}
             </>
           ) : (
-            "Log in"
+            t("Iniciar sesión")
           )}
         </Button>
       </form>
