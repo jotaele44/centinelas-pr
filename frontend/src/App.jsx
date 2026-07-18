@@ -4,6 +4,8 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { ThemeProvider } from '@/lib/ThemeContext';
+import { LanguageProvider } from '@/lib/LanguageContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -19,11 +21,9 @@ import Handoff from './pages/Handoff';
 import Pipeline from './pages/Pipeline';
 import PipelineItemDetail from './pages/PipelineItemDetail';
 import Layout from './components/Layout';
-import LawDetail from './pages/LawDetail';
-import LawTable from './pages/LawTable';
-import Profile from './pages/Profile';
-import Authors from './pages/Authors';
-import AuthorDetail from './pages/AuthorDetail';
+import SignalsTable from './pages/SignalsTable';
+import Entities from './pages/Entities';
+import EntityDetail from './pages/EntityDetail';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -60,12 +60,12 @@ const AuthenticatedApp = () => {
         <Route path="/pipeline" element={<Pipeline />} />
         <Route path="/pipeline/:itemId" element={<PipelineItemDetail />} />
 
-        {/* Legacy legislative routes retained as backward-compatible MoneySweep/LegislativeMeasure bridge. */}
-        <Route path="/ley/:id" element={<LawDetail />} />
-        <Route path="/tabla" element={<LawTable />} />
-        <Route path="/perfil" element={<Profile />} />
-        <Route path="/autores" element={<Authors />} />
-        <Route path="/autor/:id" element={<AuthorDetail />} />
+        {/* Signal-centric views converted from the legacy legislative surface. */}
+        <Route path="/tabla" element={<SignalsTable />} />
+        <Route path="/entidades" element={<Entities />} />
+        <Route path="/entidad/:slug" element={<EntityDetail />} />
+        {/* Back-compat: old legislator routes now resolve to the entity list. */}
+        <Route path="/autores" element={<Navigate to="/entidades" replace />} />
 
         {/* Normalized auth routes. */}
         <Route path="/login" element={<Login />} />
@@ -84,14 +84,18 @@ const AuthenticatedApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <QueryClientProvider client={queryClientInstance}>
+            <Router>
+              <AuthenticatedApp />
+            </Router>
+            <Toaster />
+          </QueryClientProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   )
 }
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const labels = {
   not_ready: "No listo",
@@ -11,18 +12,19 @@ const labels = {
 };
 
 const classNames = {
-  ready_for_moneysweep: "border-purple-600/30 bg-purple-600/10 text-purple-800",
-  matched_to_moneysweep: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800",
-  candidate: "border-blue-600/30 bg-blue-600/10 text-blue-800",
-  watching: "border-amber-600/30 bg-amber-600/10 text-amber-800",
-  archived: "border-slate-600/30 bg-slate-600/10 text-slate-800",
-  not_ready: "border-slate-600/30 bg-slate-600/10 text-slate-800",
+  ready_for_moneysweep: "border-purple-600/30 bg-purple-600/10 text-purple-800 dark:border-purple-500/40 dark:bg-purple-500/15 dark:text-purple-300",
+  matched_to_moneysweep: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300",
+  candidate: "border-blue-600/30 bg-blue-600/10 text-blue-800 dark:border-blue-500/40 dark:bg-blue-500/15 dark:text-blue-300",
+  watching: "border-amber-600/30 bg-amber-600/10 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300",
+  archived: "border-slate-600/30 bg-slate-600/10 text-slate-800 dark:border-slate-400/40 dark:bg-slate-400/15 dark:text-slate-300",
+  not_ready: "border-slate-600/30 bg-slate-600/10 text-slate-800 dark:border-slate-400/40 dark:bg-slate-400/15 dark:text-slate-300",
 };
 
 export default function HandoffStatusBadge({ status = "watching" }) {
+  const { t } = useLanguage();
   return (
     <Badge variant="outline" className={classNames[status] || classNames.watching}>
-      {labels[status] || status}
+      {labels[status] ? t(labels[status]) : status}
     </Badge>
   );
 }

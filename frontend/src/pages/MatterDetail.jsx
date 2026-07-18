@@ -1,46 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { appClient } from "@/api/appClient";
 import MatterTimeline from "@/components/lifecycle/MatterTimeline";
 import SignalCard from "@/components/monitor/SignalCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
 import HandoffStatusBadge from "@/components/lifecycle/HandoffStatusBadge";
-import { isReadyForMoneySweep, mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-created_date", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import { isReadyForMoneySweep } from "@/lib/lifecycle";
+import { loadLifecycle } from "@/lib/appQuery";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function MatterDetail() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const matterKey = decodeURIComponent(id || "");
   const [matters, setMatters] = useState([]);
   const [signals, setSignals] = useState([]);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadMatter() {
-      const [matterRows, signalRows, recordRows, legacyLaws] = await Promise.all([
-        safeList("Matter", "-first_seen_at", 200),
-        safeList("Signal", "-captured_at", 200),
-        safeList("OfficialRecord", "-effective_date", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
+      const { matters: matterRows, signals: signalRows, records: recordRows, error: loadError } =
+        await loadLifecycle({ matters: true, signals: true, records: true });
       if (!active) return;
-      const fallbackMatters = matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter);
-      const fallbackSignals = signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal);
-      setMatters(fallbackMatters);
-      setSignals(fallbackSignals);
+      setMatters(matterRows);
+      setSignals(signalRows);
       setRecords(recordRows);
+      setError(loadError);
       setLoading(false);
     }
     loadMatter();
@@ -54,11 +42,15 @@ export default function MatterDetail() {
   const linkedRecords = useMemo(() => records.filter((record) => record.matter_id === matterKey || record.matter_id === matter?.matter_id), [matter?.matter_id, matterKey, records]);
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto px-4 py-8"><p className="rounded-xl border p-6 text-muted-foreground">Cargando asunto…</p></div>;
+    return <div className="max-w-7xl mx-auto px-4 py-8"><p role="status" aria-live="polite" className="rounded-xl border p-6 text-muted-foreground">{t("Cargando asunto…")}</p></div>;
+  }
+
+  if (error) {
+    return <div className="max-w-7xl mx-auto px-4 py-8"><p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-foreground">{t("No se pudo cargar el asunto. Revisa la conexión con el almacén de datos e inténtalo de nuevo.")}</p></div>;
   }
 
   if (!matter) {
-    return <div className="max-w-7xl mx-auto px-4 py-8"><p className="rounded-xl border p-6 text-muted-foreground">Asunto no encontrado.</p></div>;
+    return <div className="max-w-7xl mx-auto px-4 py-8"><p className="rounded-xl border p-6 text-muted-foreground">{t("Asunto no encontrado.")}</p></div>;
   }
 
   const handoffStatus = isReadyForMoneySweep(matter, linkedSignals) ? "ready_for_moneysweep" : "watching";
@@ -83,23 +75,23 @@ export default function MatterDetail() {
 
       <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Señales Centinelas</h2>
-          {linkedSignals.length === 0 ? <p className="rounded-xl border p-6 text-muted-foreground">No hay señales vinculadas.</p> : null}
+          <h2 className="text-xl font-semibold text-foreground">{t("Señales Centinelas")}</h2>
+          {linkedSignals.length === 0 ? <p className="rounded-xl border p-6 text-muted-foreground">{t("No hay señales vinculadas.")}</p> : null}
           {linkedSignals.map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)}
         </div>
         <div className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Panel MoneySweep</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t("Panel MoneySweep")}</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Registros oficiales vinculados: {linkedRecords.length}</p>
-              <p>Identificador oficial: {matter.official_identifier || "pendiente"}</p>
-              <p>URL oficial: {matter.official_source_url ? "capturada" : "pendiente"}</p>
+              <p>{t("Registros oficiales vinculados:")} {linkedRecords.length}</p>
+              <p>{t("Identificador oficial:")} {matter.official_identifier || t("pendiente")}</p>
+              <p>{t("URL oficial:")} {matter.official_source_url ? t("capturada") : t("pendiente")}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-base">Regla de lenguaje</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t("Regla de lenguaje")}</CardTitle></CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Mientras no exista registro oficial, describir como anunciado, propuesto, programado, bajo consideración o pendiente de oficialización.
+              {t("Mientras no exista registro oficial, describir como anunciado, propuesto, programado, bajo consideración o pendiente de oficialización.")}
             </CardContent>
           </Card>
         </div>

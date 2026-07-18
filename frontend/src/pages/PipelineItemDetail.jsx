@@ -11,9 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const HUB_REPO = "thehub-pr";
 
 const statusTone = {
-  ok: "text-emerald-700",
-  failed: "text-red-700",
-  skipped: "text-slate-600",
+  ok: "text-emerald-700 dark:text-emerald-300",
+  failed: "text-red-700 dark:text-red-300",
+  skipped: "text-slate-600 dark:text-slate-300",
 };
 
 function formatDate(value) {

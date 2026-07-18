@@ -10,34 +10,6 @@ const matterId = createMatterId({
 });
 
 export const seedData = {
-  Author: [
-    {
-      id: "author-demo-001",
-      name: "Comisión de Gobierno",
-      party: "N/A",
-      chamber: "Referencia institucional",
-      district: "Puerto Rico",
-      photo_url: "",
-      created_date: now,
-    },
-  ],
-  Law: [
-    {
-      id: "law-demo-001",
-      bill_number: "P. C. DEMO-001",
-      title: "Medida demostrativa para monitoreo pre-oficial",
-      description: "Entrada heredada usada como fallback para validar la migración Law → Signal/Matter.",
-      category: "government",
-      type: "Proyecto",
-      status: "Radicada",
-      submission_date: "2026-06-20",
-      last_action_date: "2026-06-27",
-      author_ids: ["author-demo-001"],
-      votes_pro: 0,
-      votes_against: 0,
-      created_date: now,
-    },
-  ],
   Matter: [
     {
       id: "matter-demo-001",
@@ -188,9 +160,6 @@ export const seedData = {
   Municipality: [
     { id: "mun-san-juan", name: "San Juan", region: "Metro", created_date: now },
   ],
-  Comment: [],
-  Vote: [],
-  Subscription: [],
   User: [
     {
       id: "local-admin",

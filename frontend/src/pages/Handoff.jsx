@@ -4,35 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import HandoffStatusBadge from "@/components/lifecycle/HandoffStatusBadge";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
-import { HANDOFF_TRIGGERS, isReadyForMoneySweep, mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-created_date", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import ListState from "@/components/ListState";
+import { HANDOFF_TRIGGERS, isReadyForMoneySweep } from "@/lib/lifecycle";
+import { loadLifecycle } from "@/lib/appQuery";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Handoff() {
+  const { t } = useLanguage();
   const [matters, setMatters] = useState([]);
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [actionState, setActionState] = useState({});
 
   useEffect(() => {
     let active = true;
     async function loadHandoff() {
-      const [matterRows, signalRows, legacyLaws] = await Promise.all([
-        safeList("Matter", "-first_seen_at", 200),
-        safeList("Signal", "-captured_at", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
+      const { matters: matterRows, signals: signalRows, error: loadError } =
+        await loadLifecycle({ matters: true, signals: true });
       if (!active) return;
-      setMatters(matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter));
-      setSignals(signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal));
+      setMatters(matterRows);
+      setSignals(signalRows);
+      setError(loadError);
       setLoading(false);
     }
     loadHandoff();
@@ -84,17 +77,22 @@ export default function Handoff() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Handoff hacia MoneySweep</h1>
-        <p className="mt-2 text-muted-foreground">Asuntos donde Centinelas detectó señal de oficialización y debe crearse o vincularse un registro canónico posterior.</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("Handoff hacia MoneySweep")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("Asuntos donde Centinelas detectó señal de oficialización y debe crearse o vincularse un registro canónico posterior.")}</p>
       </div>
       <Card>
-        <CardHeader><CardTitle className="text-base">Disparadores aceptados</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("Disparadores aceptados")}</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-2 text-sm text-muted-foreground">
           {HANDOFF_TRIGGERS.map((trigger) => <span key={trigger} className="rounded-full border px-3 py-1">{trigger}</span>)}
         </CardContent>
       </Card>
-      {loading ? <p className="rounded-xl border p-6 text-muted-foreground">Evaluando candidatos…</p> : null}
-      {!loading && candidates.length === 0 ? <p className="rounded-xl border p-6 text-muted-foreground">No hay candidatos listos. Esto es correcto si aún no existe identificador oficial, contrato, ley, pago, permiso, auditoría o docket.</p> : null}
+      <ListState
+        loading={loading}
+        error={error}
+        empty={candidates.length === 0}
+        loadingLabel="Evaluando candidatos…"
+        emptyMessage="No hay candidatos listos. Esto es correcto si aún no existe identificador oficial, contrato, ley, pago, permiso, auditoría o docket."
+      >
       <div className="grid gap-4">
         {candidates.map(({ matter, signals: linkedSignals }) => (
           <Card key={matter.matter_id || matter.id}>
@@ -112,14 +110,14 @@ export default function Handoff() {
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <div className="grid gap-3 md:grid-cols-3">
-                <div><span className="font-medium text-foreground">Tipo:</span> {matter.matter_type}</div>
-                <div><span className="font-medium text-foreground">Señales:</span> {linkedSignals.length}</div>
-                <div><span className="font-medium text-foreground">Oficial:</span> {matter.official_identifier || matter.official_source_url || "requiere vinculación"}</div>
+                <div><span className="font-medium text-foreground">{t("Tipo:")}</span> {matter.matter_type}</div>
+                <div><span className="font-medium text-foreground">{t("Señales:")}</span> {linkedSignals.length}</div>
+                <div><span className="font-medium text-foreground">{t("Oficial:")}</span> {matter.official_identifier || matter.official_source_url || t("requiere vinculación")}</div>
               </div>
               <div className="flex flex-wrap gap-2 border-t pt-4">
-                <Button type="button" variant="outline" size="sm" onClick={() => runHandoffAction("evaluate", matter, linkedSignals)}>Evaluar</Button>
-                <Button type="button" size="sm" onClick={() => runHandoffAction("accept", matter, linkedSignals)}>Aceptar / crear registro</Button>
-                <Button type="button" variant="destructive" size="sm" onClick={() => runHandoffAction("reject", matter, linkedSignals)}>Rechazar</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => runHandoffAction("evaluate", matter, linkedSignals)}>{t("Evaluar")}</Button>
+                <Button type="button" size="sm" onClick={() => runHandoffAction("accept", matter, linkedSignals)}>{t("Aceptar / crear registro")}</Button>
+                <Button type="button" variant="destructive" size="sm" onClick={() => runHandoffAction("reject", matter, linkedSignals)}>{t("Rechazar")}</Button>
                 {actionState[matter.matter_id || matter.id] && (
                   <span className="self-center text-xs text-muted-foreground">{actionState[matter.matter_id || matter.id]}</span>
                 )}
@@ -128,6 +126,7 @@ export default function Handoff() {
           </Card>
         ))}
       </div>
+      </ListState>
     </div>
   );
 }

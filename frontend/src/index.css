@@ -1,33 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Neutral surface palette with red reserved for alert / urgency / primary CTA.
+ * Previously every token hue was red (0deg), so the whole app read as an alarm
+ * state. Fonts are a system stack (no render-blocking external @import).
+ */
 @layer base {
   :root {
-    --accent: 0 95.6% 92%;
-    --accent-foreground: 217 23% 22.9%;
-    --background: 0 97.5% 98%;
-    --border: 0 80% 88%;
-    --card: 0 85.5% 97.3%;
-    --card-foreground: 217 23% 22.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 97.5% 98%;
-    --font-body: 'Montserrat', system-ui, sans-serif;
-    --font-heading: 'Bebas Neue', system-ui, sans-serif;
-    --foreground: 217 23% 22.9%;
-    --input: 0 80% 88%;
-    --muted: 0 85.5% 97.3%;
-    --muted-foreground: 217 10% 50%;
-    --popover: 0 97.5% 98%;
-    --popover-foreground: 217 23% 22.9%;
+    --background: 210 20% 99%;
+    --foreground: 222 24% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 24% 16%;
+    --muted: 210 16% 95.5%;
+    --muted-foreground: 215 16% 42%;
+    --border: 214 20% 89%;
+    --input: 214 20% 89%;
+    --secondary: 210 16% 94%;
+    --secondary-foreground: 222 22% 22%;
+    --accent: 210 16% 94%;
+    --accent-foreground: 222 22% 22%;
+
+    /* Red stays the brand / primary / urgency signal. */
     --primary: 0 68.5% 49.8%;
-    --primary-foreground: 0 97.5% 98%;
-    --radius: 0.75rem;
+    --primary-foreground: 0 0% 100%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
     --ring: 0 68.5% 49.8%;
-    --secondary: 0 95.6% 92%;
-    --secondary-foreground: 217 23% 22.9%;
+
+    --radius: 0.75rem;
+
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-heading: var(--font-body);
+  }
+
+  .dark {
+    --background: 222 24% 11%;
+    --foreground: 210 20% 96%;
+    --card: 222 22% 14%;
+    --card-foreground: 210 20% 96%;
+    --popover: 222 22% 14%;
+    --popover-foreground: 210 20% 96%;
+    --muted: 217 18% 20%;
+    --muted-foreground: 215 16% 65%;
+    --border: 217 18% 24%;
+    --input: 217 18% 24%;
+    --secondary: 217 18% 22%;
+    --secondary-foreground: 210 20% 96%;
+    --accent: 217 18% 22%;
+    --accent-foreground: 210 20% 96%;
+
+    --primary: 0 72% 58%;
+    --primary-foreground: 0 0% 100%;
+    --destructive: 0 62% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 0 72% 58%;
   }
 }
 
@@ -37,33 +67,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
   }
-}
 
-body { font-family: var(--font-body) !important; }
-h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading) !important; letter-spacing: 0.03em; }
-
-@layer base {
-  .dark {
-    --background: 217 23% 22.9%;
-    --foreground: 0 97.5% 98%;
-    --card: 217 23% 28%;
-    --card-foreground: 0 97.5% 98%;
-    --popover: 217 23% 28%;
-    --popover-foreground: 0 97.5% 98%;
-    --primary: 0 68.5% 49.8%;
-    --primary-foreground: 0 97.5% 98%;
-    --secondary: 217 15% 35%;
-    --secondary-foreground: 0 97.5% 98%;
-    --muted: 217 15% 35%;
-    --muted-foreground: 0 85.5% 80%;
-    --accent: 0 68.5% 49.8%;
-    --accent-foreground: 0 97.5% 98%;
-    --destructive: 0 62.8% 40%;
-    --destructive-foreground: 0 97.5% 98%;
-    --border: 217 15% 35%;
-    --input: 217 15% 35%;
-    --ring: 0 68.5% 49.8%;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
   }
 }

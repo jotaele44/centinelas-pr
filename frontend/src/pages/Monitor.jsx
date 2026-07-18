@@ -1,47 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { appClient } from "@/api/appClient";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight, Database, Newspaper, RadioTower } from "lucide-react";
 import MetricCard from "@/components/monitor/MetricCard";
 import SignalCard from "@/components/monitor/SignalCard";
+import ListState from "@/components/ListState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
-
-async function safeList(entityName, sort = "-captured_at", limit = 100) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
-}
+import { loadLifecycle } from "@/lib/appQuery";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Monitor() {
+  const { t } = useLanguage();
   const [signals, setSignals] = useState([]);
   const [matters, setMatters] = useState([]);
   const [sources, setSources] = useState([]);
   const [handoffs, setHandoffs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     async function loadMonitor() {
-      const [signalRows, matterRows, sourceRows, handoffRows, legacyLaws] = await Promise.all([
-        safeList("Signal", "-captured_at", 100),
-        safeList("Matter", "-first_seen_at", 100),
-        safeList("Source", "name", 200),
-        safeList("HandoffCandidate", "-created_date", 50),
-        safeList("Law", "-last_action_date", 50),
-      ]);
+      const { signals: signalRows, matters: matterRows, sources: sourceRows, handoffs: handoffRows, error: loadError } =
+        await loadLifecycle({ signals: true, matters: true, sources: true, handoffs: true });
 
       if (!active) return;
-      const derivedSignals = signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal);
-      const derivedMatters = matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter);
-      setSignals(derivedSignals);
-      setMatters(derivedMatters);
+      setSignals(signalRows);
+      setMatters(matterRows);
       setSources(sourceRows);
       setHandoffs(handoffRows);
+      setError(loadError);
       setLoading(false);
     }
     loadMonitor();
@@ -63,37 +50,39 @@ export default function Monitor() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Centinelas</p>
-            <h1 className="mt-1 text-3xl font-bold text-foreground">Monitor temprano de información pública de Puerto Rico</h1>
+            <h1 className="mt-1 text-3xl font-bold text-foreground">{t("Monitor temprano de información pública de Puerto Rico")}</h1>
             <p className="mt-3 max-w-3xl text-muted-foreground">
-              Captura señales antes de que se conviertan en ley, contrato, permiso, pago, auditoría o expediente oficial. MoneySweep cataloga el registro oficial posterior.
+              {t("Captura señales antes de que se conviertan en ley, contrato, permiso, pago, auditoría o expediente oficial. MoneySweep cataloga el registro oficial posterior.")}
             </p>
           </div>
           <Link to="/handoff" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-            Ver handoff <ArrowRight className="h-4 w-4" />
+            {t("Ver handoff")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label="Señales capturadas" value={loading ? "…" : signals.length} detail="Upstream: anuncios, agendas, RFP, vistas, avisos." />
-        <MetricCard label="Asuntos públicos" value={loading ? "…" : matters.length} detail="Objetos compartidos con MoneySweep." />
-        <MetricCard label="Listos para MoneySweep" value={loading ? "…" : stats.ready} detail="Oficialización detectada o candidata." />
-        <MetricCard label="Fuentes con brecha" value={loading ? "…" : stats.staleSources} detail="Manual, rota o atrasada." />
+        <MetricCard label={t("Señales capturadas")} value={loading ? "…" : signals.length} detail={t("Upstream: anuncios, agendas, RFP, vistas, avisos.")} />
+        <MetricCard label={t("Asuntos públicos")} value={loading ? "…" : matters.length} detail={t("Objetos compartidos con MoneySweep.")} />
+        <MetricCard label={t("Listos para MoneySweep")} value={loading ? "…" : stats.ready} detail={t("Oficialización detectada o candidata.")} />
+        <MetricCard label={t("Fuentes con brecha")} value={loading ? "…" : stats.staleSources} detail={t("Manual, rota o atrasada.")} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Bandeja de señales</h2>
-            <Link to="/signals" className="text-sm text-primary hover:underline">Ver todas</Link>
+            <h2 className="text-xl font-semibold text-foreground">{t("Bandeja de señales")}</h2>
+            <Link to="/signals" className="text-sm text-primary hover:underline">{t("Ver todas")}</Link>
           </div>
-          {loading ? (
-            <p className="rounded-xl border p-6 text-muted-foreground">Cargando señales…</p>
-          ) : signals.length === 0 ? (
-            <p className="rounded-xl border p-6 text-muted-foreground">No hay señales todavía. Registra fuentes o importa items para iniciar cobertura.</p>
-          ) : (
-            signals.slice(0, 8).map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)
-          )}
+          <ListState
+            loading={loading}
+            error={error}
+            empty={signals.length === 0}
+            loadingLabel="Cargando señales…"
+            emptyMessage="No hay señales todavía. Registra fuentes o importa items para iniciar cobertura."
+          >
+            {signals.slice(0, 8).map((signal) => <SignalCard key={signal.signal_id || signal.id} signal={signal} />)}
+          </ListState>
         </div>
 
         <div className="space-y-4">
