@@ -8,6 +8,7 @@ const navItems = [
   { to: "/monitor", label: "Monitor" },
   { to: "/signals", label: "Señales" },
   { to: "/matters", label: "Asuntos" },
+  { to: "/entidades", label: "Entidades" },
   { to: "/sources", label: "Fuentes" },
   { to: "/pipeline", label: "Pipeline" },
   { to: "/handoff", label: "Handoff" },

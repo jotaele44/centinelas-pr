@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import SignalCard from "@/components/monitor/SignalCard";
 import ListState from "@/components/ListState";
 import { loadLifecycle } from "@/lib/appQuery";
@@ -40,9 +41,12 @@ export default function Signals() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">{t("Bandeja de señales")}</h1>
-        <p className="mt-2 text-muted-foreground">{t("Información que aparece antes de oficializarse como contrato, ley, pago, permiso, auditoría o expediente.")}</p>
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{t("Bandeja de señales")}</h1>
+          <p className="mt-2 text-muted-foreground">{t("Información que aparece antes de oficializarse como contrato, ley, pago, permiso, auditoría o expediente.")}</p>
+        </div>
+        <Link to="/tabla" className="text-sm text-primary hover:underline whitespace-nowrap">{t("Ver como tabla")}</Link>
       </div>
       <div className="grid gap-3 md:grid-cols-[1fr_260px]">
         <label className="space-y-1 text-sm font-medium text-foreground">

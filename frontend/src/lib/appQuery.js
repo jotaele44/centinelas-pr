@@ -1,5 +1,5 @@
 import { appClient } from "@/api/appClient";
-import { mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
+import { slugify } from "@/lib/lifecycle";
 
 /**
  * List one appClient entity.
@@ -23,13 +23,10 @@ const EMPTY = Promise.resolve({ rows: [], error: null });
 
 /**
  * Shared loader for the localStorage "lifecycle" pages (Monitor, Signals,
- * Matters, MatterDetail, Handoff). Fetches only the slices a caller asks for,
- * fetches the legacy `Law` entity a single time when a Signal/Matter fallback
- * may be needed, and reports the first error encountered (`null` if all
- * succeeded).
+ * Matters, MatterDetail, Handoff). Fetches only the slices a caller asks for and
+ * reports the first error encountered (`null` if all succeeded).
  *
- * Centralizes the `safeList` + legacy-`Law` fallback that was copy-pasted
- * across six pages.
+ * Centralizes the `safeList` calls that were copy-pasted across six pages.
  */
 export async function loadLifecycle({
   signals = false,
@@ -38,28 +35,69 @@ export async function loadLifecycle({
   sources = false,
   handoffs = false,
 } = {}) {
-  const needLaw = signals || matters;
-  const [signalRes, matterRes, recordRes, sourceRes, handoffRes, lawRes] = await Promise.all([
+  const [signalRes, matterRes, recordRes, sourceRes, handoffRes] = await Promise.all([
     signals ? safeList("Signal", "-captured_at", 200) : EMPTY,
     matters ? safeList("Matter", "-first_seen_at", 200) : EMPTY,
     records ? safeList("OfficialRecord", "-effective_date", 200) : EMPTY,
     sources ? safeList("Source", "name", 300) : EMPTY,
     handoffs ? safeList("HandoffCandidate", "-created_date", 50) : EMPTY,
-    needLaw ? safeList("Law", "-last_action_date", 100) : EMPTY,
   ]);
 
-  const legacyLaws = lawRes.rows;
   const error =
-    [signalRes, matterRes, recordRes, sourceRes, handoffRes, lawRes]
+    [signalRes, matterRes, recordRes, sourceRes, handoffRes]
       .map((result) => result.error)
       .find(Boolean) || null;
 
   return {
-    signals: signals ? (signalRes.rows.length > 0 ? signalRes.rows : legacyLaws.map(mapLegacyLawToSignal)) : [],
-    matters: matters ? (matterRes.rows.length > 0 ? matterRes.rows : legacyLaws.map(mapLegacyLawToMatter)) : [],
+    signals: signalRes.rows,
+    matters: matterRes.rows,
     records: recordRes.rows,
     sources: sourceRes.rows,
     handoffs: handoffRes.rows,
     error,
   };
+}
+
+/**
+ * Derive entity profiles from signal + matter data. `Entity`/`EntityMention`
+ * exist as entities but are seeded empty; the real entity data lives as string
+ * arrays on signals (`entities`, `agencies`) and matters (`people`,
+ * `organizations`, `agencies`). This aggregates those mentions into a de-duped
+ * list keyed by a slug, tracking a coarse `type` and the signals each appears in.
+ *
+ * Returns `[{ name, type, slug, mentionCount, signalIds }]` sorted by mentions.
+ */
+export function deriveEntities(signals = [], matters = []) {
+  const bySlug = new Map();
+
+  const add = (name, type, signalId) => {
+    const clean = String(name || "").trim();
+    if (!clean) return;
+    const slug = slugify(clean);
+    if (!slug) return;
+    let entry = bySlug.get(slug);
+    if (!entry) {
+      entry = { name: clean, type, slug, mentionCount: 0, signalIds: new Set() };
+      bySlug.set(slug, entry);
+    }
+    // "agency" is the strongest classification; keep it if any mention says so.
+    if (type === "agency") entry.type = "agency";
+    entry.mentionCount += 1;
+    if (signalId) entry.signalIds.add(signalId);
+  };
+
+  for (const signal of signals) {
+    const sid = signal.signal_id || signal.id;
+    (signal.agencies || []).forEach((name) => add(name, "agency", sid));
+    (signal.entities || []).forEach((name) => add(name, "entity", sid));
+  }
+  for (const matter of matters) {
+    (matter.agencies || []).forEach((name) => add(name, "agency"));
+    (matter.people || []).forEach((name) => add(name, "person"));
+    (matter.organizations || []).forEach((name) => add(name, "organization"));
+  }
+
+  return Array.from(bySlug.values())
+    .map((entry) => ({ ...entry, signalIds: Array.from(entry.signalIds) }))
+    .sort((a, b) => b.mentionCount - a.mentionCount || a.name.localeCompare(b.name));
 }
