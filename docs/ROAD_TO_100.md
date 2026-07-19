@@ -62,6 +62,28 @@ LLM tier fell back to keyword rules for every item, as designed):
 
 ---
 
+## Water-monitoring signal layer (closed here)
+
+The federation water-monitoring vertical's Centinelas side is now real code:
+
+- [x] **Water/utility sub-taxonomy** (`src/centinelas/classify/rules.py`). PR
+  water/utility terms (PRASA, acueducto, wastewater, embalse/reservoir, boil-water,
+  LUMA/PREPA/PREB outage, sequía/racionamiento) route to `aguayluz-pr` via
+  `ENVIRONMENTAL`, and `water_utility_subtypes()` tags *which* beat a signal is
+  (potable_water, boil_water, water_quality, wastewater, reservoir_drought, flood,
+  power_grid) instead of collapsing all water news into generic climate.
+- [x] **`domain_tags` on the dispatch payload** (`route/router.py`) — carried to
+  `aguayluz-pr` (and the Hub) so the consumer can pick an event_type.
+- [x] **Aguayluz egress wired** (`.github/workflows/dispatch-signals-aguayluz.yml`).
+  Previously only `moneysweep-pr` had a dispatch workflow; the ENVIRONMENTAL →
+  aguayluz hop now has its operator-triggered `emit_dispatches --only-repo
+  aguayluz-pr` egress. The consumer side (`aguayluz-pr` `centinelas-intake.yml` +
+  `scripts/ingest_centinelas_dispatch.py`) maps the payload into a service_event.
+
+The **classifier keyword tier** is real and testable offline; LLM classification
+still needs `ANTHROPIC_API_KEY`, and live PR water-source *intake* remains blocked
+below.
+
 ## Remaining — code (closable here)
 
 Both items below are **closed by this PR**.
