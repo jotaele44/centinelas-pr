@@ -43,6 +43,16 @@ def test_non_water_text_has_no_subtypes():
     assert water_utility_subtypes("The stock market rallied on earnings") == []
 
 
+def test_accented_spanish_terms_match():
+    # PR source text uses accents; matching folds them so accented forms still hit.
+    assert DomainLabel.ENVIRONMENTAL in keyword_classify("Apagón general en la isla")
+    assert DomainLabel.ENVIRONMENTAL in keyword_classify("sequía severa afecta el embalse")
+    assert water_utility_subtypes("Apagón general") == ["power_grid"]
+    assert water_utility_subtypes("contaminación del agua") == ["water_quality"]
+    assert water_utility_subtypes("inundación repentina") == ["flood"]
+    assert "reservoir_drought" in water_utility_subtypes("sequía prolongada")
+
+
 def test_domain_tags_on_aguayluz_and_hub_payloads():
     item = _classified("PRASA issues boil water advisory", "reservoir levels low")
     payloads = route(item)

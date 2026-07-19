@@ -1,8 +1,20 @@
 """Keyword pre-filter — fast path that skips LLM calls for obvious domain hits."""
 
 import re
+import unicodedata
 
 from centinelas.classify.labels import DomainLabel
+
+
+def _fold(text: str) -> str:
+    """Lowercase + strip accents so PR Spanish text matches ASCII keywords.
+
+    PR source text uses accents (``sequía``, ``apagón``, ``contaminación``); the
+    taxonomy keywords are ASCII. Fold both sides (NFKD → drop combining marks →
+    lower) so accented and unaccented forms match interchangeably.
+    """
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
 
 # Each entry is (keywords, label). Keywords are lowercased and matched on WORD
 # BOUNDARIES (not naive substring containment), so a short token like "sec"
@@ -66,7 +78,7 @@ def _compile(keyword: str) -> re.Pattern[str]:
     "war" in "warehouse") while a trailing ``s?`` keeps genuine plurals matching
     ("rocket" -> "rockets"). ``re.escape`` keeps multi-word phrases literal.
     """
-    return re.compile(rf"\b{re.escape(keyword)}s?\b")
+    return re.compile(rf"\b{re.escape(_fold(keyword))}s?\b")
 
 
 # Precompile once: [(patterns, label), ...] mirroring _RULES order.
@@ -77,7 +89,7 @@ _COMPILED_RULES: list[tuple[list[re.Pattern[str]], DomainLabel]] = [
 
 def keyword_classify(text: str) -> list[DomainLabel]:
     """Return matched labels from keyword rules. May return multiple labels."""
-    lower = text.lower()
+    lower = _fold(text)
     matched: list[DomainLabel] = []
     seen: set[DomainLabel] = set()
     for patterns, label in _COMPILED_RULES:
@@ -120,5 +132,5 @@ def water_utility_subtypes(text: str) -> list[str]:
 
     Order-stable (matches ``_WATER_UTILITY_TAGS`` insertion order); deterministic.
     """
-    lower = text.lower()
+    lower = _fold(text)
     return [tag for tag, pats in _COMPILED_WATER_TAGS if any(p.search(lower) for p in pats)]
