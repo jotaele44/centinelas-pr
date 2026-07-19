@@ -17,8 +17,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-_REPO = Path(__file__).resolve().parents[2]
-RESOLVER_PATH = _REPO / "data" / "reference" / "pr_natural_features_resolver.json"
+# Packaged alongside the module (like ingest/sources.yaml) so it resolves after a
+# normal pip install, not only from an editable/source checkout.
+RESOLVER_PATH = Path(__file__).resolve().parent / "data" / "pr_natural_features_resolver.json"
 
 
 def _fold(value: Any) -> str:

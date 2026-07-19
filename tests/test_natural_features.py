@@ -6,11 +6,10 @@ the federation joins on.
 """
 
 import json
-from pathlib import Path
 
 from centinelas.natural_features import RESOLVER_PATH, resolve_natural_feature
 
-DATA = Path(__file__).resolve().parents[1] / "data" / "reference" / "pr_natural_features_resolver.json"
+DATA = RESOLVER_PATH
 
 
 def test_slice_is_name_only_all_groups():
