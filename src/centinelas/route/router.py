@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO
+from centinelas.classify.rules import is_critical_signal, water_utility_subtypes
 from centinelas.models import ClassifiedItem
 
 # Targets that consume the pre-officialization finance/location enrichment.
@@ -14,6 +15,12 @@ from centinelas.models import ClassifiedItem
 # the canonical federation packages, not this raw enrichment. Other domain repos
 # keep the lean base payload.
 _FINANCE_ENRICHED_REPOS = {"moneysweep-pr"}
+
+# Targets that consume the water/utility sub-taxonomy tags. aguayluz-pr (the
+# water/power/outage node) uses them to recognize *which* utility beat a signal
+# is about; the Hub gets them for cross-repo correlation. Other repos keep the
+# lean base payload.
+_WATER_TAGGED_REPOS = {"aguayluz-pr", HUB_REPO}
 
 
 def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
@@ -40,6 +47,10 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
         "classifier_reasoning": item.classifier_reasoning,
         "routed_to": target_repo,
         "routed_at": datetime.now(timezone.utc).isoformat(),
+        # Life-safety flag: emergency/evacuation/boil-water/hurricane-warning language
+        # in the signal. Lets downstream producers + the Hub fast-track it into the
+        # ASAP push/SMS tier instead of a batched brief.
+        "is_critical": is_critical_signal(f"{item.title} {item.body_text}"),
     }
     if target_repo in _FINANCE_ENRICHED_REPOS:
         payload.update(
@@ -51,6 +62,10 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
                 "beat": item.beat,
             }
         )
+    if target_repo in _WATER_TAGGED_REPOS:
+        # Fine-grained water/utility beat tags (potable_water, boil_water,
+        # reservoir_drought, power_grid, …) so aguayluz can route within its domain.
+        payload["domain_tags"] = water_utility_subtypes(f"{item.title} {item.body_text}")
     return payload
 
 

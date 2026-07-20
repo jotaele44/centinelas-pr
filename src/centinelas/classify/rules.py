@@ -1,8 +1,20 @@
 """Keyword pre-filter — fast path that skips LLM calls for obvious domain hits."""
 
 import re
+import unicodedata
 
 from centinelas.classify.labels import DomainLabel
+
+
+def _fold(text: str) -> str:
+    """Lowercase + strip accents so PR Spanish text matches ASCII keywords.
+
+    PR source text uses accents (``sequía``, ``apagón``, ``contaminación``); the
+    taxonomy keywords are ASCII. Fold both sides (NFKD → drop combining marks →
+    lower) so accented and unaccented forms match interchangeably.
+    """
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
 
 # Each entry is (keywords, label). Keywords are lowercased and matched on WORD
 # BOUNDARIES (not naive substring containment), so a short token like "sec"
@@ -19,7 +31,13 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
     (
         ["hurricane", "tropical storm", "flood", "wildfire", "drought", "deforestation",
          "climate change", "emissions", "pollution", "epa", "noaa", "water quality",
-         "coral reef", "sea level", "carbon", "biodiversity", "species", "ecosystem"],
+         "coral reef", "sea level", "carbon", "biodiversity", "species", "ecosystem",
+         # PR water/utility infrastructure — routes to aguayluz-pr (the water/power
+         # /outage monitoring node), not just generic global climate news.
+         "prasa", "acueducto", "aqueduct", "wastewater", "alcantarillado", "sewer",
+         "reservoir", "embalse", "represa", "boil water", "boil-water",
+         "hervir el agua", "racionamiento", "sequia", "luma", "prepa", "preb",
+         "outage", "apagon", "aee"],
         DomainLabel.ENVIRONMENTAL,
     ),
     (
@@ -60,7 +78,7 @@ def _compile(keyword: str) -> re.Pattern[str]:
     "war" in "warehouse") while a trailing ``s?`` keeps genuine plurals matching
     ("rocket" -> "rockets"). ``re.escape`` keeps multi-word phrases literal.
     """
-    return re.compile(rf"\b{re.escape(keyword)}s?\b")
+    return re.compile(rf"\b{re.escape(_fold(keyword))}s?\b")
 
 
 # Precompile once: [(patterns, label), ...] mirroring _RULES order.
@@ -71,7 +89,7 @@ _COMPILED_RULES: list[tuple[list[re.Pattern[str]], DomainLabel]] = [
 
 def keyword_classify(text: str) -> list[DomainLabel]:
     """Return matched labels from keyword rules. May return multiple labels."""
-    lower = text.lower()
+    lower = _fold(text)
     matched: list[DomainLabel] = []
     seen: set[DomainLabel] = set()
     for patterns, label in _COMPILED_RULES:
@@ -81,3 +99,58 @@ def keyword_classify(text: str) -> list[DomainLabel]:
             matched.append(label)
             seen.add(label)
     return matched
+
+
+# ── Water/utility sub-taxonomy ────────────────────────────────────────────────
+# The six DomainLabels stay coarse (ENVIRONMENTAL routes to aguayluz-pr). This
+# finer layer tags *which* water/utility beat a signal is about, so aguayluz can
+# recognize a PRASA boil-water notice vs. a reservoir/drought vs. a grid outage
+# instead of treating every ENVIRONMENTAL item as generic climate news. Emitted
+# as `domain_tags` on the aguayluz/hub dispatch payload (router.build_payload).
+_WATER_UTILITY_TAGS: dict[str, list[str]] = {
+    "potable_water": ["prasa", "acueducto", "aqueduct", "agua potable", "drinking water",
+                      "water utility", "water main", "water service"],
+    "boil_water": ["boil water", "boil-water", "hervir el agua", "boil advisory",
+                   "boil-water advisory"],
+    "water_quality": ["water quality", "contamination", "contaminacion", "turbidity",
+                      "sdwis", "e. coli", "coliform"],
+    "wastewater": ["wastewater", "alcantarillado", "sewer", "sewage", "aguas usadas",
+                   "aguas negras", "npdes"],
+    "reservoir_drought": ["reservoir", "embalse", "represa", "drought", "sequia",
+                          "racionamiento", "water rationing", "dam safety"],
+    "flood": ["flood", "inundacion", "flash flood", "flooding"],
+    "power_grid": ["luma", "prepa", "preb", "power outage", "apagon", "blackout",
+                   "grid", "aee", "generation"],
+}
+_COMPILED_WATER_TAGS: list[tuple[str, list[re.Pattern[str]]]] = [
+    (tag, [_compile(kw) for kw in kws]) for tag, kws in _WATER_UTILITY_TAGS.items()
+]
+
+
+def water_utility_subtypes(text: str) -> list[str]:
+    """Return the water/utility sub-taxonomy tags a signal matches (may be empty).
+
+    Order-stable (matches ``_WATER_UTILITY_TAGS`` insertion order); deterministic.
+    """
+    lower = _fold(text)
+    return [tag for tag, pats in _COMPILED_WATER_TAGS if any(p.search(lower) for p in pats)]
+
+
+# Life-safety / emergency vocabulary (English + PR Spanish). A signal matching any of
+# these is flagged is_critical so downstream producers/the Hub can fast-track it into
+# the ASAP push/SMS tier instead of a batched brief.
+_URGENCY_KEYWORDS: list[str] = [
+    "emergency", "emergencia", "evacuate", "evacuation", "evacuacion", "evacuar",
+    "boil water", "hervir el agua", "tsunami", "hurricane warning", "aviso de huracan",
+    "flash flood", "inundacion repentina", "mandatory", "obligatorio", "shelter in place",
+    "refugio", "curfew", "toque de queda", "immediate", "inmediato", "urgent", "urgente",
+    "life-threatening", "peligro de muerte", "explosion", "explosión", "wildfire",
+    "landslide", "derrumbe", "toxic", "toxico", "contamination emergency",
+]
+_COMPILED_URGENCY = [_compile(kw) for kw in _URGENCY_KEYWORDS]
+
+
+def is_critical_signal(text: str) -> bool:
+    """True when a signal carries life-safety / emergency language (ASAP push tier)."""
+    lower = _fold(text)
+    return any(p.search(lower) for p in _COMPILED_URGENCY)
