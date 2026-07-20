@@ -38,10 +38,19 @@ _SCALE: dict[str, float] = {
 }
 _SCALE_ALT = "|".join(sorted((re.escape(k) for k in _SCALE), key=len, reverse=True))
 
-# "$299.7 million", "299.7 millones", "$1.2 billion", "1 mil millones".
-_SCALED_RE = re.compile(rf"\$?\s*(\d[\d,]*(?:\.\d+)?)\s*({_SCALE_ALT})\b")
+# `estimated_value` is USD-typed (MoneySweep intake contract). We therefore only
+# accept amounts that carry an explicit USD marker and ignore everything else,
+# rather than assuming every scaled number is dollars — otherwise a non-USD
+# figure ("€5 million", "£5 million") from a broad contractor/financial feed
+# would be silently mislabelled as USD. A USD marker is either a leading dollar
+# sign (optionally "US$") or a trailing dollar word ("dollars"/"dólares"/"USD").
+_USD_WORD = r"(?:de\s+)?(?:dolares|dollars|usd)"
+# "$299.7 million", "US$1.2 billion".
+_SCALED_USD_PREFIX_RE = re.compile(rf"(?:us)?\$\s*(\d[\d,]*(?:\.\d+)?)\s*({_SCALE_ALT})\b")
+# "299.7 millones de dólares", "5 million dollars", "1.2 mil millones USD".
+_SCALED_USD_SUFFIX_RE = re.compile(rf"(\d[\d,]*(?:\.\d+)?)\s*({_SCALE_ALT})\s*{_USD_WORD}\b")
 # Plain currency with a thousands group or 4+ bare digits: "$299,700,000".
-_PLAIN_RE = re.compile(r"\$\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{4,}(?:\.\d+)?)")
+_PLAIN_RE = re.compile(r"(?:us)?\$\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{4,}(?:\.\d+)?)")
 
 
 def _to_float(number: str) -> float | None:
@@ -55,17 +64,21 @@ def _to_float(number: str) -> float | None:
 def extract_estimated_value(text: str) -> float | None:
     """Return the largest USD amount mentioned (headline award value), or None.
 
-    Handles scaled forms ("$299.7 million", "299.7 millones", "$1.2 billion",
-    "mil millones") and plain currency ("$299,700,000"). Picking the max keeps
-    the headline figure when a body also cites smaller line items.
+    Only amounts with an explicit USD marker are considered — scaled forms with a
+    leading "$"/"US$" ("$299.7 million", "US$1.2 billion") or a trailing dollar
+    word ("299.7 millones de dólares", "5 million dollars"), and plain currency
+    ("$299,700,000"). Non-USD or unmarked figures are ignored so the USD-typed
+    field is never populated with another currency. Picking the max keeps the
+    headline figure when a body also cites smaller line items.
     """
     folded = _fold(text)
     values: list[float] = []
 
-    for number, scale in _SCALED_RE.findall(folded):
-        magnitude = _to_float(number)
-        if magnitude is not None:
-            values.append(magnitude * _SCALE[scale])
+    for regex in (_SCALED_USD_PREFIX_RE, _SCALED_USD_SUFFIX_RE):
+        for number, scale in regex.findall(folded):
+            magnitude = _to_float(number)
+            if magnitude is not None:
+                values.append(magnitude * _SCALE[scale])
 
     for number in _PLAIN_RE.findall(folded):
         magnitude = _to_float(number)

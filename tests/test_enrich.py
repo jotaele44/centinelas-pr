@@ -25,12 +25,13 @@ CAMP_SANTIAGO_BODY = (
     "text, expected",
     [
         ("a project of $299.7 million", 299_700_000.0),
-        ("award of a project of $299.7 millions", 299_700_000.0),   # plural form
-        ("proyecto de 299.7 millones", 299_700_000.0),              # PR Spanish
-        ("un contrato de 1.2 mil millones", 1_200_000_000.0),       # Spanish billion
-        ("a $1.2 billion deal", 1_200_000_000.0),
-        ("valorado en $299,700,000", 299_700_000.0),                # plain currency
-        ("$299700000 total", 299_700_000.0),                        # bare digits
+        ("award of a project of $299.7 millions", 299_700_000.0),      # plural form
+        ("proyecto de 299.7 millones de dolares", 299_700_000.0),      # PR Spanish + USD word
+        ("un contrato de 1.2 mil millones de dolares", 1_200_000_000.0),  # Spanish billion
+        ("a US$1.2 billion deal", 1_200_000_000.0),                    # US$ prefix
+        ("a deal worth 5 million dollars", 5_000_000.0),               # trailing dollar word
+        ("valorado en $299,700,000", 299_700_000.0),                   # plain currency
+        ("$299700000 total", 299_700_000.0),                           # bare digits
     ],
 )
 def test_extract_estimated_value(text, expected):
@@ -45,6 +46,21 @@ def test_extract_estimated_value_picks_headline_max():
 def test_extract_estimated_value_none_without_amount():
     assert enrich.extract_estimated_value("millions of people attended the parade") is None
     assert enrich.extract_estimated_value("no money mentioned here") is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "a €5 million contract",       # euros
+        "a £5 million contract",       # pounds
+        "a 5 million euro contract",   # non-USD currency word
+        "5 million people attended",   # unmarked count, not money
+    ],
+)
+def test_extract_estimated_value_rejects_non_usd(text):
+    # estimated_value is USD-typed; amounts without an explicit USD marker must
+    # be ignored rather than mislabelled as dollars.
+    assert enrich.extract_estimated_value(text) is None
 
 
 # ── Agencies / stage / beat ───────────────────────────────────────────────────
