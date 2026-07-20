@@ -113,7 +113,7 @@ def build_classified_item(raw: "RawItem") -> "ClassifiedItem":
     from centinelas.models import ClassifiedItem
 
     labels, confidence, reasoning = classify(raw)
-    enrichment = enrich.extract(raw.title, raw.body_text)
+    enrichment = enrich.extract(raw.title, raw.body_text, raw.source_name)
     return ClassifiedItem(
         **raw.model_dump(),
         labels=labels,

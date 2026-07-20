@@ -85,10 +85,45 @@ def test_beat_procurement():
     assert enrich.extract_beat("a hurricane update") is None
 
 
+# ── Recipient / awardee ───────────────────────────────────────────────────────
+def test_recipients_source_anchor_and_jv():
+    recipients = enrich.extract_recipients(
+        CAMP_SANTIAGO_TITLE, CAMP_SANTIAGO_BODY, "Del Valle Group"
+    )
+    # Announcing company (source anchor) and the named JV, both distinct awardees.
+    assert "Del Valle Group" in recipients
+    assert "4Contractors JV" in recipients
+
+
+def test_recipients_award_attribution_patterns():
+    assert enrich.extract_recipients(
+        "Contract awarded to Bermudez Longo Inc for the road", "", ""
+    ) == ["Bermudez Longo Inc"]
+    assert enrich.extract_recipients(
+        "El contrato fue adjudicado a Constructora Boricua", "", ""
+    ) == ["Constructora Boricua"]
+
+
+def test_recipients_exclude_funder():
+    # The awarding agency must never be recorded as the recipient.
+    recipients = enrich.extract_recipients(
+        "National Guard announces the award", "awarded to National Guard", "National Guard"
+    )
+    assert recipients == []
+
+
+def test_recipients_empty_without_award():
+    # A self-published item with no procurement vocabulary yields no recipient.
+    assert enrich.extract_recipients(
+        "Del Valle Group opens a new office", "a nice building", "Del Valle Group"
+    ) == []
+
+
 def test_extract_bundle_shape():
-    out = enrich.extract(CAMP_SANTIAGO_TITLE, CAMP_SANTIAGO_BODY)
+    out = enrich.extract(CAMP_SANTIAGO_TITLE, CAMP_SANTIAGO_BODY, "Del Valle Group")
     assert out == {
         "municipalities": [],
+        "recipients": ["Del Valle Group", "4Contractors JV"],
         "agencies": ["Puerto Rico National Guard"],
         "estimated_value": 299_700_000.0,
         "signal_stage": "award_announced",

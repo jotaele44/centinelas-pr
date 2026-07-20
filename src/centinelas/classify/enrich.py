@@ -159,7 +159,66 @@ def extract_beat(text: str) -> str | None:
     return "procurement" if _matches_any(_fold(text), _PROCUREMENT_TERMS) else None
 
 
-def extract(title: str, body_text: str) -> dict:
+# ── Recipient / awardee ───────────────────────────────────────────────────────
+# The awardee is *who won the contract*, distinct from the awarding agency (the
+# funder, ``extract_agencies``). MoneySweep keeps separate recipient/funder
+# entity slots, so surfacing the awardee here stops the funder from being
+# mislabelled as the recipient.
+#
+# An entity phrase: a capitalized/numeric token (company names may start with a
+# digit, e.g. "4Contractors") plus following capitalized tokens and lowercase
+# connectors ("de"/"of"/"and"/…). Matched on original-case text to preserve the
+# name; the surrounding award cue keeps the span tight.
+_ENTITY = r"[A-Z0-9][A-Za-z0-9.&'\-]*(?:\s+(?:de|del|of|and|y|la|el|los|the|[A-Z0-9][A-Za-z0-9.&'\-]*))*"
+
+# Award-attribution cues that name the awardee.
+_RECIPIENT_RES: list[re.Pattern[str]] = [
+    re.compile(rf"({_ENTITY})\s+announces\b"),                 # "Del Valle Group announces the award"
+    re.compile(rf"\bawarded\s+to\s+({_ENTITY})"),              # "awarded to Del Valle Group"
+    re.compile(rf"\badjudic\w*\s+a\s+({_ENTITY})", re.IGNORECASE),  # "adjudicado a X"
+    re.compile(r"\b([A-Z0-9][A-Za-z0-9.&'\-]*\s+(?:JV|Joint Venture))\b"),  # "4Contractors JV"
+]
+
+
+def extract_recipients(title: str, body_text: str, source_name: str = "") -> list[str]:
+    """Return awardee/recipient names, distinct from the awarding agency.
+
+    Two deterministic signals: (1) a *source anchor* — for a self-announced
+    contractor press release, the announcing company (``source_name``) is the
+    awardee, used when procurement vocabulary is present and the source names
+    itself in the title; (2) *award-attribution patterns* around award cues that
+    also catch a named joint venture. Any candidate that is itself an awarding
+    agency (``extract_agencies``) is dropped so the funder never leaks in.
+    Order-stable, deduplicated case-insensitively.
+    """
+    text = f"{title} {body_text}"
+    candidates: list[str] = []
+
+    # (1) Source anchor: the announcer of a procurement award is the awardee.
+    if source_name and _matches_any(_fold(text), _PROCUREMENT_TERMS):
+        if _fold(source_name) in _fold(title):
+            candidates.append(source_name.strip())
+
+    # (2) Award-attribution patterns over title + body.
+    for pattern in _RECIPIENT_RES:
+        for match in pattern.findall(text):
+            candidates.append(match.strip())
+
+    recipients: list[str] = []
+    seen: set[str] = set()
+    for name in candidates:
+        key = name.lower()
+        if len(name) < 3 or key in seen:
+            continue
+        # Never record an awarding agency as a recipient.
+        if extract_agencies(name):
+            continue
+        seen.add(key)
+        recipients.append(name)
+    return recipients
+
+
+def extract(title: str, body_text: str, source_name: str = "") -> dict:
     """Extract all enrichment fields from a signal's title + body.
 
     Returns a dict keyed to match ``ClassifiedItem``'s enrichment fields, so a
@@ -170,6 +229,7 @@ def extract(title: str, body_text: str) -> dict:
     text = f"{title} {body_text}"
     return {
         "municipalities": [],
+        "recipients": extract_recipients(title, body_text, source_name),
         "agencies": extract_agencies(text),
         "estimated_value": extract_estimated_value(text),
         "signal_stage": extract_signal_stage(text),
