@@ -27,6 +27,7 @@ _SYSTEM_PROMPT = """You are an online intelligence classifier. Given a news arti
 - GEO_GEOLOGY: earthquakes, volcanoes, geology, geography, natural terrain
 - ANOMALOUS: UFOs/UAPs, paranormal, unexplained phenomena, cryptids
 - MILITARY_AEROSPACE: military, defense, weapons, aviation, space launches, aerospace industry
+- SAFETY_COMPLIANCE: workplace safety & health, OSHA/DOL enforcement, inspections, citations, workplace fatalities/amputations, occupational hazards
 
 Return a JSON object with:
 - "labels": array of matching domain strings (can be multiple, or ["UNCLASSIFIED"] if none match)
