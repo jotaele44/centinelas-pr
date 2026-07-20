@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Centinelas monitorea señales públicas tempranas relevantes a Puerto Rico antes de que se oficialicen como contratos, leyes, permisos, pagos o auditorías." />
     <title>Centinelas | Monitor temprano de Puerto Rico</title>
+    <!-- Set the theme before first paint so preference users never see a flash.
+         Mirrors resolveInitialTheme() in src/lib/ThemeContext.jsx
+         (stored preference -> OS preference -> light). -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('centinelas_theme');
+          var theme = (stored === 'light' || stored === 'dark') ? stored
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          var root = document.documentElement;
+          root.classList.toggle('dark', theme === 'dark');
+          root.dataset.theme = theme;
+          root.dataset.repo = 'centinelas-pr';
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" crossorigin src="/src/main.jsx"></script>
   </head>
   <body>

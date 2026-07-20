@@ -62,10 +62,10 @@ export default function Monitor() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-4">
-        <MetricCard label={t("Señales capturadas")} value={loading ? "…" : signals.length} detail={t("Upstream: anuncios, agendas, RFP, vistas, avisos.")} />
-        <MetricCard label={t("Asuntos públicos")} value={loading ? "…" : matters.length} detail={t("Objetos compartidos con MoneySweep.")} />
-        <MetricCard label={t("Listos para MoneySweep")} value={loading ? "…" : stats.ready} detail={t("Oficialización detectada o candidata.")} />
-        <MetricCard label={t("Fuentes con brecha")} value={loading ? "…" : stats.staleSources} detail={t("Manual, rota o atrasada.")} />
+        <MetricCard label={t("Señales capturadas")} value={signals.length} loading={loading} detail={t("Upstream: anuncios, agendas, RFP, vistas, avisos.")} />
+        <MetricCard label={t("Asuntos públicos")} value={matters.length} loading={loading} detail={t("Objetos compartidos con MoneySweep.")} />
+        <MetricCard label={t("Listos para MoneySweep")} value={stats.ready} loading={loading} detail={t("Oficialización detectada o candidata.")} />
+        <MetricCard label={t("Fuentes con brecha")} value={stats.staleSources} loading={loading} detail={t("Manual, rota o atrasada.")} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
