@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO
-from centinelas.classify.rules import water_utility_subtypes
+from centinelas.classify.rules import is_critical_signal, water_utility_subtypes
 from centinelas.models import ClassifiedItem
 
 # Targets that consume the pre-officialization finance/location enrichment.
@@ -47,6 +47,10 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
         "classifier_reasoning": item.classifier_reasoning,
         "routed_to": target_repo,
         "routed_at": datetime.now(timezone.utc).isoformat(),
+        # Life-safety flag: emergency/evacuation/boil-water/hurricane-warning language
+        # in the signal. Lets downstream producers + the Hub fast-track it into the
+        # ASAP push/SMS tier instead of a batched brief.
+        "is_critical": is_critical_signal(f"{item.title} {item.body_text}"),
     }
     if target_repo in _FINANCE_ENRICHED_REPOS:
         payload.update(

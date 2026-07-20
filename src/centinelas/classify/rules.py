@@ -134,3 +134,23 @@ def water_utility_subtypes(text: str) -> list[str]:
     """
     lower = _fold(text)
     return [tag for tag, pats in _COMPILED_WATER_TAGS if any(p.search(lower) for p in pats)]
+
+
+# Life-safety / emergency vocabulary (English + PR Spanish). A signal matching any of
+# these is flagged is_critical so downstream producers/the Hub can fast-track it into
+# the ASAP push/SMS tier instead of a batched brief.
+_URGENCY_KEYWORDS: list[str] = [
+    "emergency", "emergencia", "evacuate", "evacuation", "evacuacion", "evacuar",
+    "boil water", "hervir el agua", "tsunami", "hurricane warning", "aviso de huracan",
+    "flash flood", "inundacion repentina", "mandatory", "obligatorio", "shelter in place",
+    "refugio", "curfew", "toque de queda", "immediate", "inmediato", "urgent", "urgente",
+    "life-threatening", "peligro de muerte", "explosion", "explosión", "wildfire",
+    "landslide", "derrumbe", "toxic", "toxico", "contamination emergency",
+]
+_COMPILED_URGENCY = [_compile(kw) for kw in _URGENCY_KEYWORDS]
+
+
+def is_critical_signal(text: str) -> bool:
+    """True when a signal carries life-safety / emergency language (ASAP push tier)."""
+    lower = _fold(text)
+    return any(p.search(lower) for p in _COMPILED_URGENCY)
