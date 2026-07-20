@@ -58,7 +58,17 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
         ["stock market", "interest rate", "federal reserve", "inflation", "gdp",
          "recession", "cryptocurrency", "bitcoin", "sec", "ipo", "merger", "acquisition",
          "earnings", "hedge fund", "bond yield", "treasury", "imf", "world bank",
-         "trade deficit", "tariff", "sanctions"],
+         "trade deficit", "tariff", "sanctions",
+         # Public-money / procurement / award vocabulary (English + PR Spanish) —
+         # routes contractor/government award announcements to moneysweep-pr (the
+         # money anchor), which only ingests FINANCIAL/POLITICAL drops. Without
+         # these, a construction-award story classifies MILITARY_AEROSPACE or
+         # UNCLASSIFIED and never reaches the finance lane. Accent-folded at
+         # compile time, so "adjudicacion" matches "adjudicación".
+         "contract", "contrato", "contractor", "contratista", "award", "awarded",
+         "adjudicacion", "aviso de adjudicacion", "subasta", "licitacion",
+         "procurement", "rfp", "joint venture", "obra publica", "obras publicas",
+         "construccion", "infraestructura"],
         DomainLabel.FINANCIAL,
     ),
     (

@@ -102,6 +102,14 @@ def test_plural_keywords_still_match():
     assert DomainLabel.POLITICAL in keyword_classify("Elections and protests grip the nation")
 
 
+def test_procurement_award_keywords_route_financial():
+    """Contract/award vocabulary (English + PR Spanish) anchors to FINANCIAL so
+    contractor award announcements reach the MoneySweep finance lane."""
+    assert DomainLabel.FINANCIAL in keyword_classify("company awarded a construction contract")
+    assert DomainLabel.FINANCIAL in keyword_classify("aviso de adjudicacion de subasta")
+    assert DomainLabel.FINANCIAL in keyword_classify("licitacion para obras publicas")
+
+
 def test_item_id_is_deterministic():
     url = "https://example.com/article"
     dt = datetime(2026, 7, 1, tzinfo=timezone.utc)
