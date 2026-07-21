@@ -8,6 +8,10 @@ class DomainLabel(str, Enum):
     GEO_GEOLOGY = "GEO_GEOLOGY"
     ANOMALOUS = "ANOMALOUS"
     MILITARY_AEROSPACE = "MILITARY_AEROSPACE"
+    # Workplace safety & compliance: OSHA/DOL enforcement, inspections, citations,
+    # workplace fatalities/amputations, occupational health. Routes to aguayluz-pr,
+    # whose INDUSTRIAL alert module (Industrial / Port / Facility Alerts) owns this beat.
+    SAFETY_COMPLIANCE = "SAFETY_COMPLIANCE"
     UNCLASSIFIED = "UNCLASSIFIED"
 
 
@@ -19,6 +23,7 @@ LABEL_TO_REPO: dict[DomainLabel, str] = {
     DomainLabel.GEO_GEOLOGY: "spiderweb-pr",
     DomainLabel.ANOMALOUS: "ovnis-pr",
     DomainLabel.MILITARY_AEROSPACE: "skywatcher-pr",
+    DomainLabel.SAFETY_COMPLIANCE: "aguayluz-pr",
 }
 
 HUB_REPO = "thehub-pr"
