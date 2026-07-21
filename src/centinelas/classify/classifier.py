@@ -13,7 +13,7 @@ from centinelas.classify.labels import DomainLabel
 from centinelas.classify.rules import keyword_classify
 
 if TYPE_CHECKING:
-    from centinelas.models import RawItem
+    from centinelas.models import ClassifiedItem, RawItem
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ _MODEL = "claude-haiku-4-5-20251001"
 _SYSTEM_PROMPT = """You are an online intelligence classifier. Given a news article title and body, classify it into one or more of these domains:
 
 - ENVIRONMENTAL: climate, weather events, pollution, ecosystems, conservation
-- FINANCIAL: markets, economics, banking, cryptocurrency, trade
+- FINANCIAL: markets, economics, banking, cryptocurrency, trade, government contracts, procurement, and contract/grant award announcements (including construction/infrastructure awards)
 - POLITICAL: elections, legislation, government, diplomacy, geopolitics
 - GEO_GEOLOGY: earthquakes, volcanoes, geology, geography, natural terrain
 - ANOMALOUS: UFOs/UAPs, paranormal, unexplained phenomena, cryptids
@@ -99,3 +99,26 @@ def classify(item: "RawItem") -> tuple[list[DomainLabel], float, str]:
         if keyword_hits:
             return keyword_hits, 0.6, f"Keyword fallback (LLM unavailable: {exc})"
         return [DomainLabel.UNCLASSIFIED], 0.3, f"Unclassified — LLM unavailable: {exc}"
+
+
+def build_classified_item(raw: "RawItem") -> "ClassifiedItem":
+    """Classify + enrich a RawItem into a fully-populated ClassifiedItem.
+
+    Single construction site shared by the CLI ``classify`` and ``run`` commands:
+    runs domain classification and the deterministic finance/procurement
+    enrichment (:mod:`centinelas.classify.enrich`) so the pre-officialization
+    fields (estimated_value/agencies/signal_stage/beat) travel with the item to
+    the MoneySweep anchor.
+    """
+    from centinelas.classify import enrich
+    from centinelas.models import ClassifiedItem
+
+    labels, confidence, reasoning = classify(raw)
+    enrichment = enrich.extract(raw.title, raw.body_text, raw.source_name)
+    return ClassifiedItem(
+        **raw.model_dump(),
+        labels=labels,
+        confidence=confidence,
+        classifier_reasoning=reasoning,
+        **enrichment,
+    )

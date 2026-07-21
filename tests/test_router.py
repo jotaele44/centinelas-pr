@@ -101,6 +101,7 @@ def test_moneysweep_payload_carries_finance_enrichment():
         confidence=0.9,
         classifier_reasoning="test",
         municipalities=["Ponce"],
+        recipients=["Acme Construction Corp"],
         agencies=["Autoridad de Acueductos y Alcantarillados"],
         estimated_value=1500000.0,
         signal_stage="rfp_open",
@@ -109,6 +110,7 @@ def test_moneysweep_payload_carries_finance_enrichment():
     payloads = route(item)
     ms = payloads["moneysweep-pr"]
     assert ms["municipalities"] == ["Ponce"]
+    assert ms["recipients"] == ["Acme Construction Corp"]
     assert ms["agencies"] == ["Autoridad de Acueductos y Alcantarillados"]
     assert ms["estimated_value"] == 1500000.0
     assert ms["signal_stage"] == "rfp_open"
@@ -116,6 +118,7 @@ def test_moneysweep_payload_carries_finance_enrichment():
     # Only the MoneySweep anchor carries the enrichment; every other target —
     # including the Hub — stays on the base contract shape.
     assert "estimated_value" not in payloads[HUB_REPO]
+    assert "recipients" not in payloads[HUB_REPO]
     assert "estimated_value" not in payloads["spiderweb-pr"]
 
 
@@ -124,6 +127,7 @@ def test_finance_enrichment_defaults_empty_when_absent():
     payloads = route(item)
     ms = payloads["moneysweep-pr"]
     assert ms["municipalities"] == []
+    assert ms["recipients"] == []
     assert ms["agencies"] == []
     assert ms["estimated_value"] is None
 

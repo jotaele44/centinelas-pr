@@ -57,8 +57,8 @@ def classify(
     ),
 ) -> None:
     """Classify queued RawItems using keyword rules + Claude Haiku."""
-    from centinelas.classify.classifier import classify as do_classify
-    from centinelas.models import ClassifiedItem, RawItem
+    from centinelas.classify.classifier import build_classified_item
+    from centinelas.models import RawItem
 
     output.mkdir(parents=True, exist_ok=True)
     files = list(queue.glob("*.json"))
@@ -69,13 +69,7 @@ def classify(
 
     for path in files:
         raw = RawItem.model_validate_json(path.read_text())
-        labels, confidence, reasoning = do_classify(raw)
-        classified = ClassifiedItem(
-            **raw.model_dump(),
-            labels=labels,
-            confidence=confidence,
-            classifier_reasoning=reasoning,
-        )
+        classified = build_classified_item(raw)
         out_path = output / path.name
         out_path.write_text(classified.model_dump_json(indent=2))
 
@@ -128,7 +122,7 @@ def run(
     ),
 ) -> None:
     """Full pipeline: ingest → classify → route."""
-    from centinelas.classify.classifier import classify as do_classify
+    from centinelas.classify.classifier import build_classified_item
     from centinelas.ingest.rss import poll_all
     from centinelas.models import ClassifiedItem
     from centinelas.route.dispatch import dispatch
@@ -145,13 +139,7 @@ def run(
     classified_output.mkdir(parents=True, exist_ok=True)
     classified: list[ClassifiedItem] = []
     for raw in items:
-        labels, confidence, reasoning = do_classify(raw)
-        item = ClassifiedItem(
-            **raw.model_dump(),
-            labels=labels,
-            confidence=confidence,
-            classifier_reasoning=reasoning,
-        )
+        item = build_classified_item(raw)
         classified.append(item)
         (classified_output / f"{item.item_id}.json").write_text(item.model_dump_json(indent=2))
     console.print(f"  classified {len(classified)} items → {classified_output}")

@@ -86,6 +86,19 @@ feeds:
     url: "https://www.sciencedaily.com/rss/all.xml"
     tier: "T2"
 
+  # ── Contracts / Procurement (PR contractor & agency press) ─
+  # PR contractor / procurement award announcements. These are the
+  # pre-officialization finance signals that anchor to moneysweep-pr: a
+  # contractor announcing an awarded contract (dollar amount + agency) before it
+  # shows up in the official federal/territorial spending datasets. Classified
+  # FINANCIAL via the procurement/award vocabulary in classify/rules.py, then
+  # enriched (estimated_value / agencies / signal_stage) by classify/enrich.py.
+  # Add more contractor/agency WordPress `/feed/` endpoints here as they are
+  # verified to expose valid RSS.
+  - name: "Del Valle Group"
+    url: "https://delvallegroup.net/feed/"
+    tier: "T2"
+
   # ── Workplace Safety & Compliance (OSHA) ──────────────
   # OSHA publishes no webhooks; these are its poll-friendly RSS feeds (XML, no key).
   # Classified SAFETY_COMPLIANCE → routed to aguayluz-pr's INDUSTRIAL alert module.

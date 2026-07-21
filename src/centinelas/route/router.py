@@ -56,6 +56,7 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
         payload.update(
             {
                 "municipalities": list(item.municipalities),
+                "recipients": list(item.recipients),
                 "agencies": list(item.agencies),
                 "estimated_value": item.estimated_value,
                 "signal_stage": item.signal_stage,
