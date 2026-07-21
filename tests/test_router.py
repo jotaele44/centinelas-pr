@@ -132,6 +132,35 @@ def test_finance_enrichment_defaults_empty_when_absent():
     assert ms["estimated_value"] is None
 
 
+def test_ovnis_payload_carries_municipalities():
+    # An ANOMALOUS item with resolved municipalities must forward them to the
+    # OVNIS anchor so its intake can set a case location_name. The Hub and other
+    # targets stay on the base payload shape (no municipalities key).
+    item = ClassifiedItem(
+        item_id="uapenrich001",
+        source_url="https://example.com/uap",
+        source_name="Test",
+        title="Unidentified craft filmed over Cabo Rojo",
+        body_text="Multiple witnesses reported a silent disc off the coast",
+        published_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        labels=[DomainLabel.ANOMALOUS],
+        confidence=0.9,
+        classifier_reasoning="test",
+        municipalities=["Cabo Rojo"],
+    )
+    payloads = route(item)
+    assert payloads["ovnis-pr"]["municipalities"] == ["Cabo Rojo"]
+    # The Hub (and any other target) stays on the base contract — no municipalities.
+    assert "municipalities" not in payloads[HUB_REPO]
+
+
+def test_ovnis_municipalities_defaults_empty_when_absent():
+    item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "uap001"))
+    payloads = route(item)
+    assert payloads["ovnis-pr"]["municipalities"] == []
+
+
 def test_no_duplicate_repos_in_targets():
     # FINANCIAL and POLITICAL both map to moneysweep — should only appear once
     item = ClassifiedItem(
