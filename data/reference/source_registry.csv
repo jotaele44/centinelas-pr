@@ -32,3 +32,8 @@ CENT-SRC-RSS-FOREIGN-POLICY,Foreign Policy,en,political_media,0.9,rss,active,Liv
 CENT-SRC-RSS-BBC-WORLD,BBC World,en,news_wire,0.9,rss,active,Live RSS intake (T1); engine feed https://feeds.bbci.co.uk/news/world/rss.xml
 CENT-SRC-RSS-SCIENCE-DAILY,Science Daily,en,science_wire,0.7,rss,active,Live RSS intake (T2); engine feed https://www.sciencedaily.com/rss/all.xml
 CENT-SRC-RSS-DEL-VALLE-GROUP,Del Valle Group,es,contractor_press,0.7,rss,active,Live RSS intake (T2); PR contractor award/procurement press releases -> moneysweep-pr; engine feed https://delvallegroup.net/feed/
+CENT-SRC-RSS-OSHA-NEWS-RELEASES,OSHA News Releases,en,osha_enforcement,0.95,rss,active,Live RSS intake (T1); engine feed https://www.osha.gov/news/newsreleases.xml
+CENT-SRC-RSS-OSHA-FEDERAL-REGISTER-NOTICES,OSHA Federal Register Notices,en,osha_enforcement,0.95,rss,active,Live RSS intake (T1); engine feed https://www.osha.gov/laws-regs/federalregisters.xml
+CENT-SRC-RSS-OSHA-STANDARD-INTERPRETATIONS,OSHA Standard Interpretations,en,osha_enforcement,0.95,rss,active,Live RSS intake (T1); engine feed https://www.osha.gov/laws-regs/standardinterpretations.xml
+CENT-SRC-RSS-OSHA-DIRECTIVES,OSHA Directives,en,osha_enforcement,0.95,rss,active,Live RSS intake (T1); engine feed https://www.osha.gov/enforcement/directives.xml
+CENT-SRC-RSS-OSHA-QUICKTAKES,OSHA QuickTakes,en,osha_enforcement,0.85,rss,active,Live RSS intake (T2); engine feed https://www.osha.gov/sites/default/files/quicktakes.xml

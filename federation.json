@@ -26,7 +26,8 @@
     "POLITICAL": "moneysweep-pr",
     "GEO_GEOLOGY": "spiderweb-pr",
     "ANOMALOUS": "ovnis-pr",
-    "MILITARY_AEROSPACE": "skywatcher-pr"
+    "MILITARY_AEROSPACE": "skywatcher-pr",
+    "SAFETY_COMPLIANCE": "aguayluz-pr"
   },
   "hub_callable_commands": {
     "setup": "python -m pip install -e .[dev]",

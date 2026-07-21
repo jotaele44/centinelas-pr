@@ -98,3 +98,26 @@ feeds:
   - name: "Del Valle Group"
     url: "https://delvallegroup.net/feed/"
     tier: "T2"
+
+  # ── Workplace Safety & Compliance (OSHA) ──────────────
+  # OSHA publishes no webhooks; these are its poll-friendly RSS feeds (XML, no key).
+  # Classified SAFETY_COMPLIANCE → routed to aguayluz-pr's INDUSTRIAL alert module.
+  - name: "OSHA News Releases"
+    url: "https://www.osha.gov/news/newsreleases.xml"
+    tier: "T1"
+
+  - name: "OSHA Federal Register Notices"
+    url: "https://www.osha.gov/laws-regs/federalregisters.xml"
+    tier: "T1"
+
+  - name: "OSHA Standard Interpretations"
+    url: "https://www.osha.gov/laws-regs/standardinterpretations.xml"
+    tier: "T1"
+
+  - name: "OSHA Directives"
+    url: "https://www.osha.gov/enforcement/directives.xml"
+    tier: "T1"
+
+  - name: "OSHA QuickTakes"
+    url: "https://www.osha.gov/sites/default/files/quicktakes.xml"
+    tier: "T2"

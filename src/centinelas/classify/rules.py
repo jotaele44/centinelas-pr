@@ -78,6 +78,18 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
          "government", "policy", "regulation"],
         DomainLabel.POLITICAL,
     ),
+    (
+        # Workplace safety & compliance — OSHA/DOL enforcement, inspections, citations,
+        # workplace fatalities/amputations, occupational health (English + PR Spanish).
+        # Routes to aguayluz-pr's INDUSTRIAL alert module.
+        ["osha", "occupational safety", "occupational health", "workplace safety",
+         "worker safety", "workplace fatality", "worker death", "safety violation",
+         "willful violation", "serious violation", "safety citation", "workplace hazard",
+         "imminent danger", "amputation", "severe injury report", "workplace injury",
+         "seguridad ocupacional", "seguridad laboral", "salud ocupacional",
+         "muerte de trabajador", "accidente laboral"],
+        DomainLabel.SAFETY_COMPLIANCE,
+    ),
 ]
 
 
@@ -156,6 +168,10 @@ _URGENCY_KEYWORDS: list[str] = [
     "refugio", "curfew", "toque de queda", "immediate", "inmediato", "urgent", "urgente",
     "life-threatening", "peligro de muerte", "explosion", "explosión", "wildfire",
     "landslide", "derrumbe", "toxic", "toxico", "contamination emergency",
+    # Workplace life-safety (OSHA): a fatality/amputation/imminent-danger signal is
+    # ASAP-tier just like a natural-hazard emergency.
+    "workplace fatality", "worker death", "muerte de trabajador", "imminent danger",
+    "peligro inminente", "amputation", "fatal injury", "workplace explosion",
 ]
 _COMPILED_URGENCY = [_compile(kw) for kw in _URGENCY_KEYWORDS]
 
