@@ -36,10 +36,11 @@ cd centinelas-pr
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Runtime + dev tooling (matches CI). The shared prii-export-utils package is a
-# core dependency pulled from the hub at a pinned commit, so this needs network
-# access:
-pip install -e ".[dev]" -r server/backend/requirements.txt
+# Runtime + dev tooling (matches CI). The shared prii-maintenance/prii-export-utils
+# packages resolve from a sibling thehub-pr checkout via [tool.uv.sources], so clone
+# it alongside this repo and install with uv:
+[ -d ../thehub-pr ] || git clone https://github.com/jotaele44/thehub-pr.git ../thehub-pr
+pip install uv && uv pip install -e ".[dev]" -r server/backend/requirements.txt
 ```
 
 Run the checks CI runs (`.github/workflows/validate.yml`):
