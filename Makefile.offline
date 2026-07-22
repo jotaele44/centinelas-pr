@@ -1,0 +1,4 @@
+.PHONY: offline
+
+offline:
+	sh scripts/run_offline_operator.sh
