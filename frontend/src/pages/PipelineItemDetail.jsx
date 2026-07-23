@@ -5,15 +5,18 @@ import { getItem } from "@/api/pipelineClient";
 import DomainBadge from "@/components/pipeline/DomainBadge";
 import EvidenceTierBadge from "@/components/lifecycle/EvidenceTierBadge";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
+import { federationTone } from "@pr-federation/react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const HUB_REPO = "thehub-pr";
 
-const statusTone = {
-  ok: "text-emerald-700 dark:text-emerald-300",
-  failed: "text-red-700 dark:text-red-300",
-  skipped: "text-slate-600 dark:text-slate-300",
+// Dispatch status → canonical federation status roles. Colors come from the
+// shared `.fd-status` tokens (@pr-federation/react/styles.css).
+const STATUS_ROLE = {
+  ok: "success",
+  failed: "danger",
+  skipped: "neutral",
 };
 
 function formatDate(value) {
@@ -64,6 +67,9 @@ export default function PipelineItemDetail() {
 
   const pct = Math.round((Number(item.confidence) || 0) * 100);
   const dispatch = item.dispatch;
+  const { className: statusChipClass, ...statusChipAttrs } = federationTone(
+    STATUS_ROLE[dispatch?.status] || "neutral",
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -110,7 +116,7 @@ export default function PipelineItemDetail() {
           ) : (
             <div className="space-y-3">
               <p>
-                Status: <span className={`font-semibold ${statusTone[dispatch.status] || ""}`}>{dispatch.status}</span>
+                Status: <span className={statusChipClass} {...statusChipAttrs}>{dispatch.status}</span>
                 <span className="ml-3 text-muted-foreground">at {formatDate(dispatch.dispatched_at)}</span>
               </p>
               {dispatch.error ? <p className="text-red-700">Error: {dispatch.error}</p> : null}
