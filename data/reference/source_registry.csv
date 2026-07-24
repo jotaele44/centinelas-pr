@@ -37,3 +37,6 @@ CENT-SRC-RSS-OSHA-FEDERAL-REGISTER-NOTICES,OSHA Federal Register Notices,en,osha
 CENT-SRC-RSS-OSHA-STANDARD-INTERPRETATIONS,OSHA Standard Interpretations,en,osha_enforcement,0.95,rss,active,Live RSS intake (T1); engine feed https://www.osha.gov/laws-regs/standardinterpretations.xml
 CENT-SRC-RSS-OSHA-DIRECTIVES,OSHA Directives,en,osha_enforcement,0.95,rss,active,Live RSS intake (T1); engine feed https://www.osha.gov/enforcement/directives.xml
 CENT-SRC-RSS-OSHA-QUICKTAKES,OSHA QuickTakes,en,osha_enforcement,0.85,rss,active,Live RSS intake (T2); engine feed https://www.osha.gov/sites/default/files/quicktakes.xml
+CENT-SRC-PROCUREMENT-ASG,Administración de Servicios Generales — Subastas,es,procurement_rfp,0.95,html,active,T1 official index; canonical https://www.asg.pr.gov/subastas
+CENT-SRC-PROCUREMENT-SAM-PR,SAM.gov — Puerto Rico contract opportunities,en,procurement_rfp,0.95,html,active,T1 federal opportunities; canonical https://sam.gov/content/opportunities
+CENT-SRC-MUNI-SAN-JUAN-PROCUREMENT,Municipio de San Juan — Avisos y Portal de Subastas,es,municipal_procurement,0.95,html,active,T1 canonical pages https://sanjuan.pr/avisos-publicos/ and https://subastas.sanjuan.pr/
