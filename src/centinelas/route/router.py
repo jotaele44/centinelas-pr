@@ -22,6 +22,13 @@ _FINANCE_ENRICHED_REPOS = {"moneysweep-pr"}
 # lean base payload.
 _WATER_TAGGED_REPOS = {"aguayluz-pr", HUB_REPO}
 
+# Targets that consume the resolved PR municipalities. ovnis-pr (the anomalous
+# case corpus) is Puerto Rico-scoped and requires a location_name on every case;
+# passing the already-resolved municipalities lets its intake derive that
+# location instead of quarantining an otherwise valid signal. This reuses the
+# classifier's existing enrichment (item.municipalities) — no new resolution.
+_LOCATION_TAGGED_REPOS = {"ovnis-pr"}
+
 
 def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
     """Build the JSON payload for a target repo's intake/ folder.
@@ -67,6 +74,10 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
         # Fine-grained water/utility beat tags (potable_water, boil_water,
         # reservoir_drought, power_grid, …) so aguayluz can route within its domain.
         payload["domain_tags"] = water_utility_subtypes(f"{item.title} {item.body_text}")
+    if target_repo in _LOCATION_TAGGED_REPOS:
+        # Resolved PR municipalities so ovnis can set a case location_name.
+        # Always present (empty when unknown) so its intake contract is stable.
+        payload["municipalities"] = list(item.municipalities)
     return payload
 
 
