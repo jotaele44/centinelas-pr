@@ -53,6 +53,8 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "DISPATCHED_DIR", data_dir / "dispatched")
 
     monkeypatch.setattr("centinelas.ingest.rss.poll_all", lambda: [_raw_item("run-ep-001")])
+    monkeypatch.setattr(
+        "centinelas.ingest.federal_register.poll_federal_register", list)
 
     with TestClient(main.app) as c:
         yield c
@@ -96,6 +98,8 @@ def test_run_dispatch_records_land_in_server_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "CLASSIFIED_DIR", data_dir / "classified")
     monkeypatch.setattr(main, "DISPATCHED_DIR", data_dir / "dispatched")
     monkeypatch.setattr("centinelas.ingest.rss.poll_all", lambda: [_raw_item("run-ep-002")])
+    monkeypatch.setattr(
+        "centinelas.ingest.federal_register.poll_federal_register", list)
 
     with TestClient(main.app) as c:
         c.post("/run", json={"dry_run": True})

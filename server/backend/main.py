@@ -176,6 +176,7 @@ def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
     Returns a JSON summary of the run (counts + dispatch-status breakdown).
     """
     from centinelas.classify.classifier import classify as do_classify
+    from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
@@ -191,9 +192,11 @@ def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
     req = req or RunRequest()
 
     # poll_all already isolates per-feed failures; guard the call itself so a hard
-    # failure surfaces as a clean 502 rather than an unhandled 500.
+    # failure surfaces as a clean 502 rather than an unhandled 500. The Federal
+    # Register poller (config-gated, self-swallowing) adds federal coastal/permit
+    # coverage so the HTTP pipeline matches the CLI's intake sources.
     try:
-        items = poll_all()
+        items = poll_all() + poll_federal_register()
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"ingest failed: {exc}") from exc
     if req.limit:

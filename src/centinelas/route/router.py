@@ -5,7 +5,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO
-from centinelas.classify.rules import is_critical_signal, water_utility_subtypes
+from centinelas.classify.rules import (
+    is_critical_signal,
+    permit_subtypes,
+    water_utility_subtypes,
+)
 from centinelas.models import ClassifiedItem
 
 # Targets that consume the pre-officialization finance/location enrichment.
@@ -71,9 +75,16 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
             }
         )
     if target_repo in _WATER_TAGGED_REPOS:
-        # Fine-grained water/utility beat tags (potable_water, boil_water,
-        # reservoir_drought, power_grid, …) so aguayluz can route within its domain.
-        payload["domain_tags"] = water_utility_subtypes(f"{item.title} {item.body_text}")
+        # Fine-grained beat tags so aguayluz can route within its domain:
+        # water/utility (potable_water, boil_water, reservoir_drought, power_grid, …)
+        # plus permit-ecosystem (coastal_zmt, environmental_impact, public_hearing, …).
+        # Deduped, water tags first, both order-stable within their taxonomy.
+        text = f"{item.title} {item.body_text}"
+        tags = water_utility_subtypes(text)
+        for tag in permit_subtypes(text):
+            if tag not in tags:
+                tags.append(tag)
+        payload["domain_tags"] = tags
     if target_repo in _LOCATION_TAGGED_REPOS:
         # Resolved PR municipalities so ovnis can set a case location_name.
         # Always present (empty when unknown) so its intake contract is stable.

@@ -37,7 +37,24 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
          "prasa", "acueducto", "aqueduct", "wastewater", "alcantarillado", "sewer",
          "reservoir", "embalse", "represa", "boil water", "boil-water",
          "hervir el agua", "racionamiento", "sequia", "luma", "prepa", "preb",
-         "outage", "apagon", "aee"],
+         "outage", "apagon", "aee",
+         # PR permit ecosystem — DRNA coastal/environmental permitting + federal
+         # coastal (Corps §404 / EPA). These are the pre-officialization permit
+         # signals (boundary certifications, impact determinations, hearings,
+         # notices, reviews) that anchor to aguayluz-pr. Accent-folded at compile
+         # time ("maritimo" matches "marítimo"). Deliberately omits over-generic
+         # tokens: bare "dia" (collides with Spanish "día"/"días"), bare "permiso"
+         # / "endoso" / "costera" / "section 10" (too broad) — precise multi-word
+         # phrases are used instead so non-permit text is not mislabeled.
+         "deslinde", "zmt", "zona maritimo terrestre", "maritimo terrestre",
+         "zona costanera", "zona costera", "litoral", "ambiental",
+         "impacto ambiental", "declaracion de impacto", "cumplimiento ambiental",
+         "endosos y permisos", "fuente de contaminacion", "contaminacion",
+         "calidad de agua", "calidad del agua", "calidad de aire",
+         "calidad del aire", "inyeccion subterranea", "revision publica",
+         "npdes", "drna", "recursos naturales", "junta de calidad ambiental",
+         "section 404", "clean water act", "corps of engineers", "dredge",
+         "antilles"],
         DomainLabel.ENVIRONMENTAL,
     ),
     (
@@ -156,6 +173,47 @@ def water_utility_subtypes(text: str) -> list[str]:
     """
     lower = _fold(text)
     return [tag for tag, pats in _COMPILED_WATER_TAGS if any(p.search(lower) for p in pats)]
+
+
+# ── Permit-ecosystem sub-taxonomy ─────────────────────────────────────────────
+# Like the water/utility layer above, ENVIRONMENTAL stays coarse (routes to
+# aguayluz-pr). This finer layer tags *which* permit beat a signal is about — a
+# ZMT boundary certification vs. an environmental-impact determination vs. a
+# public hearing vs. a pollution-source permit — so aguayluz/the Hub can route
+# within the permit domain instead of treating every DRNA/federal permit item
+# alike. Merged into ``domain_tags`` alongside the water tags in
+# router.build_payload. Tag names are chosen to not collide with the water tags.
+_PERMIT_TAGS: dict[str, list[str]] = {
+    "coastal_zmt": ["deslinde", "zmt", "zona maritimo terrestre", "maritimo terrestre",
+                    "zona costanera", "zona costera", "litoral", "pmzc"],
+    "environmental_impact": ["impacto ambiental", "declaracion de impacto",
+                             "environmental impact"],
+    "air_quality": ["calidad de aire", "calidad del aire", "air quality"],
+    "water_permit": ["calidad de agua", "calidad del agua", "npdes",
+                     "fuente de contaminacion", "water quality permit"],
+    "wells_injection": ["inyeccion subterranea", "pozo de inyeccion",
+                        "underground injection"],
+    "underground_tanks": ["tanques soterrados", "tanque soterrado",
+                          "underground storage tank"],
+    "land_contamination": ["contaminacion de terrenos", "terrenos contaminados",
+                           "land contamination"],
+    "public_hearing": ["vista publica", "revision publica", "comentario publico",
+                       "public hearing", "public comment"],
+    "procurement_permit": ["sdp", "rfp", "subasta", "licitacion"],
+    "regulation": ["reglamento", "reglamento propuesto", "orden administrativa"],
+}
+_COMPILED_PERMIT_TAGS: list[tuple[str, list[re.Pattern[str]]]] = [
+    (tag, [_compile(kw) for kw in kws]) for tag, kws in _PERMIT_TAGS.items()
+]
+
+
+def permit_subtypes(text: str) -> list[str]:
+    """Return the permit-ecosystem sub-taxonomy tags a signal matches (may be empty).
+
+    Order-stable (matches ``_PERMIT_TAGS`` insertion order); deterministic.
+    """
+    lower = _fold(text)
+    return [tag for tag, pats in _COMPILED_PERMIT_TAGS if any(p.search(lower) for p in pats)]
 
 
 # Life-safety / emergency vocabulary (English + PR Spanish). A signal matching any of
