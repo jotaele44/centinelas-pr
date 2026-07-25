@@ -5,34 +5,37 @@ import { getItems, getStatus } from "@/api/pipelineClient";
 import DomainBadge, { ALL_DOMAINS, DOMAIN_META } from "@/components/pipeline/DomainBadge";
 import EvidenceTierBadge from "@/components/lifecycle/EvidenceTierBadge";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
-import { Badge } from "@/components/ui/badge";
+import { federationTone } from "@pr-federation/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/lib/LanguageContext";
 
 const HUB_REPO = "thehub-pr";
 
-const dispatchTone = {
-  ok: "border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300",
-  failed: "border-red-600/30 bg-red-600/10 text-red-800 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-300",
-  skipped: "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:border-slate-400/40 dark:bg-slate-400/15 dark:text-slate-300",
+// Dispatch status → canonical federation status roles. Colors come from the
+// shared `.fd-status` tokens (@pr-federation/react/styles.css).
+const DISPATCH_ROLE = {
+  ok: "success",
+  failed: "danger",
+  skipped: "neutral",
 };
 
 function DispatchChips({ dispatch }) {
   if (!dispatch) {
-    return <Badge variant="outline" className="border-slate-400/30 bg-slate-400/10 text-slate-600 dark:border-slate-400/40 dark:bg-slate-400/15 dark:text-slate-300">not yet dispatched</Badge>;
+    const { className: fdClass, ...toneAttrs } = federationTone("neutral");
+    return <span className={fdClass} {...toneAttrs}>not yet dispatched</span>;
   }
-  const tone = dispatchTone[dispatch.status] || dispatchTone.skipped;
+  const { className: fdClass, ...toneAttrs } = federationTone(DISPATCH_ROLE[dispatch.status] || "neutral");
   return (
     <div className="flex flex-wrap gap-1.5">
       {(dispatch.dispatched_to || []).map((repo) => (
-        <Badge
+        <span
           key={repo}
-          variant="outline"
-          className={`${tone} ${repo === HUB_REPO ? "font-bold" : ""}`}
+          className={`${fdClass} ${repo === HUB_REPO ? "font-bold" : ""}`}
           title={repo === HUB_REPO ? "Hub — every item is logged here" : `Dispatched to ${repo}`}
+          {...toneAttrs}
         >
           {repo === HUB_REPO ? "⬢ hub" : repo.replace(/-pr$/, "")}
-        </Badge>
+        </span>
       ))}
     </div>
   );
