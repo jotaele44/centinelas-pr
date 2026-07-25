@@ -11,18 +11,7 @@ from desktop import setup
 
 
 class HubSiblingPreflightTests(unittest.TestCase):
-    def configure_paths(self, root: Path) -> Path:
-        sibling = root / "thehub-pr"
-        package = sibling / "packages" / "prii_desktop"
-        pyproject = package / "pyproject.toml"
-        self.stack.enter_context(mock.patch.object(setup, "HUB_SIBLING", sibling))
-        self.stack.enter_context(mock.patch.object(setup, "HUB_DESKTOP_PACKAGE", package))
-        self.stack.enter_context(mock.patch.object(setup, "HUB_DESKTOP_PYPROJECT", pyproject))
-        return pyproject
-
     def setUp(self) -> None:
-        self.stack = unittest.mock.ExitStack() if hasattr(unittest.mock, "ExitStack") else None
-        # ExitStack lives in contextlib; use a patcher list for Python 3.10 compatibility.
         self.patchers = []
 
     def tearDown(self) -> None:
