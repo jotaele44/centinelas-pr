@@ -121,3 +121,133 @@ feeds:
   - name: "OSHA QuickTakes"
     url: "https://www.osha.gov/sites/default/files/quicktakes.xml"
     tier: "T2"
+
+  # ── Puerto Rico Permit Ecosystem — DRNA ───────────────
+  # DRNA (Departamento de Recursos Naturales y Ambientales, incl. the former
+  # JCA/Junta de Calidad Ambiental) is the territorial coastal/environmental
+  # permitting authority. Its site is WordPress, so every content category
+  # exposes a valid `/cat/<slug>/feed/` RSS endpoint (verified 200 + <item>s).
+  # These are the pre-officialization permit signals — boundary certifications,
+  # environmental-impact determinations, public hearings, notices, reviews —
+  # that anchor to aguayluz-pr (ENVIRONMENTAL) and, for RFP/subasta items,
+  # moneysweep-pr (FINANCIAL) via classify/rules.py. Add more DRNA category
+  # feeds here as new permit beats appear (enumerate via /wp-json/wp/v2/categories).
+
+  # Deslindes / ZMT / coastal (the origin beat: maritime-terrestrial boundaries)
+  - name: "DRNA — Deslindes ZMT"
+    url: "https://www.drna.pr.gov/cat/deslindes-zmt/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Deslindes ZMT (Aprobados)"
+    url: "https://www.drna.pr.gov/cat/deslindes-zmt/deslindes-zmt-aprobados/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Deslindes ZMT (Avisos)"
+    url: "https://www.drna.pr.gov/cat/deslindes-zmt/aviso-deslindes-zmt/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Zona Costanera"
+    url: "https://www.drna.pr.gov/cat/programas-y-proyectos/zona-costanera/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Zona Marítimo Terrestre"
+    url: "https://www.drna.pr.gov/cat/programas-y-proyectos/zona-costanera/zona-maritimo-terrestre/feed/"
+    tier: "T2"
+
+  - name: "DRNA — PMZC (Manejo Zona Costanera)"
+    url: "https://www.drna.pr.gov/cat/pmzc/feed/"
+    tier: "T2"
+
+  # Endorsements / permits / application forms
+  - name: "DRNA — Endosos y Permisos"
+    url: "https://www.drna.pr.gov/cat/endosos-y-permisos/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Formularios PERM"
+    url: "https://www.drna.pr.gov/cat/documentos/formularios/perm/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Calidad de Agua"
+    url: "https://www.drna.pr.gov/cat/documentos/formularios/perm/calidad-agua/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Inyección Subterránea"
+    url: "https://www.drna.pr.gov/cat/documentos/formularios/perm/calidad-agua/inyeccion-subterranea/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Tanques Soterrados"
+    url: "https://www.drna.pr.gov/cat/documentos/formularios/perm/calidad-agua/tanques-soterrados/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Calidad de Aire"
+    url: "https://www.drna.pr.gov/cat/documentos/formularios/perm/calidad-aire/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Contaminación de Terrenos"
+    url: "https://www.drna.pr.gov/cat/documentos/formularios/perm/contaminacion-terrenos/feed/"
+    tier: "T2"
+
+  # Environmental review / public notices / comment periods
+  - name: "DRNA — DIA (Declaración de Impacto Ambiental)"
+    url: "https://www.drna.pr.gov/cat/documentos/dia/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Vistas Públicas"
+    url: "https://www.drna.pr.gov/cat/vistas-publicas/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Avisos"
+    url: "https://www.drna.pr.gov/cat/avisos/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Aviso Ambiental"
+    url: "https://www.drna.pr.gov/cat/avisos/aviso-ambiental/feed/"
+    tier: "T1"
+
+  - name: "DRNA — Revisión Pública"
+    url: "https://www.drna.pr.gov/cat/avisos/revision-publica/feed/"
+    tier: "T1"
+
+  # Procurement (RFP/subasta → FINANCIAL → moneysweep-pr)
+  - name: "DRNA — SDP / RFP"
+    url: "https://www.drna.pr.gov/cat/avisos/sdp-rfp/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Subastas"
+    url: "https://www.drna.pr.gov/cat/avisos/subastas/feed/"
+    tier: "T2"
+
+  # Regulatory / orders / notifications
+  - name: "DRNA — Reglamentos"
+    url: "https://www.drna.pr.gov/cat/reglamentos-es/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Reglamentos Propuestos"
+    url: "https://www.drna.pr.gov/cat/reglamentos-es/prop_reg/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Órdenes Administrativas"
+    url: "https://www.drna.pr.gov/cat/documentos/ordenes-administrativas/feed/"
+    tier: "T2"
+
+  - name: "DRNA — Notificaciones"
+    url: "https://www.drna.pr.gov/cat/notificaciones/feed/"
+    tier: "T2"
+
+# ── Federal Register (JSON API, not RSS) ────────────────
+# Federal coastal/environmental permit actions touching Puerto Rico, pulled from
+# the Federal Register JSON API (server-side filtered by term + agency, so the
+# result is content-rich and PR-scoped — unlike the USACE district RSS, whose
+# items are opaque permit-ID stubs with no body/location). Consumed by
+# ingest/federal_register.py (poll_federal_register). Agencies are Federal
+# Register slugs. See data/reference/source_registry.csv for the scrape-only
+# federal sources (USACE Jacksonville notices, EPA Region 2 NPDES).
+federal_register:
+  enabled: true
+  term: "Puerto Rico"
+  order: "newest"
+  per_page: 50
+  tier: "T1"
+  agencies:
+    - "engineers-corps"
+    - "environmental-protection-agency"

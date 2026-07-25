@@ -19,6 +19,23 @@ console = Console()
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 
+def _merge_items(*item_lists: list) -> list:
+    """Concatenate RawItem lists from multiple intake sources, deduping by item_id.
+
+    Each poller (RSS, Federal Register) dedups internally; this guards against a
+    collision across sources (same source_url + published_at) while preserving
+    first-seen order.
+    """
+    seen: set[str] = set()
+    merged: list = []
+    for items in item_lists:
+        for item in items:
+            if item.item_id not in seen:
+                seen.add(item.item_id)
+                merged.append(item)
+    return merged
+
+
 @app.command()
 def ingest(
     output: Path = typer.Option(
@@ -29,10 +46,11 @@ def ingest(
     limit: int = typer.Option(0, "--limit", "-n", help="Max items (0 = unlimited)"),
 ) -> None:
     """Poll all RSS/Atom feeds and write RawItems to local queue."""
+    from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
 
     output.mkdir(parents=True, exist_ok=True)
-    items = poll_all()
+    items = _merge_items(poll_all(), poll_federal_register())
     if limit:
         items = items[:limit]
 
@@ -123,6 +141,7 @@ def run(
 ) -> None:
     """Full pipeline: ingest → classify → route."""
     from centinelas.classify.classifier import build_classified_item
+    from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
     from centinelas.models import ClassifiedItem
     from centinelas.route.dispatch import dispatch
@@ -130,7 +149,7 @@ def run(
     console.print("[bold]centinelas run[/bold] — full pipeline")
 
     console.print("  [cyan]ingest[/cyan]...")
-    items = poll_all()
+    items = _merge_items(poll_all(), poll_federal_register())
     if limit:
         items = items[:limit]
     console.print(f"  ingested {len(items)} raw items")
