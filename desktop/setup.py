@@ -48,24 +48,41 @@ MIN_PYTHON = (3, 10)
 
 HUB_SIBLING = REPO_ROOT.parent / "thehub-pr"
 HUB_CLONE_URL = "https://github.com/jotaele44/thehub-pr.git"
+HUB_DESKTOP_PACKAGE = HUB_SIBLING / "packages" / "prii_desktop"
+HUB_DESKTOP_PYPROJECT = HUB_DESKTOP_PACKAGE / "pyproject.toml"
+
+
+def validate_hub_sibling() -> None:
+    """Require the sibling checkout to contain an installable desktop package."""
+    if HUB_DESKTOP_PYPROJECT.is_file():
+        return
+
+    raise SystemExit(
+        f"thehub-pr exists at {HUB_SIBLING}, but the shared desktop package is "
+        f"missing or incomplete: expected {HUB_DESKTOP_PYPROJECT}. "
+        "This usually means the sibling checkout is stale. Preserve any local "
+        "changes, then update it (for a clean main checkout: "
+        f"git -C {HUB_SIBLING} pull --ff-only origin main) and re-run setup."
+    )
 
 
 def ensure_hub_sibling() -> None:
-    """Requirement files reference shared packages by a sibling path
-    (``-e ../thehub-pr/packages/*``). For a dev launch from a fresh clone the
-    sibling may be absent, so fetch it once. Frozen builds bundle the package and
-    never hit this path."""
-    if HUB_SIBLING.exists():
-        return
-    git = shutil.which("git")
-    if git is None:
-        raise SystemExit(
-            "git not found: the desktop wrapper needs a sibling thehub-pr checkout "
-            f"at {HUB_SIBLING}. Clone {HUB_CLONE_URL} there and re-run."
-        )
-    print(f"Fetching shared federation packages into {HUB_SIBLING} …")
-    run([git, "clone", "--depth", "1", HUB_CLONE_URL, str(HUB_SIBLING)])
+    """Ensure the sibling checkout contains the shared installable package.
 
+    A missing checkout is cloned once. An existing but stale or incomplete
+    checkout is never modified automatically.
+    """
+    if not HUB_SIBLING.exists():
+        git = shutil.which("git")
+        if git is None:
+            raise SystemExit(
+                "git not found: the desktop wrapper needs a sibling thehub-pr checkout "
+                f"at {HUB_SIBLING}. Clone {HUB_CLONE_URL} there and re-run."
+            )
+        print(f"Fetching shared federation packages into {HUB_SIBLING} …")
+        run([git, "clone", "--depth", "1", HUB_CLONE_URL, str(HUB_SIBLING)])
+
+    validate_hub_sibling()
 
 def setup_python() -> None:
     ensure_hub_sibling()
@@ -79,7 +96,8 @@ def setup_python() -> None:
     install = [str(venv_python()), "-m", "pip", "install", "--quiet"]
     for req in REQUIREMENT_FILES:
         install += ["-r", str(req)]
-    run(install)
+    # Resolve editable paths from the repository root, independent of the shell cwd.
+    run(install, cwd=REPO_ROOT)
     # Repos whose backend imports the repo's own package list extra pip specs
     # (e.g. an editable install with extras) in desktop/config.py.
     extra = list(getattr(config, "EXTRA_PIP_SPECS", []))
