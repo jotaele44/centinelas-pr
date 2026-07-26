@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/centinelas/space_data_lead.schema.json",
+  "title": "Centinelas Space Data Lead",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["lead_id", "category", "subcategory", "source_id", "source_url", "discovered_at", "title", "discovery_provenance", "access_status", "temporal_coverage", "geographic_coverage", "sensor", "potential_case_links", "downstream_route", "evidence_tier", "confidence_score", "review_status", "content_fingerprint", "raw_binary_storage_prohibited", "confirmation_claim_prohibited"],
+  "properties": {
+    "category": {"const": "SPACE_AND_REMOTE_SENSING"},
+    "subcategory": {"enum": ["SATELLITE_DATASET_RELEASE", "MISSION_ARCHIVE_RELEASE", "DECLASSIFIED_SPACE_RECORD", "ORBITAL_EPHEMERIS_UPDATE", "WEATHER_SATELLITE_ARCHIVE", "INFRARED_SENSOR_RECORD", "SHUTTLE_VIDEO_OR_TELEMETRY", "SPACE_SURVEILLANCE_RECORD", "FOIA_READING_ROOM_RELEASE", "SCIENTIFIC_REPROCESSING"]},
+    "raw_binary_storage_prohibited": {"const": true},
+    "confirmation_claim_prohibited": {"const": true},
+    "confidence_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "content_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
