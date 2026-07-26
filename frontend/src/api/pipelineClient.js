@@ -20,6 +20,18 @@ async function getJSON(path, fallback = null) {
   }
 }
 
+async function postJSON(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15000),
+  });
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload.detail || `Request failed (${res.status})`);
+  return payload;
+}
+
 const qs = (params = {}) => {
   const pairs = Object.entries(params).filter(([, v]) => v != null && v !== "");
   return pairs.length ? "?" + new URLSearchParams(pairs).toString() : "";
@@ -31,3 +43,9 @@ export const getItem = (itemId) => getJSON(`/items/${encodeURIComponent(itemId)}
 export const getQueue = () => getJSON("/queue", []);
 export const getSources = () => getJSON("/sources", []);
 export const getStatus = () => getJSON("/status", {});
+export const getHandoffs = () => getJSON("/handoffs", []);
+export const createHandoff = (itemId, targets, options = {}) =>
+  postJSON(`/handoffs/${encodeURIComponent(itemId)}`, {
+    targets,
+    dry_run: Boolean(options.dryRun),
+  });
