@@ -48,9 +48,10 @@ def ingest(
     """Poll all RSS/Atom feeds and write RawItems to local queue."""
     from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
+    from centinelas.ingest.web import poll_scrape_sources
 
     output.mkdir(parents=True, exist_ok=True)
-    items = _merge_items(poll_all(), poll_federal_register())
+    items = _merge_items(poll_all(), poll_federal_register(), poll_scrape_sources())
     if limit:
         items = items[:limit]
 
@@ -143,13 +144,14 @@ def run(
     from centinelas.classify.classifier import build_classified_item
     from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
+    from centinelas.ingest.web import poll_scrape_sources
     from centinelas.models import ClassifiedItem
     from centinelas.route.dispatch import dispatch
 
     console.print("[bold]centinelas run[/bold] — full pipeline")
 
     console.print("  [cyan]ingest[/cyan]...")
-    items = _merge_items(poll_all(), poll_federal_register())
+    items = _merge_items(poll_all(), poll_federal_register(), poll_scrape_sources())
     if limit:
         items = items[:limit]
     console.print(f"  ingested {len(items)} raw items")

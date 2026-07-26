@@ -54,7 +54,15 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
          "calidad del aire", "inyeccion subterranea", "revision publica",
          "npdes", "drna", "recursos naturales", "junta de calidad ambiental",
          "section 404", "clean water act", "corps of engineers", "dredge",
-         "antilles"],
+         "antilles",
+         # Permit hearings. Scraped OGPe/JP hearing entries are titled with a
+         # bare case number ("2025-663228-PU-438754") or a short code
+         # ("VP - Poblado Castañer"), so the hearing vocabulary is the only thing
+         # that routes them to the permit lane. Both plural forms are listed
+         # because _compile() only tolerates a trailing "s" on the whole phrase,
+         # and Spanish pluralizes both words ("vistas públicas").
+         "vista publica", "vistas publicas", "junta de planificacion",
+         "consulta de ubicacion"],
         DomainLabel.ENVIRONMENTAL,
     ),
     (

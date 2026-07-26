@@ -251,3 +251,84 @@ federal_register:
   agencies:
     - "engineers-corps"
     - "environmental-protection-agency"
+
+# ── HTML scrape sources (no feed available) ─────────────
+# The central permitting bodies — OGPe (permisos.pr.gov) and the Junta de
+# Planificación (jp.pr.gov) — plus EPA Region 2's PR NPDES listing publish no
+# RSS. All of them are server-rendered (content is in the raw HTML; no JS
+# execution needed), so ingest/web.py parses them with httpx + BeautifulSoup.
+# Consumed by web.poll_scrape_sources(). Each source names a `parser`:
+#   webflow_cms — Webflow CMS collection lists (.w-dyn-item), optionally
+#                 restricted to named tab panes via `tabs`
+#   html_table  — a header-row + data-row HTML table
+#   rss_detail  — an RSS index whose items are stubs, so each linked notice
+#                 page is fetched for its body (crawl depth 2)
+scrape:
+  enabled: true
+  sources:
+    - name: "OGPe — Fuentes de Información"
+      url: "https://permisos.pr.gov/fuentes-de-informacion"
+      parser: webflow_cms
+      tier: "T1"
+      # Permit-signal panes only. The page also carries Manuales, Guía de
+      # Usuario SBP, Videos Informativos, Formularios, Mapas de Inundabilidad,
+      # Códigos and Informes — how-to material, not permit events. Ingesting
+      # those would put user manuals and tutorial videos into the signal
+      # pipeline permanently, so they are deliberately excluded here.
+      tabs:
+        - "Vistas Públicas"
+        - "Próximas Vistas"
+        - "Vistas Pasadas"
+        - "Documentos Ambientales"
+        - "Ordenes Administrativas"
+        - "Leyes y Reglamentos"
+        - "RFPs"
+        - "Ordenanzas Municipales"
+        - "Cartas Circulares"
+
+    # `section` labels what each entry *is* for pages whose whole listing is one
+    # record type. Entries here are often titled with only a case number or a
+    # short code ("VP - Poblado Castañer"), so without it the item carries no
+    # word the classifier can act on.
+    - name: "JP — Vistas Públicas"
+      url: "https://jp.pr.gov/vistas-publicas"
+      parser: webflow_cms
+      tier: "T1"
+      section: "Vista pública de la Junta de Planificación"
+
+    - name: "JP — Resoluciones Especiales"
+      url: "https://jp.pr.gov/resoluciones-especiales"
+      parser: webflow_cms
+      tier: "T2"
+      section: "Resolución especial de la Junta de Planificación"
+
+    - name: "JP — Noticias y Comunicados"
+      url: "https://jp.pr.gov/noticias-comunicados"
+      parser: webflow_cms
+      tier: "T2"
+      section: "Comunicado de la Junta de Planificación"
+
+    - name: "EPA Region 2 — Puerto Rico NPDES Permits"
+      url: "https://www.epa.gov/npdes-permits/puerto-rico-npdes-permits"
+      parser: html_table
+      tier: "T1"
+      # Columns: Location | Facility or Permit Name | Permit Number |
+      # Permit Type | Permit Status | Public Notice Date |
+      # Public Notice Comment Period End Date | Permit Effective/Expiration Date
+      title_columns: ["Facility or Permit Name", "Permit Number", "Permit Status"]
+      date_column: "Public Notice Date"
+
+    - name: "USACE Jacksonville — Regulatory Public Notices"
+      url: "https://www.saj.usace.army.mil/DesktopModules/ArticleCS/RSS.ashx?ContentType=4&Site=435&isdashboardselected=0&max=20"
+      parser: rss_detail
+      # DISABLED: saj.usace.army.mil sits behind an Akamai edge that refuses
+      # programmatic clients — httpx/curl get "403 Access Denied" (even for
+      # robots.txt) and headless Chromium gets ERR_CONNECTION_RESET. Only the
+      # RSS endpoint answers, and its items are opaque permit-ID stubs
+      # ("SAJ-2023-00283(AJC)") with no body or location, so they cannot be
+      # PR-filtered or classified. The rss_detail connector is implemented and
+      # tested; flip this to true from a network the edge accepts — no code
+      # change required.
+      enabled: false
+      tier: "T1"
+      match_any: ["puerto rico", "antilles", "vieques", "culebra"]
