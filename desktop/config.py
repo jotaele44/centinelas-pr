@@ -31,6 +31,14 @@ REQUIREMENT_FILES = [
 # Health endpoint used to detect that the backend is up.
 HEALTH_PATH = "/health"
 
-# The intake API imports the centinelas package itself; install it (with the
-# fastapi/uvicorn server extra) into the private venv.
-EXTRA_PIP_SPECS = ["-e", f"{REPO_ROOT}[server]"]
+# pip does not interpret [tool.uv.sources], so provide the sibling federation
+# libraries explicitly before installing Centinelas with its server extra.
+HUB_PACKAGES = REPO_ROOT.parent / "thehub-pr" / "packages"
+EXTRA_PIP_SPECS = [
+    "-e",
+    str(HUB_PACKAGES / "prii_maintenance"),
+    "-e",
+    str(HUB_PACKAGES / "prii_export_utils"),
+    "-e",
+    f"{REPO_ROOT}[server]",
+]
