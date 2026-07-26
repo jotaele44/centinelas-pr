@@ -1,0 +1,21 @@
+name: Record handoff acknowledgment
+on:
+  repository_dispatch:
+    types: [centinelas-handoff-ack]
+permissions:
+  contents: write
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          CENTINELAS_ACK: ${{ toJSON(github.event.client_payload) }}
+        run: python3 scripts/record_handoff_ack.py
+      - name: Persist acknowledgment
+        run: |
+          git config user.name centinelas-handoff-bot
+          git config user.email actions@users.noreply.github.com
+          git add data/handoff_receipts
+          git diff --cached --quiet || git commit -m "data: record handoff acknowledgment [skip ci]"
+          git push
