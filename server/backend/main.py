@@ -27,6 +27,7 @@ DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", str(REPO_ROOT / ".centinel
 QUEUE_DIR = DATA_DIR / "queue"
 CLASSIFIED_DIR = DATA_DIR / "classified"
 DISPATCHED_DIR = DATA_DIR / "dispatched"
+HANDOFF_DIR = DATA_DIR / "handoffs"
 
 app = FastAPI(title="Centinelas-PR Intake API")
 app.add_middleware(
@@ -154,6 +155,72 @@ class RunRequest(BaseModel):
 
     dry_run: bool = False
     limit: int = 0
+
+
+class HandoffRequest(BaseModel):
+    targets: list[str]
+    dry_run: bool = False
+    retry_receipt_id: str | None = None
+
+
+@app.get("/handoffs")
+def handoffs(limit: int = Query(default=500, ge=1, le=5000)) -> JSONResponse:
+    """List classified items and their durable manual-handoff history."""
+    history: dict[str, list[dict[str, Any]]] = {}
+    for receipt in _load_dir(HANDOFF_DIR):
+        history.setdefault(receipt.get("item_id", ""), []).append(receipt)
+    rows = []
+    for item in _load_dir(CLASSIFIED_DIR):
+        rows.append({**item, "handoffs": history.get(item.get("item_id", ""), [])})
+    rows.sort(key=lambda row: row.get("captured_at") or "", reverse=True)
+    return JSONResponse(rows[:limit])
+
+
+@app.post("/handoffs/{item_id}")
+def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
+    """Dispatch one classified item to selected federation consumers."""
+    from datetime import datetime, timezone
+
+    from centinelas.models import ClassifiedItem
+    from centinelas.route import dispatch as dispatch_mod
+    from centinelas.route.dispatch import dispatch_to_targets
+
+    raw = _load_json(CLASSIFIED_DIR / f"{item_id}.json")
+    if raw is None:
+        raise HTTPException(status_code=404, detail=f"Item not found: {item_id}")
+
+    targets = req.targets
+    if req.retry_receipt_id:
+        previous = _load_json(HANDOFF_DIR / f"{req.retry_receipt_id}.json")
+        if previous is None or previous.get("item_id") != item_id:
+            raise HTTPException(status_code=404, detail="Retry receipt not found")
+        failed = {
+            attempt["target"]
+            for attempt in previous.get("attempts", [])
+            if attempt.get("status") == "failed"
+        }
+        targets = [target for target in req.targets if target in failed]
+        if not targets:
+            raise HTTPException(status_code=409, detail="Receipt has no failed targets to retry")
+
+    dispatch_mod._DATA_DIR = DATA_DIR
+    try:
+        receipt = dispatch_to_targets(
+            ClassifiedItem.model_validate(raw),
+            targets,
+            dry_run=req.dry_run,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    receipt["receipt_id"] = f"{item_id}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}"
+    receipt["created_at"] = datetime.now(timezone.utc).isoformat()
+    HANDOFF_DIR.mkdir(parents=True, exist_ok=True)
+    (HANDOFF_DIR / f"{receipt['receipt_id']}.json").write_text(
+        json.dumps(receipt, indent=2),
+        encoding="utf-8",
+    )
+    return JSONResponse(receipt)
 
 
 @app.post("/run")
