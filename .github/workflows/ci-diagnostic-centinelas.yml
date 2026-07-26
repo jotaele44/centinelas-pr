@@ -1,0 +1,42 @@
+name: ci-diagnostic-centinelas
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - ".github/workflows/ci-diagnostic-centinelas.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  capture-ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install validation environment
+        shell: bash
+        run: |
+          if [ ! -d ../thehub-pr ]; then
+            git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr
+          fi
+          command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+          uv pip install --system -e ".[dev]"
+      - name: Capture Ruff diagnostics
+        shell: bash
+        run: |
+          set +e
+          ruff check . > centinelas-ruff-diagnostic.log 2>&1
+          status=$?
+          echo "exit_status=$status" >> centinelas-ruff-diagnostic.log
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: centinelas-ruff-diagnostic
+          path: centinelas-ruff-diagnostic.log
+          if-no-files-found: error
