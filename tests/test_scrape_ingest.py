@@ -13,12 +13,38 @@ from pathlib import Path
 from centinelas.classify.labels import DomainLabel
 from centinelas.classify.rules import keyword_classify, permit_subtypes
 from centinelas.ingest import web
+from centinelas.models import RawItem
 
 FIXTURES = Path(__file__).parent / "fixtures"
 WEBFLOW_HTML = (FIXTURES / "webflow_listing.html").read_text()
 EPA_HTML = (FIXTURES / "epa_npdes_table.html").read_text()
 
 OGPE_TABS = ["Vistas Públicas", "Documentos Ambientales"]
+
+# Two entries carrying no date node at all — the case whose identity must not
+# depend on when we happened to poll.
+UNDATED_HTML = """
+<html><body><div class="w-dyn-items">
+  <div class="w-dyn-item"><div class="noticia-title">Vista pública sin fecha</div></div>
+  <div class="w-dyn-item"><div class="noticia-title">Otra vista pública sin fecha</div></div>
+</div></body></html>
+"""
+
+# Minimal RSS index + notice page for the rss_detail parser. The pubDate is
+# RFC-822, the format real feeds use.
+RSS_INDEX = """<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>SAJ-2023-00283(AJC)</title>
+    <link>https://example.mil/notices/saj-2023-00283</link>
+    <pubDate>Wed, 01 Oct 2025 14:48:00 GMT</pubDate>
+  </item>
+</channel></rss>
+"""
+RSS_NOTICE = (
+    "<html><body><p>Joint public notice for a Section 404 permit in "
+    "Puerto Rico, San Juan Harbor.</p></body></html>"
+)
 
 
 def _webflow_source(**overrides):
@@ -103,6 +129,39 @@ def test_linkless_entries_get_unique_source_urls(monkeypatch):
     assert len({i.item_id for i in linkless}) == len(linkless)
 
 
+def test_undated_entry_keeps_a_stable_id_across_polls(monkeypatch):
+    # Regression: item_id used to hash url + now() when a date could not be
+    # parsed, so the same unchanged entry got a fresh id on every poll. Because
+    # the pipeline names files by item_id, those records accumulated in the
+    # queue and in each target repo's intake/ instead of overwriting.
+    monkeypatch.setattr(web, "_fetch_html", lambda url: UNDATED_HTML)
+
+    first = {i.title: i.item_id for i in web.scrape_listing(_webflow_source())}
+    second = {i.title: i.item_id for i in web.scrape_listing(_webflow_source())}
+
+    assert first and first == second
+
+
+def test_undated_entries_with_different_titles_get_different_ids(monkeypatch):
+    # The stable-id fallback must not collapse distinct undated rows into one.
+    monkeypatch.setattr(web, "_fetch_html", lambda url: UNDATED_HTML)
+    items = web.scrape_listing(_webflow_source())
+
+    assert len(items) == 2
+    assert len({i.item_id for i in items}) == 2
+
+
+def test_dated_entry_id_is_unchanged_by_the_fallback(monkeypatch):
+    # Entries whose date parses keep exactly the url+date identity they had, so
+    # nothing already ingested churns.
+    monkeypatch.setattr(web, "_fetch_html", lambda url: WEBFLOW_HTML)
+    castaner = next(
+        i for i in web.scrape_listing(_webflow_source()) if "Castañer" in i.title)
+
+    assert castaner.item_id == RawItem.make_id(
+        castaner.source_url, datetime(2026, 7, 24, tzinfo=timezone.utc))
+
+
 def test_subtitle_and_municipality_land_in_body(monkeypatch):
     # The project/applicant and municipality lines are what let the classifier
     # and the municipality enrichment locate a hearing.
@@ -168,6 +227,46 @@ def test_epa_row_link_is_absolutized(monkeypatch):
 
     aguadilla = next(i for i in items if "Aguadilla" in i.title)
     assert aguadilla.source_url == "https://www.epa.gov/npdes-permits/aguadilla-rwwtp"
+
+
+# ── rss_detail (stub feed → per-notice fetch) ────────────────────────────────
+
+def _rss_detail_source(**overrides):
+    source = {
+        "name": "USACE Jacksonville — Regulatory Public Notices",
+        "url": "https://example.mil/rss",
+        "parser": "rss_detail",
+        "tier": "T1",
+        "match_any": ["puerto rico", "antilles"],
+    }
+    source.update(overrides)
+    return source
+
+
+def _rss_fetch(url):
+    return RSS_INDEX if url.endswith("/rss") else RSS_NOTICE
+
+
+def test_rss_detail_parses_rfc822_pubdate(monkeypatch):
+    # The feed's RFC-822 pubDate is not among _DATE_FORMATS, so a string parse
+    # returned None and every notice fell back to now() — both wrong as a date
+    # and unstable as an identity.
+    monkeypatch.setattr(web, "_fetch_html", _rss_fetch)
+    items = web.scrape_listing(_rss_detail_source())
+
+    assert len(items) == 1
+    notice = items[0]
+    assert notice.published_at == datetime(2025, 10, 1, 14, 48, tzinfo=timezone.utc)
+    assert notice.item_id == RawItem.make_id(notice.source_url, notice.published_at)
+    assert "Puerto Rico" in notice.body_text
+
+
+def test_rss_detail_filters_by_match_any(monkeypatch):
+    monkeypatch.setattr(
+        web, "_fetch_html",
+        lambda url: RSS_INDEX if url.endswith("/rss")
+        else "<html><body><p>A notice about Tampa Bay, Florida.</p></body></html>")
+    assert web.scrape_listing(_rss_detail_source()) == []
 
 
 # ── poll_scrape_sources: gating, isolation, dedup ────────────────────────────

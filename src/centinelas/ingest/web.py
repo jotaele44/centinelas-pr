@@ -57,6 +57,10 @@ _CONTEXT_CLASS_RE = re.compile(r"subtitle|programa", re.I)
 # "July 31, 2026 9:30 AM".
 _DATE_FORMATS = ("%B %d, %Y %I:%M %p", "%B %d, %Y", "%m/%d/%Y", "%Y-%m-%d")
 
+# Stand-in date used *only* when hashing the identity of an entry whose own date
+# could not be parsed. See _entry_item_id.
+_UNDATED = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
 _MAX_BODY_CHARS = 2000
 
 # Unicode Private Use Area — where icon fonts put their glyphs.
@@ -180,6 +184,40 @@ def _parse_date(text: str) -> datetime | None:
         except ValueError:
             continue
     return None
+
+
+def _feed_entry_date(entry) -> datetime | None:
+    """UTC datetime from a feedparser entry, or None when it carries no date.
+
+    Mirrors ``rss._parse_date`` but returns None instead of falling back to
+    now(), so the caller can tell "undated" from "published today" — the
+    distinction the item identity depends on. Using feedparser's already-parsed
+    struct_time also handles RFC-822 (``Wed, 01 Oct 2025 14:48:00 GMT``), which
+    the ``_DATE_FORMATS`` patterns do not cover.
+    """
+    for field in ("published_parsed", "updated_parsed"):
+        value = entry.get(field)
+        if value:
+            try:
+                return datetime(*value[:6], tzinfo=timezone.utc)
+            except (TypeError, ValueError):
+                pass
+    return None
+
+
+def _entry_item_id(url: str, title: str, published_at: datetime | None) -> str:
+    """Stable identity for a listing entry.
+
+    ``make_id`` hashes url + published_at, so an entry whose date could not be
+    parsed must NOT fall back to now() here: that would mint a fresh item_id on
+    every poll, and because the pipeline names files by item_id, the same
+    unchanged entry would pile up as new queue/classified/intake records instead
+    of overwriting its own. Undated entries are therefore identified by
+    url + title against a fixed sentinel date.
+    """
+    if published_at is not None:
+        return RawItem.make_id(url, published_at)
+    return RawItem.make_id(f"{url}|{title}", _UNDATED)
 
 
 def _first_by_class(item, pattern: re.Pattern[str], exclude=()) -> object | None:
@@ -343,7 +381,7 @@ def _parse_rss_detail(cfg: dict, base_url: str) -> list[dict]:
         entries.append({
             "title": entry.get("title", "").strip(),
             "body": body,
-            "published_at": _parse_date(entry.get("published", "")),
+            "published_at": _feed_entry_date(entry),
             "url": link,
         })
     return entries
@@ -376,14 +414,19 @@ def scrape_listing(source: dict) -> list[RawItem]:
 
     items: list[RawItem] = []
     for entry in entries:
-        published_at = entry.get("published_at") or datetime.now(timezone.utc)
+        # Keep the parsed date separate from the stored one: the record still
+        # falls back to now() (published_at is required, and rss.py /
+        # federal_register.py do the same), but only a *parsed* date may take
+        # part in the identity — see _entry_item_id.
+        parsed_at = entry.get("published_at")
+        published_at = parsed_at or datetime.now(timezone.utc)
         # Entries without their own link (a hearing listed as plain text) would
         # otherwise all share the listing URL and collide in make_id, so give
         # them a stable per-entry fragment.
         item_url = entry.get("url") or f"{url}#{_slug(entry['title'])}"
         items.append(
             RawItem(
-                item_id=RawItem.make_id(item_url, published_at),
+                item_id=_entry_item_id(item_url, entry["title"], parsed_at),
                 source_url=item_url,
                 source_name=name,
                 title=entry["title"],
