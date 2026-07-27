@@ -1,0 +1,19 @@
+{
+  "producer": "centinelas-space-observations",
+  "contract_version": "1.0.0",
+  "mode": "production",
+  "network_acquisition_performed": false,
+  "files": [
+    {"filename": "sources.jsonl", "record_count": 1},
+    {"filename": "entities.jsonl", "record_count": 1},
+    {"filename": "relationships.jsonl", "record_count": 0},
+    {"filename": "observations.jsonl", "record_count": 1}
+  ],
+  "analytic_boundaries": {
+    "uap_confirmation_prohibited": true,
+    "classified_capability_inference_prohibited": true,
+    "negative_inference_prohibited": true,
+    "case_authority": "ovnis-pr",
+    "correlation_owner": "thehub-pr"
+  }
+}
