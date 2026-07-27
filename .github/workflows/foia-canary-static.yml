@@ -15,8 +15,9 @@ jobs:
         run: |
           python - <<'PY'
           import pathlib
-          files={p.name:p.read_text() for p in pathlib.Path('.github/workflows').glob('foia-canary-*.yml')}
-          assert {'foia-canary-dispatch.yml','foia-canary-ack.yml','foia-canary-retry.yml'} <= set(files)
+          root=pathlib.Path('.github/workflows')
+          names=['foia-canary-dispatch.yml','foia-canary-ack.yml','foia-canary-retry.yml']
+          files={name:(root/name).read_text() for name in names}
           dispatch=files['foia-canary-dispatch.yml']; ack=files['foia-canary-ack.yml']; retry=files['foia-canary-retry.yml']
           for token in ['canary_branch','no_production_promotion','canary_receipt_namespace','artifacts/foia_canary_dispatch','injected_failure_pending_retry']:
               assert token in dispatch, token
