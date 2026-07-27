@@ -1,8 +1,6 @@
 import copy
 import json
 
-import pytest
-
 from centinelas.space_observations import IntakeEngine, export_federation
 from centinelas.space_observations.routing import route_to_embedded_producer
 
