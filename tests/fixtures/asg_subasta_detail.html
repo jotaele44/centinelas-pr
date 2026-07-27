@@ -1,0 +1,39 @@
+<!-- Trimmed reproduction of an ASG bid detail page (asg.pr.gov/subastas26J-10309),
+     the page reached from a card on the bid index. It carries two dated
+     milestones in identically-shaped .reunion-info blocks, and the pre-bid
+     meeting is listed FIRST — so a parser that simply took the page's first
+     date would record the wrong one. The <i> tags are FontAwesome icon mounts
+     and are empty, exactly as on the live page. -->
+<html><body>
+<div class="container">
+  <h1>Detalle de Licitación</h1>
+  <div style="margin-left: 20px; margin-right: 20px;">
+    <h2 class="card-title">Agencia</h2>
+    &emsp;AUTORIDAD DEL DISTRITO DEL CENTRO DE CONVENCIONES<br>
+    <h2 class="card-title">Localidad</h2>
+    &emsp;SAN JUAN<br>
+  </div>
+
+  <div class="reuniones">
+    <a href="https://teams.microsoft.com/l/meetup-join/example" target="_blank" class="reunion-main-link">
+      <div class="reunion-info">
+        <span class="reunion-name">Reunión Pre Subasta</span>
+        <span class="reunion-datetime">
+          <i class="far fa-calendar-alt"></i> 3 de febrero de 2026 &nbsp;&nbsp;
+          <i class="far fa-clock"></i> 10:30 AM
+        </span>
+      </div>
+    </a>
+
+    <a href="https://teams.microsoft.com/l/meetup-join/example2" target="_blank" class="reunion-main-link">
+      <div class="reunion-info">
+        <span class="reunion-name">Acto de Apertura</span>
+        <span class="reunion-datetime">
+          <i class="far fa-calendar-alt"></i> 24 de febrero de 2026 &nbsp;&nbsp;
+          <i class="far fa-clock"></i> 3:00 PM
+        </span>
+      </div>
+    </a>
+  </div>
+</div>
+</body></html>

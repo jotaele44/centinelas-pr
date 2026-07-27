@@ -1,10 +1,10 @@
-"""Tests for the HTML listing scrapers (OGPe / Junta de Planificación / EPA).
+"""Tests for the HTML listing scrapers (OGPe / Junta de Planificación / EPA / ASG).
 
 No test touches the network: every case monkeypatches ``web._fetch_html``, the
 single seam the listing layer uses for HTTP (same pattern as the Federal
 Register connector's ``_get_json``). The HTML fixtures reproduce the real DOM
-shapes — Webflow CMS collections with tab panes and hidden bindings, and EPA's
-permit table.
+shapes — Webflow CMS collections with tab panes and hidden bindings, EPA's
+permit table, and ASG's Bootstrap cards.
 """
 
 from datetime import datetime, timezone
@@ -18,6 +18,9 @@ from centinelas.models import RawItem
 FIXTURES = Path(__file__).parent / "fixtures"
 WEBFLOW_HTML = (FIXTURES / "webflow_listing.html").read_text()
 EPA_HTML = (FIXTURES / "epa_npdes_table.html").read_text()
+ASG_SUBASTAS_HTML = (FIXTURES / "asg_subastas.html").read_text()
+ASG_DETAIL_HTML = (FIXTURES / "asg_subasta_detail.html").read_text()
+ASG_NOTICIAS_HTML = (FIXTURES / "asg_noticias.html").read_text()
 
 OGPE_TABS = ["Vistas Públicas", "Documentos Ambientales"]
 
@@ -267,6 +270,207 @@ def test_rss_detail_filters_by_match_any(monkeypatch):
         lambda url: RSS_INDEX if url.endswith("/rss")
         else "<html><body><p>A notice about Tampa Bay, Florida.</p></body></html>")
     assert web.scrape_listing(_rss_detail_source()) == []
+
+
+# ── asg_cards (Bootstrap card listings + optional per-entry date fetch) ──────
+
+def _asg_subastas_source(**overrides):
+    source = {
+        "name": "ASG — Licitaciones (Subastas)",
+        "url": "https://asg.pr.gov/subastas?order_by=-creado",
+        "parser": "asg_cards",
+        "tier": "T1",
+        "section": "Licitación de la Administración de Servicios Generales",
+        "item_selector": ".card-media-info",
+        "title_selectors": [
+            ".subasta-card-number", ".subasta-card-method", ".subasta-card-agency",
+        ],
+        "body_selectors": [
+            ".subasta-card-purpose", ".subasta-card-agency", ".subasta-card-method",
+        ],
+        "link_selector": "a[href]",
+        "detail_date_label": "Acto de Apertura",
+        "max_pages": 1,
+    }
+    source.update(overrides)
+    return source
+
+
+def _asg_noticias_source(**overrides):
+    source = {
+        "name": "ASG — Noticias",
+        "url": "https://asg.pr.gov/noticias/",
+        "parser": "asg_cards",
+        "tier": "T2",
+        "section": "Noticia de la Administración de Servicios Generales",
+        "item_selector": "article.blog-card, article.blog-featured",
+        "title_selectors": [".blog-card-title", ".blog-featured-body h2"],
+        "date_selector": ".blog-card-meta span:last-of-type",
+        "body_selectors": ["p"],
+        "link_selector": "a.blog-link",
+        "max_pages": 1,
+    }
+    source.update(overrides)
+    return source
+
+
+def _asg_fetch(url):
+    """Listing pages vs. bid detail pages, the way the live site splits them."""
+    return ASG_DETAIL_HTML if "/subastas2" in url else ASG_SUBASTAS_HTML
+
+
+def test_asg_card_title_carries_number_method_and_agency(monkeypatch):
+    # A bid card's own heading is a bare code ("26J-14214-R1"). Joining the
+    # method and agency in is what gives the title anything to read.
+    monkeypatch.setattr(web, "_fetch_html", _asg_fetch)
+    items = web.scrape_listing(_asg_subastas_source())
+
+    assert len(items) == 3
+    bid = next(i for i in items if i.title.startswith("26J-14214-R1"))
+    assert bid.title == (
+        "26J-14214-R1 — Subasta Formal — "
+        "DEPARTAMENTO DE CORRECCION Y REHABILITACION (DCR)"
+    )
+    assert "ACONDICIONADORES DE AIRE" in bid.body_text
+    assert bid.evidence_tier == "T1"
+
+
+def test_asg_card_links_are_absolutized(monkeypatch):
+    monkeypatch.setattr(web, "_fetch_html", _asg_fetch)
+    items = web.scrape_listing(_asg_subastas_source())
+
+    bid = next(i for i in items if i.title.startswith("26J-10309"))
+    assert bid.source_url == "https://asg.pr.gov/subastas26J-10309"
+
+
+def test_asg_bid_date_comes_from_the_labelled_milestone(monkeypatch):
+    # The detail page lists "Reunión Pre Subasta" (3 Feb) BEFORE "Acto de
+    # Apertura" (24 Feb), so taking the page's first date would be wrong.
+    monkeypatch.setattr(web, "_fetch_html", _asg_fetch)
+    items = web.scrape_listing(_asg_subastas_source())
+
+    assert all(i.published_at == datetime(2026, 2, 24, tzinfo=timezone.utc) for i in items)
+
+
+def test_asg_bid_id_is_stable_across_polls(monkeypatch):
+    monkeypatch.setattr(web, "_fetch_html", _asg_fetch)
+    first = web.scrape_listing(_asg_subastas_source())
+    second = web.scrape_listing(_asg_subastas_source())
+
+    assert {i.item_id for i in first} == {i.item_id for i in second}
+    assert len({i.item_id for i in first}) == 3
+    bid = first[0]
+    assert bid.item_id == RawItem.make_id(bid.source_url, bid.published_at)
+
+
+def test_asg_max_pages_bounds_the_crawl(monkeypatch):
+    # The live bid index runs to 64 pages and each entry costs a second request
+    # for its date, so an unbounded sweep would be ~1,700 fetches per poll.
+    listing_urls = []
+
+    def counting_fetch(url):
+        if "/subastas2" in url:
+            return ASG_DETAIL_HTML
+        listing_urls.append(url)
+        return ASG_SUBASTAS_HTML
+
+    monkeypatch.setattr(web, "_fetch_html", counting_fetch)
+    web.scrape_listing(_asg_subastas_source(max_pages=2))
+
+    assert listing_urls == [
+        "https://asg.pr.gov/subastas?order_by=-creado",
+        "https://asg.pr.gov/subastas?order_by=-creado&page=2",
+    ]
+
+
+def test_asg_pagination_preserves_the_configured_sort():
+    # Dropping order_by would paginate an unsorted index, so page 2 of a routine
+    # poll would no longer be the second-newest batch of bids.
+    assert web._page_url("https://asg.pr.gov/subastas?order_by=-creado", 3) == (
+        "https://asg.pr.gov/subastas?order_by=-creado&page=3"
+    )
+
+
+def test_asg_crawl_stops_when_a_page_yields_nothing(monkeypatch):
+    # max_pages is an upper bound, not a page count: a listing shorter than the
+    # bound must not keep requesting empty pages to reach it.
+    fetched = []
+
+    def two_page_index(url):
+        fetched.append(url)
+        return "<html><body></body></html>" if "page=" in url else ASG_NOTICIAS_HTML
+
+    monkeypatch.setattr(web, "_fetch_html", two_page_index)
+    items = web.scrape_listing(_asg_noticias_source(max_pages=9))
+
+    assert len(items) == 3  # page 1 only
+    assert len(fetched) == 2  # page 1, then one empty page, then stop
+
+
+def test_asg_noticias_are_dated_from_the_card_without_a_detail_fetch(monkeypatch):
+    def listing_only(url):
+        assert url.startswith("https://asg.pr.gov/noticias/"), f"unexpected fetch: {url}"
+        return ASG_NOTICIAS_HTML
+
+    monkeypatch.setattr(web, "_fetch_html", listing_only)
+    items = web.scrape_listing(_asg_noticias_source())
+
+    mercadito = next(i for i in items if "Mercadito" in i.title)
+    assert mercadito.published_at == datetime(2025, 5, 23, tzinfo=timezone.utc)
+    assert mercadito.source_url == "https://asg.pr.gov/noticias/la-gsa-lanza-mercadito"
+
+
+def test_asg_featured_lead_story_is_not_dropped(monkeypatch):
+    # The promoted story is <article class="blog-featured"> with a plain <h2>,
+    # not <article class="blog-card"> with a .blog-card-title. Matching only the
+    # card shape silently loses whichever story ASG is currently featuring.
+    monkeypatch.setattr(web, "_fetch_html", lambda url: ASG_NOTICIAS_HTML)
+    items = web.scrape_listing(_asg_noticias_source())
+
+    assert len(items) == 3
+    featured = next(i for i in items if "OEA" in i.title)
+    assert featured.published_at == datetime(2025, 12, 8, tzinfo=timezone.utc)
+    assert featured.source_url.endswith("/noticias/la-oea-concede-premio-a-la-plataforma-de-compras")
+
+
+def test_spanish_dates_parse_in_both_long_and_abbreviated_forms():
+    # strptime's %B reads month names through the C locale, so every Spanish
+    # date fell through _DATE_FORMATS and left the entry undated.
+    assert web._parse_date("24 de febrero de 2026") == datetime(2026, 2, 24, tzinfo=timezone.utc)
+    assert web._parse_date("08 Dic 2025") == datetime(2025, 12, 8, tzinfo=timezone.utc)
+    # "setiembre" is the Puerto Rican spelling of "septiembre".
+    assert web._parse_date("1 de setiembre de 2024") == datetime(2024, 9, 1, tzinfo=timezone.utc)
+    # A date sharing its cell with a time, as ASG renders bid milestones.
+    assert web._parse_date("24 de febrero de 2026    3:00 PM") == datetime(
+        2026, 2, 24, tzinfo=timezone.utc)
+    # English formats must keep working, and nonsense must stay None.
+    assert web._parse_date("July 24, 2026") == datetime(2026, 7, 24, tzinfo=timezone.utc)
+    assert web._parse_date("31 de febrero de 2026") is None
+    assert web._parse_date("no es una fecha") is None
+
+
+def test_asg_bid_without_a_reachable_detail_page_still_yields_an_item(monkeypatch):
+    # A bid whose detail page 500s (the live site does this) must not take the
+    # whole listing down with it.
+    monkeypatch.setattr(
+        web, "_fetch_html",
+        lambda url: None if "/subastas2" in url else ASG_SUBASTAS_HTML)
+    items = web.scrape_listing(_asg_subastas_source())
+
+    assert len(items) == 3
+    # Undated entries hash against the sentinel, so they stay stable rather than
+    # minting a new id on every poll.
+    assert all(i.item_id == RawItem.make_id(f"{i.source_url}|{i.title}", web._UNDATED)
+               for i in items)
+
+
+def test_asg_bid_classifies_into_the_procurement_lane(monkeypatch):
+    monkeypatch.setattr(web, "_fetch_html", _asg_fetch)
+    items = web.scrape_listing(_asg_subastas_source())
+
+    bid = next(i for i in items if i.title.startswith("26J-14214-R1"))
+    assert bid.body_text.startswith("Licitación de la Administración de Servicios Generales")
+    assert "procurement_permit" in permit_subtypes(f"{bid.title} {bid.body_text}")
 
 
 # ── poll_scrape_sources: gating, isolation, dedup ────────────────────────────
