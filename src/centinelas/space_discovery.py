@@ -5,8 +5,9 @@ import hashlib
 import json
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
@@ -17,8 +18,21 @@ SUBCATEGORIES = frozenset({
     "SHUTTLE_VIDEO_OR_TELEMETRY", "SPACE_SURVEILLANCE_RECORD", "FOIA_READING_ROOM_RELEASE",
     "SCIENTIFIC_REPROCESSING",
 })
-FORBIDDEN_CONFIRMATION = re.compile(r"\b(confirm(?:s|ed|ation)?|proves?|verified uap|alien craft)\b", re.I)
+FORBIDDEN_ASSERTION = re.compile(
+    r"\b(confirm(?:s|ed|ation)?|proves?|verified uap|alien craft|definitive uap|"
+    r"sensor detected the (?:uap|object)|no detection proves)\b",
+    re.I,
+)
 MAX_CAPTURE_BYTES = 2_000_000
+BINARY_SIGNATURES = (
+    b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a", b"RIFF",
+    b"PK\x03\x04", b"%PDF-", b"II*\x00", b"MM\x00*", b"\x00\x00\x00\x18ftyp",
+)
+ALLOWED_CAPTURE_TYPES = {
+    "application/json", "application/xml", "application/atom+xml", "application/rss+xml",
+    "text/html", "text/plain", "text/xml", "text/csv",
+}
+ROUTE_STATUSES = frozenset({"new", "queued", "accepted", "rejected", "acquired", "normalized", "correlated"})
 
 
 def utc_now() -> str:
@@ -37,33 +51,73 @@ def canonical_url(url: str) -> str:
 
 
 def idempotency_key(item: dict[str, Any]) -> str:
-    material = "|".join(str(item.get(k) or "") for k in
-                        ("canonical_url", "catalog_identifier", "dataset_version", "published_at"))
+    material = "|".join(str(item.get(key) or "") for key in (
+        "canonical_url", "catalog_identifier", "dataset_version", "published_at",
+    ))
     return sha256_bytes(material.encode())
+
+
+def _append_jsonl(path: Path, row: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+
+def _load_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def validate_lead(lead: dict[str, Any]) -> None:
     required = {
-        "lead_id", "category", "subcategory", "source_id", "source_url", "discovered_at",
-        "title", "discovery_provenance", "access_status", "temporal_coverage",
-        "geographic_coverage", "sensor", "potential_case_links", "downstream_route",
-        "evidence_tier", "confidence_score", "review_status", "content_fingerprint",
+        "schema_version", "lead_id", "category", "subcategory", "source_id", "source_url",
+        "canonical_url", "discovered_at", "title", "discovery_provenance", "access_status",
+        "temporal_coverage", "geographic_coverage", "sensor", "potential_case_links",
+        "downstream_route", "evidence_tier", "confidence_score", "review_status",
+        "content_fingerprint", "dedup_key", "raw_binary_storage_prohibited",
+        "confirmation_claim_prohibited", "analyst_assertion",
     }
     missing = sorted(required - lead.keys())
     if missing:
         raise ValueError(f"missing required fields: {missing}")
+    if lead["schema_version"] != "1.0.0":
+        raise ValueError("unsupported schema version")
+    if not re.fullmatch(r"CENT-SPACE-\d{4}-[A-F0-9]{16}", str(lead["lead_id"])):
+        raise ValueError("invalid lead_id")
     if lead["category"] != CATEGORY or lead["subcategory"] not in SUBCATEGORIES:
         raise ValueError("invalid category or subcategory")
     if lead.get("raw_binary_storage_prohibited") is not True:
         raise ValueError("raw binary storage prohibition must be true")
     if lead.get("confirmation_claim_prohibited") is not True:
         raise ValueError("confirmation claim prohibition must be true")
-    if FORBIDDEN_CONFIRMATION.search(f"{lead.get('title', '')} {lead.get('summary', '')}"):
-        raise ValueError("discovery lead contains prohibited confirmation language")
+    assertion = lead.get("analyst_assertion")
+    if assertion and FORBIDDEN_ASSERTION.search(str(assertion)):
+        raise ValueError("analyst assertion contains prohibited confirmation language")
+    if not re.fullmatch(r"[a-f0-9]{64}", str(lead["content_fingerprint"])):
+        raise ValueError("invalid content fingerprint")
+    if not re.fullmatch(r"[a-f0-9]{64}", str(lead["dedup_key"])):
+        raise ValueError("invalid dedup key")
+    confidence = lead.get("confidence_score")
+    if not isinstance(confidence, int) or not 0 <= confidence <= 100:
+        raise ValueError("confidence_score must be an integer from 0 to 100")
+    route = lead.get("downstream_route") or {}
+    if route.get("primary") != "satellite-observations-pr" or route.get("correlation_target") != "thehub-pr":
+        raise ValueError("invalid downstream boundary")
+    if route.get("route_status") not in ROUTE_STATUSES:
+        raise ValueError("invalid route status")
+    for link in lead.get("potential_case_links") or []:
+        if link.get("producer") != "ovnis-pr" or link.get("not_a_confirmation") is not True:
+            raise ValueError("case links must be ovnis-pr reference-only candidates")
     sensor = lead.get("sensor") or {}
-    if sensor.get("sensor_type") == "infrared_warning" and sensor.get("capability_known"):
-        if lead.get("evidence_tier") != "T1" or not sensor.get("capability_source_ref"):
-            raise ValueError("DSP/infrared capability claims require T1 evidence and a source reference")
+    infrared_claim = sensor.get("sensor_type") == "infrared_warning" and any(
+        sensor.get(key) not in (None, False, "", [], {})
+        for key in ("capability_known", "coverage_claim", "detection_claim", "sensitivity_claim")
+    )
+    if infrared_claim and (lead.get("evidence_tier") != "T1" or not sensor.get("capability_source_ref")):
+        raise ValueError("DSP/infrared claims require T1 evidence and a source reference")
+    if lead.get("negative_inference") not in (None, False):
+        raise ValueError("discovery leads cannot make negative inferences")
 
 
 @dataclass
@@ -81,32 +135,93 @@ class RunLedger:
         if total != self.input_count:
             raise AssertionError(f"unaccounted rows: input={self.input_count} disposition={total}")
 
+    def persist(self, path: str | Path, run_id: str) -> None:
+        self.account()
+        _append_jsonl(Path(path), {"run_id": run_id, "recorded_at": utc_now(), **asdict(self)})
+
 
 class DedupStore:
-    """Reversible dedup index; duplicates retain a pointer to the retained lead."""
-    def __init__(self) -> None:
+    """Reversible persistent dedup index; duplicate records retain their disposition."""
+
+    def __init__(self, path: str | Path | None = None) -> None:
+        self.path = Path(path) if path else None
         self._retained: dict[str, str] = {}
+        if self.path:
+            for row in _load_jsonl(self.path):
+                if row.get("disposition") == "retained":
+                    self._retained[row["fingerprint"]] = row["lead_id"]
 
     def register(self, fingerprint: str, lead_id: str) -> str | None:
         retained = self._retained.get(fingerprint)
         if retained:
+            if self.path:
+                _append_jsonl(self.path, {
+                    "fingerprint": fingerprint, "lead_id": lead_id, "disposition": "duplicate",
+                    "retained_lead_id": retained, "recorded_at": utc_now(),
+                })
             return retained
         self._retained[fingerprint] = lead_id
+        if self.path:
+            _append_jsonl(self.path, {
+                "fingerprint": fingerprint, "lead_id": lead_id, "disposition": "retained",
+                "retained_lead_id": None, "recorded_at": utc_now(),
+            })
         return None
+
+
+class SourceHealthStore:
+    def __init__(self, path: str | Path) -> None:
+        self.path = Path(path)
+
+    def record(self, source_id: str, *, status: str, success: bool, failure_class: str | None = None) -> None:
+        _append_jsonl(self.path, {
+            "source_id": source_id, "status": status, "checked_at": utc_now(),
+            "success": success, "failure_class": failure_class,
+        })
+
+
+class FailureLedger:
+    def __init__(self, path: str | Path) -> None:
+        self.path = Path(path)
+
+    def record(self, *, run_id: str, source_id: str, failure_class: str, detail: str, retryable: bool) -> None:
+        _append_jsonl(self.path, {
+            "run_id": run_id, "source_id": source_id, "failure_class": failure_class,
+            "detail": detail, "retryable": retryable, "recorded_at": utc_now(),
+        })
+
+
+class RoutingReceiptStore:
+    def __init__(self, path: str | Path) -> None:
+        self.path = Path(path)
+
+    def record(self, receipt: dict[str, Any]) -> None:
+        _append_jsonl(self.path, receipt)
 
 
 class BaseAdapter:
     method = "manual"
 
-    def receipt(self, *, source_url: str, body: bytes, status: int | None = 200,
-                parser_version: str = "1.0.0", **extra: Any) -> dict[str, Any]:
+    def receipt(
+        self,
+        *,
+        source_url: str,
+        body: bytes,
+        status: int | None = 200,
+        parser_version: str = "1.0.0",
+        content_type: str = "text/plain",
+        **extra: Any,
+    ) -> dict[str, Any]:
+        normalized_type = content_type.split(";", 1)[0].strip().lower()
         if len(body) > MAX_CAPTURE_BYTES:
             raise ValueError("raw payload exceeds Centinelas capture limit; route downstream")
+        if normalized_type not in ALLOWED_CAPTURE_TYPES or body.startswith(BINARY_SIGNATURES) or b"\x00" in body[:1024]:
+            raise ValueError("binary payload is prohibited in Centinelas; route downstream")
         return {
             "adapter_id": self.__class__.__name__, "retrieval_method": self.method,
-            "retrieved_at": utc_now(), "http_status": status,
+            "retrieved_at": utc_now(), "http_status": status, "content_type": normalized_type,
             "content_sha256": sha256_bytes(body), "parser_version": parser_version,
-            **extra,
+            "source_url": canonical_url(source_url), **extra,
         }
 
 
@@ -123,7 +238,8 @@ class RSSAtomAdapter(BaseAdapter):
             if not link:
                 link_node = node.find("{*}link")
                 link = link_node.get("href") if link_node is not None else None
-            items.append({"title": title, "canonical_url": canonical_url(urljoin(base_url, link or ""))})
+            if link:
+                items.append({"title": title, "canonical_url": canonical_url(urljoin(base_url, link))})
         return items
 
 
@@ -134,6 +250,8 @@ class APICatalogAdapter(BaseAdapter):
         obj = json.loads(body)
         if isinstance(obj, list):
             return obj
+        if not isinstance(obj, dict):
+            raise ValueError("catalog response must be an object or array")
         for key in ("results", "items", "features", "records"):
             if isinstance(obj.get(key), list):
                 return obj[key]
@@ -155,9 +273,11 @@ class SitemapAdapter(BaseAdapter):
         rows = []
         for entry in root.findall(".//{*}url"):
             loc = entry.find("{*}loc")
-            if loc is not None:
-                rows.append({"canonical_url": canonical_url(loc.text or ""),
-                             "lastmod": entry.findtext("{*}lastmod") or None})
+            if loc is not None and (loc.text or "").strip():
+                rows.append({
+                    "canonical_url": canonical_url(loc.text or ""),
+                    "lastmod": entry.findtext("{*}lastmod") or None,
+                })
         return rows
 
 
@@ -165,19 +285,35 @@ class ManualReceiptAdapter(BaseAdapter):
     method = "manual"
 
 
-def build_lead(*, source_id: str, source_url: str, title: str, subcategory: str,
-               body: bytes, receipt: dict[str, Any], summary: str | None = None,
-               evidence_tier: str = "T1", sensor: dict[str, Any] | None = None,
-               case_links: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+def build_lead(
+    *,
+    source_id: str,
+    source_url: str,
+    title: str,
+    subcategory: str,
+    body: bytes,
+    receipt: dict[str, Any],
+    summary: str | None = None,
+    evidence_tier: str = "T1",
+    sensor: dict[str, Any] | None = None,
+    case_links: list[dict[str, Any]] | None = None,
+    catalog_identifier: str | None = None,
+    dataset_version: str | None = None,
+    published_at: str | None = None,
+    access_status: str = "public_direct",
+) -> dict[str, Any]:
     url = canonical_url(source_url)
     fingerprint = sha256_bytes(body)
+    discovered_at = utc_now()
     lead = {
-        "schema_version": "1.0.0", "lead_id": f"CENT-SPACE-{datetime.now().year}-{fingerprint[:6].upper()}",
+        "schema_version": "1.0.0",
+        "lead_id": f"CENT-SPACE-{discovered_at[:4]}-{fingerprint[:16].upper()}",
         "category": CATEGORY, "subcategory": subcategory, "signal_type": "space_data_discovery",
         "source_id": source_id, "source_url": source_url, "canonical_url": url,
-        "title": title, "summary": summary, "published_at": None, "discovered_at": utc_now(),
-        "last_verified_at": utc_now(), "discovery_provenance": receipt,
-        "access_status": "public_direct",
+        "title": title, "summary": summary, "published_at": published_at,
+        "dataset_version": dataset_version, "catalog_identifier": catalog_identifier,
+        "discovered_at": discovered_at, "last_verified_at": discovered_at,
+        "discovery_provenance": receipt, "access_status": access_status,
         "temporal_coverage": {"coverage_type": "unknown", "start": None, "end": None,
                               "precision": "unknown", "timezone_basis": "unknown", "uncertainty_seconds": None},
         "geographic_coverage": {"coverage_type": "unknown", "geometry": None,
@@ -185,14 +321,17 @@ def build_lead(*, source_id: str, source_url: str, title: str, subcategory: str,
                                 "spatial_resolution_m": None, "location_uncertainty_m": None},
         "sensor": sensor or {"platform": None, "platform_class": "unknown", "sensor_name": None,
                               "sensor_type": "unknown", "spectral_or_measurement_domain": None,
-                              "capability_known": False, "capability_source_ref": None},
+                              "capability_known": False, "capability_source_ref": None,
+                              "coverage_claim": None, "detection_claim": None, "sensitivity_claim": None},
         "potential_case_links": case_links or [],
         "downstream_route": {"primary": "satellite-observations-pr", "secondary": ["ovnis-pr"] if case_links else [],
                              "correlation_target": "thehub-pr", "route_status": "new", "routing_reason": None},
         "evidence_tier": evidence_tier, "confidence_score": 95 if evidence_tier == "T1" else 80,
         "review_status": "new", "content_fingerprint": fingerprint,
-        "dedup_key": idempotency_key({"canonical_url": url}),
-        "raw_binary_storage_prohibited": True, "confirmation_claim_prohibited": True, "notes": None,
+        "dedup_key": idempotency_key({"canonical_url": url, "catalog_identifier": catalog_identifier,
+                                      "dataset_version": dataset_version, "published_at": published_at}),
+        "raw_binary_storage_prohibited": True, "confirmation_claim_prohibited": True,
+        "analyst_assertion": None, "negative_inference": False, "notes": None,
     }
     validate_lead(lead)
     return lead
@@ -200,13 +339,20 @@ def build_lead(*, source_id: str, source_url: str, title: str, subcategory: str,
 
 def route_receipt(lead: dict[str, Any], status: str = "queued") -> dict[str, Any]:
     validate_lead(lead)
-    return {"lead_id": lead["lead_id"], "route": lead["downstream_route"]["primary"],
-            "status": status, "idempotency_key": lead["dedup_key"], "routed_at": utc_now(),
-            "payload_sha256": sha256_bytes(json.dumps(lead, sort_keys=True).encode())}
+    if status not in ROUTE_STATUSES:
+        raise ValueError("invalid route receipt status")
+    return {
+        "lead_id": lead["lead_id"], "route": lead["downstream_route"]["primary"],
+        "status": status, "idempotency_key": lead["dedup_key"], "routed_at": utc_now(),
+        "payload_sha256": sha256_bytes(json.dumps(lead, sort_keys=True).encode()),
+    }
 
 
 def enrich_federation_attributes(signal: dict[str, Any]) -> dict[str, Any]:
-    keys = ("category", "subcategory", "access_status", "temporal_coverage",
-            "geographic_coverage", "sensor", "potential_case_links", "downstream_route",
-            "content_fingerprint", "confirmation_claim_prohibited")
+    keys = (
+        "category", "subcategory", "access_status", "temporal_coverage", "geographic_coverage",
+        "sensor", "potential_case_links", "downstream_route", "content_fingerprint",
+        "confirmation_claim_prohibited", "raw_binary_storage_prohibited", "analyst_assertion",
+        "negative_inference", "dedup_key",
+    )
     return {key: signal.get(key) for key in keys if key in signal}
