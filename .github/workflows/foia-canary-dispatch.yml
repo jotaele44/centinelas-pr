@@ -1,0 +1,40 @@
+name: FOIA canary dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      canary_branch:
+        required: true
+        default: canary/centinelas-foia-v0-5
+      inject_failure_target:
+        required: false
+        default: ""
+permissions:
+  contents: write
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce canary branch
+        run: |
+          case "${{ inputs.canary_branch }}" in canary/*) ;; *) echo unsafe >&2; exit 1;; esac
+      - name: Build and dispatch synthetic envelopes
+        env:
+          TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+          CANARY_BRANCH: ${{ inputs.canary_branch }}
+          INJECT_FAILURE_TARGET: ${{ inputs.inject_failure_target }}
+        run: |
+          test -n "$TOKEN"
+          python - <<'PY'
+          import hashlib,json,os,subprocess
+          targets=[('thehub-pr','thehub_evidence'),('thehub-pr','thehub_intelligence'),('ovnis-pr','ovnis'),('skywatcher-pr','skywatcher'),('aguayluz-pr','aguayluz'),('moneysweep-pr','moneysweep'),('spiderweb-pr','spiderweb')]
+          finding={'finding_id':'synthetic-foia-canary-v0-5','release_id':'synthetic-release','document_id':'synthetic-document','finding_type':'mixed_content','title':'Synthetic FOIA canary','summary':'Synthetic aircraft contract utility and anomalous report for Puerto Rico','citations':[{'document_id':'synthetic-document','page':1,'excerpt':'Synthetic non-private canary evidence.'}],'keywords':['aircraft','contract','utility','unidentified','Puerto Rico'],'evidence_tier':'T1','extraction_confidence':0.95,'sensitive':False,'entity_collision':False}
+          for repo,destination in targets:
+              decision={'decision_id':f'decision-{destination}','finding_id':finding['finding_id'],'destination':destination,'disposition':'export','score':0.95,'reason_codes':['SYNTHETIC_CANARY'],'reversible':True}
+              envelope={'schema_name':'prii.foia.finding','schema_version':'0.2.0','producer':'centinelas-pr','event_id':f'foia-canary-{destination}','idempotency_key':'','destination':destination,'finding':finding,'decision':decision}
+              key=hashlib.sha256(f"{finding['finding_id']}:{destination}:{finding['document_id']}".encode()).hexdigest(); envelope['idempotency_key']=key
+              branch=os.environ['CANARY_BRANCH'] if repo!=os.environ.get('INJECT_FAILURE_TARGET') else 'canary/injected-failure-v0-5'
+              payload={'canary':True,'canary_branch':branch,'canary_receipt_namespace':'artifacts/foia_canary_receipts','no_production_promotion':True,'target_repo':repo,'destination':destination,'idempotency_key':key,'envelope':envelope}
+              body=json.dumps({'event_type':'foia-canary','client_payload':payload})
+              subprocess.run(['curl','-sSf','-X','POST','-H',f"Authorization: Bearer {os.environ['TOKEN']}",'-H','Accept: application/vnd.github+json',f'https://api.github.com/repos/jotaele44/{repo}/dispatches','-d',body],check=True)
+          PY
