@@ -24,6 +24,7 @@ import Layout from './components/Layout';
 import SignalsTable from './pages/SignalsTable';
 import Entities from './pages/Entities';
 import EntityDetail from './pages/EntityDetail';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, appPublicSettings } = useAuth();
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
   }
 
   return (
+    <ErrorBoundary>
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
@@ -100,6 +102,7 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </ErrorBoundary>
   );
 };
 
