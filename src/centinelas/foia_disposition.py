@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Callable, Iterable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -63,7 +63,7 @@ class FOIARelease(BaseModel):
     agency: str = Field(min_length=1)
     foia_case_number: str | None = None
     released_at: datetime | None = None
-    acquired_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    acquired_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_url: str | None = None
     release_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     page_count: int = Field(ge=1)
@@ -111,7 +111,7 @@ class RoutingDecision(BaseModel):
     disposition: Disposition
     score: float = Field(ge=0, le=1)
     reason_codes: list[str] = Field(min_length=1)
-    decided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    decided_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reversible: bool = True
     supersedes_decision_id: str | None = None
 
@@ -122,7 +122,7 @@ class FederationEnvelope(BaseModel):
     producer: str = "centinelas-pr"
     event_id: str
     idempotency_key: str
-    occurred_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    occurred_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     destination: Destination
     finding: FOIAFinding
     decision: RoutingDecision
@@ -147,7 +147,7 @@ class ReviewCase(BaseModel):
     reason_codes: list[str]
     proposed_decisions: list[RoutingDecision]
     status: str = "pending"
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 ROUTE_TERMS: dict[Destination, set[str]] = {
@@ -290,7 +290,7 @@ class DurableOutbox(_JsonlStore):
                 continue
             receipt = ExportReceipt.model_validate(row["receipt"])
             receipt.attempts += 1
-            receipt.last_attempt_at = datetime.now(UTC)
+            receipt.last_attempt_at = datetime.now(timezone.utc)
             receipt.error = error
             if error:
                 receipt.status = ReceiptStatus.FAILED
