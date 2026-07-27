@@ -1,0 +1,32 @@
+version: 0.1
+policy:
+  deterministic_weight: 0.75
+  semantic_weight: 0.25
+  export_threshold: 0.80
+  review_threshold: 0.55
+  minimum_extraction_confidence: 0.70
+  semantic_only_routes_allowed: false
+  canonical_evidence_destination: thehub_evidence
+routes:
+  centinelas:
+    terms: [investigation, policy, hearing, notice, release, puerto rico]
+  ovnis:
+    terms: [uap, ufo, uso, unidentified, anomalous, flying object]
+  skywatcher:
+    terms: [aircraft, tail number, flight, airspace, radar, surveillance]
+  aguayluz:
+    terms: [prepa, aee, luma, prasa, aaa, reservoir, water, grid, utility]
+  moneysweep:
+    terms: [contract, award, invoice, grant, payment, procurement, obligation]
+  spiderweb:
+    terms: [officer, director, registered agent, affiliate, subsidiary, relationship]
+gates:
+  duplicate: reject_duplicate
+  out_of_scope: reject_irrelevant
+  sensitive: hold_sensitive
+  no_route_match: archive_only
+  low_extraction_confidence: review
+receipts:
+  required: true
+  idempotency_material: [finding_id, destination, document_id]
+  retry_scope: failed_destination_only

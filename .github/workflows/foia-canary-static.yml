@@ -1,0 +1,33 @@
+name: FOIA canary orchestration static validation
+on:
+  pull_request:
+    paths:
+      - .github/workflows/foia-canary-*.yml
+      - docs/FOIA_CANARY_POST_MERGE_RUNBOOK_v0_6.md
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate dispatch, ack, retry, and nonmutation contracts
+        run: |
+          python - <<'PY'
+          import pathlib
+          root=pathlib.Path('.github/workflows')
+          names=['foia-canary-dispatch.yml','foia-canary-ack.yml','foia-canary-retry.yml']
+          files={name:(root/name).read_text() for name in names}
+          dispatch=files['foia-canary-dispatch.yml']; ack=files['foia-canary-ack.yml']; retry=files['foia-canary-retry.yml']
+          for token in ['canary_branch','no_production_promotion','canary_receipt_namespace','artifacts/foia_canary_dispatch','injected_failure_pending_retry']:
+              assert token in dispatch, token
+          for token in ['foia-canary-ack','artifacts/foia_canary_acks','canary_branch','no_production_promotion']:
+              assert token in ack, token
+          for token in ['dispatch-ledger.json','artifacts/foia_canary_acks','retry-ledger.json','attempts']:
+              assert token in retry, token
+          combined='\n'.join(files.values())
+          for forbidden in ['git push origin HEAD:main','git push origin HEAD:master','data/service_events.jsonl','data/entities','data/contracts']:
+              assert forbidden not in combined, forbidden
+          assert "extraction_confidence':0.95" in dispatch
+          assert "entity_collision':False" in dispatch
+          PY

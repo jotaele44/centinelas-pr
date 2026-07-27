@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/foia_export_envelope.schema.json",
+  "title": "Centinelas FOIA Federation Envelope",
+  "type": "object",
+  "required": ["schema_name", "schema_version", "producer", "event_id", "idempotency_key", "occurred_at", "destination", "finding", "decision"],
+  "properties": {
+    "schema_name": {"const": "prii.foia.finding"},
+    "schema_version": {"const": "0.2.0"},
+    "producer": {"const": "centinelas-pr"},
+    "event_id": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "destination": {"enum": ["centinelas", "thehub_evidence", "thehub_intelligence", "ovnis", "skywatcher", "aguayluz", "moneysweep", "spiderweb", "archive_only"]},
+    "finding": {"type": "object"},
+    "decision": {"type": "object"}
+  },
+  "additionalProperties": false
+}

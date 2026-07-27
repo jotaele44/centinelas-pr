@@ -1,0 +1,54 @@
+{
+  "version": "0.1",
+  "cases": [
+    {
+      "id": "mixed-content",
+      "finding": {
+        "finding_type": "mixed_content",
+        "title": "Aircraft contract and unidentified radar report",
+        "summary": "FAA aircraft surveillance contract records an unidentified object near Puerto Rico.",
+        "keywords": ["aircraft", "contract", "unidentified", "Puerto Rico"],
+        "extraction_confidence": 0.95
+      },
+      "expected_destinations": ["thehub_evidence", "thehub_intelligence", "centinelas", "ovnis", "skywatcher", "moneysweep"]
+    },
+    {
+      "id": "duplicate-release",
+      "flags": {"duplicate": true},
+      "expected": {"destination": "archive_only", "disposition": "reject_duplicate"}
+    },
+    {
+      "id": "ocr-low-confidence",
+      "finding": {
+        "finding_type": "uap_report",
+        "title": "Unidentified object report",
+        "summary": "OCR text mentions an unidentified object.",
+        "keywords": ["unidentified"],
+        "extraction_confidence": 0.42
+      },
+      "expected": {"destination": "ovnis", "disposition": "review"}
+    },
+    {
+      "id": "entity-collision",
+      "finding": {
+        "finding_type": "entity_relationship",
+        "title": "Possible corporate officer relationship",
+        "summary": "A director name may refer to two different people.",
+        "keywords": ["director", "relationship"],
+        "extraction_confidence": 0.68
+      },
+      "expected": {"destination": "spiderweb", "disposition": "review"}
+    },
+    {
+      "id": "no-export",
+      "finding": {
+        "finding_type": "administrative",
+        "title": "Transmittal sheet",
+        "summary": "Blank administrative cover page.",
+        "keywords": [],
+        "extraction_confidence": 0.99
+      },
+      "expected": {"destination": "archive_only", "disposition": "archive_only"}
+    }
+  ]
+}
