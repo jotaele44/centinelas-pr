@@ -26,7 +26,16 @@ import Entities from './pages/Entities';
 import EntityDetail from './pages/EntityDetail';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, appPublicSettings } = useAuth();
+
+  // `appClient.js` is a platform-neutral localStorage adapter (see AGENTS.md): it
+  // needs no backend, and its auth methods do not verify anything —
+  // `loginViaEmailPassword` takes no password argument, `verifyOtp` accepts any
+  // code, and `me()` returns the local admin by default. Rendering an
+  // email/password/SSO form on top of that presents a credential check that does
+  // not exist. Gate the auth routes on the adapter's own `auth_required` flag so
+  // the forms appear only if a real authenticating backend is ever wired in.
+  const authRequired = Boolean(appPublicSettings?.public_settings?.auth_required);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -67,11 +76,23 @@ const AuthenticatedApp = () => {
         {/* Back-compat: old legislator routes now resolve to the entity list. */}
         <Route path="/autores" element={<Navigate to="/entidades" replace />} />
 
-        {/* Normalized auth routes. */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        {/* Normalized auth routes — rendered only when auth is actually required. */}
+        {authRequired ? (
+          <>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </>
+        ) : (
+          <>
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="/register" element={<Navigate to="/" replace />} />
+            <Route path="/forgot-password" element={<Navigate to="/" replace />} />
+            <Route path="/reset-password" element={<Navigate to="/" replace />} />
+          </>
+        )}
+        {/* Back-compat capitalized aliases. */}
         <Route path="/Login" element={<Navigate to="/login" replace />} />
         <Route path="/Register" element={<Navigate to="/register" replace />} />
         <Route path="/ForgotPassword" element={<Navigate to="/forgot-password" replace />} />
