@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/lib/LanguageContext";
+import { FederationEmptyState } from "@pr-federation/react";
 
 /**
  * Shared async-list state wrapper for the lifecycle pages.
@@ -44,7 +45,10 @@ export default function ListState({
   }
 
   if (empty) {
-    return <p className="rounded-xl border p-6 text-muted-foreground">{t(emptyMessage)}</p>;
+    // Shared federation empty state (@pr-federation/react) so "no results"
+    // reads identically across the federation. Keeps the bordered-card frame
+    // this page layout expects; the message itself now comes from one source.
+    return <FederationEmptyState className="rounded-xl border" title={t(emptyMessage)} />;
   }
 
   return children;
