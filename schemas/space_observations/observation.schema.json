@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/centinelas/space_observations/observation.schema.json",
+  "title": "Centinelas Space Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["observation_id", "entity_id", "source_id", "observation_type", "observed_at", "attributes", "confidence", "lineage", "synthetic", "created_at", "extracted_at"],
+  "properties": {
+    "observation_id": {"type": "string", "pattern": "^obs_[a-f0-9]{32}$"},
+    "entity_id": {"type": "string", "pattern": "^ent_[a-f0-9]{32}$"},
+    "source_id": {"type": "string", "pattern": "^src_[a-f0-9]{32}$"},
+    "observation_type": {"const": "satellite_acquisition_registered"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "attributes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["lead_id", "lead_sha256", "network_acquisition_performed", "analytic_boundaries"],
+      "properties": {
+        "lead_id": {"type": "string"},
+        "lead_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "network_acquisition_performed": {"const": false},
+        "analytic_boundaries": {"type": "object"}
+      }
+    },
+    "confidence": {"const": 1.0},
+    "lineage": {"type": "object"},
+    "synthetic": {"const": false},
+    "created_at": {"type": "string", "format": "date-time"},
+    "extracted_at": {"type": "string", "format": "date-time"}
+  }
+}
