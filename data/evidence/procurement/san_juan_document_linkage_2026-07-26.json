@@ -1,0 +1,39 @@
+{
+  "schema_version": "centinelas.document_linkage.v0.1",
+  "review_id": "CENT-REVIEW-SJ-DOCUMENT-LINKAGE-2026-07-26",
+  "source_index_url": "https://sanjuan.pr/avisos-publicos/",
+  "retrieval_timestamp": "2026-07-26T13:33:18Z",
+  "findings": [
+    {
+      "expected_matter_id": "CENT-MAT-MSJ-RFP-DUDP-2026-006",
+      "original_url": "https://sanjuan.pr/wp-content/uploads/2026/07/El_Nuevo_Da2026-07-16_page31.pdf",
+      "binary_sha256": "168a62f86496340ae93008e057c4ffb321bf42f886f3021ffa72ac10982f9342",
+      "page_count": 1,
+      "observed_content": "Commercial supermarket correction/rain-check notice unrelated to the municipal RFP.",
+      "link_status": "MISMATCHED",
+      "substantive_association": "WITHHELD",
+      "cancellation_inference": false,
+      "contradiction_id": "CENT-CONTRA-SJ-2026-001"
+    },
+    {
+      "expected_matter_id": "CENT-MAT-MSJ-RFP-2027-002",
+      "original_url": "https://sanjuan.pr/wp-content/uploads/2026/07/El_Nuevo_Da2026-07-16_page26.pdf",
+      "binary_sha256": "5071d06aff46d551cea2babcc63e63ffa0790b0c15139e85f7edc26bfc848807",
+      "page_count": 1,
+      "observed_content": "PRCCDA-2026-02-RFP public notice for an independent convention district mixed-use development matter.",
+      "link_status": "MISMATCHED",
+      "substantive_association": "WITHHELD",
+      "cancellation_inference": false,
+      "contradiction_id": "CENT-CONTRA-SJ-2026-002",
+      "registered_independent_matter_id": "CENT-MAT-PRCCDA-2026-02-RFP"
+    }
+  ],
+  "safeguards": {
+    "original_urls_preserved": true,
+    "false_cancellation_assertions": 0,
+    "false_document_associations": 0,
+    "rus_preexisting_exclusions_preserved": 32,
+    "rus_new_false_negatives_counted": 0,
+    "external_contact_or_submission": false
+  }
+}
