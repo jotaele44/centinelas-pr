@@ -1,4 +1,4 @@
-# FOIA Disposition Engine Validation Ledger v0.3
+# FOIA Disposition Engine Validation Ledger v0.4
 
 ## Scope
 
@@ -6,96 +6,84 @@ Target branch: `codex/foia-disposition-engine-v0-1`
 
 Base: `24d0769061c526a5b765ce0fa71dcd037f9a518e`
 
-Certified head: `015a465b4159efc8394afb28a87fad873e9ce43e`
-
 Draft PR: `#50`
 
-## Implemented integration
+## CI-certified implementation
 
 - Finding-level multi-destination routing remains deterministic-first.
-- Added a versioned `FederationEnvelope` compatible with the repository's shared federation pattern.
-- Added durable receipt state: pending, acknowledged, failed, superseded.
-- Added per-target failed export retry selection.
-- Added append-only review queue storage with idempotent case insertion.
-- Added reversible superseding decisions.
-- Added explicit entity-collision review behavior.
-- Semantic scores are clamped to `[0, 1]` and cannot create routes without deterministic terms.
-- Threshold order is validated at construction.
+- Versioned `FederationEnvelope` schema: `prii.foia.finding` `0.2.0`.
+- Durable receipt states: pending, acknowledged, failed, superseded.
+- Per-target failed export retry selection.
+- Append-only review queue storage with idempotent case insertion.
+- Reversible superseding decisions.
+- Explicit entity-collision review behavior.
+- Semantic scores cannot create routes without deterministic terms.
+- Raw low-confidence OCR cannot bypass review.
 
-## Preservation controls
+## Python compatibility remediations
 
-- Raw OCR cannot bypass extraction-confidence review.
-- Findings require at least one page citation.
-- Every citation must reference the finding's document.
-- Entity collision does not auto-merge identities.
-- Canonical evidence is routed independently from intelligence indexing.
-- Routing decisions remain reversible and auditable.
-
-## Acceptance tests
-
-- mixed-content multi-destination routing
-- duplicate release suppression
-- low-confidence OCR review
-- sensitive-content hold
-- no-route archive disposition
-- AguaYLuz routing
-- Spiderweb entity-collision review
-- semantic score clamping
-- prevention of semantic-only route creation
-- invalid threshold ordering
-- export failure
-- acknowledged receipt
-- duplicate receipt
-- failed-target-only retry selection
-- receipt attempt accounting
-- review queue deduplication
-- reversible superseding decision
-
-## Reproducible defects remediated
-
-1. Python 3.10 could not import `enum.StrEnum`, introduced in Python 3.11.
-   - Remediation: use the compatible `str, Enum` pattern for all serialized enums.
-2. Python 3.10 could not import `datetime.UTC`, introduced in Python 3.11.
-   - Remediation: use `datetime.now(timezone.utc)`.
-
-Neither remediation changes schema values, routing behavior, receipt behavior, or stored JSON representations.
+1. Replaced Python 3.11-only `enum.StrEnum` with `str, Enum`.
+2. Replaced Python 3.11-only `datetime.UTC` with `timezone.utc`.
 
 ## Authoritative CI certificate
 
-Final workflow head: `015a465b4159efc8394afb28a87fad873e9ce43e`
-
 | Gate | Result |
 |---|---|
-| Ruff check | PASS |
-| Python 3.10 federation manifest gate | PASS |
-| Python 3.10 spatial-grid validation | PASS |
-| Python 3.10 canonical federation export | PASS |
-| Python 3.10 full pytest suite | PASS |
-| Python 3.11 full validation job | PASS |
-| Python 3.12 full validation job | PASS |
+| Ruff | PASS |
+| Python 3.10 full validation and pytest | PASS |
+| Python 3.11 full validation and pytest | PASS |
+| Python 3.12 full validation and pytest | PASS |
+| Federation manifest/export gates | PASS |
+| Puerto Rico spatial-grid gate | PASS |
 | Federation template drift | PASS |
 
-Workflow runs:
+## Isolated live persistence canary v0.4
 
-- `validate` run `148`: success
-- `Federation template drift` run `168`: success
+Canary ID: `centinelas-foia-canary-v0-4-20260727`
 
-The repository workflow executes the full pytest suite in each supported Python validation job. The targeted FOIA tests are therefore included in three clean full-suite executions, including Python 3.10, 3.11, and 3.12.
+Input was a non-private synthetic mixed-content FOIA finding. No real person, contract, aircraft, utility event, or anomalous incident was represented.
 
-## Schema certificate
+Production datasets were not modified. Every destination write was isolated on branch `canary/centinelas-foia-v0-4`.
 
-- Python enum values remain stable strings.
-- Pydantic v2 model validation passed in all supported Python jobs.
-- Federation envelope serialization passed the canonical export gate.
-- No CI evidence of enum drift, Pydantic serialization errors, schema-reference errors, or line-length/lint failures.
-- The standalone JSON Schema files are parseable repository artifacts, but the current workflow does not expose a distinct named `jsonschema` command. Certification is grounded in successful tests and federation export validation rather than a separately identified schema-only job.
+| Destination | Repository | Record ID | Result |
+|---|---|---|---|
+| TheHub Evidence | `jotaele44/thehub-pr` | `thehub_evidence-canary-b5a9725373b4c7cba1f2` | ACKNOWLEDGED |
+| TheHub Intelligence | `jotaele44/thehub-pr` | `thehub_intelligence-canary-76998f1f53c93a11a511` | ACKNOWLEDGED |
+| OVNIS | `jotaele44/ovnis-pr` | `ovnis-canary-15f142cac8289e537f90` | ACKNOWLEDGED |
+| Skywatcher | `jotaele44/skywatcher-pr` | `skywatcher-canary-de2c2d3b39f73a9fb097` | ACKNOWLEDGED |
+| AguaYLuz | `jotaele44/aguayluz-pr` | `aguayluz-canary-05aa789b7579dabb3427` | ACKNOWLEDGED |
+| MoneySweep | `jotaele44/moneysweep-pr` | `moneysweep-canary-61c2d8d7b357162e3999` | ACKNOWLEDGED |
+| Spiderweb | `jotaele44/spiderweb-pr` | `spiderweb-canary-cceda8858b4548b260a3` | ACKNOWLEDGED AFTER RETRY |
 
-## Remaining risks
+### Failure and retry
 
-- Downstream consumers have not yet returned real production acknowledgments for FOIA envelopes.
-- Retry and acknowledgment persistence are certified through repository tests, not a live multi-repository dispatch.
-- Schema evolution beyond `0.2.0` still requires an explicit compatibility and migration policy.
+The first Spiderweb write targeted the deliberately nonexistent branch `canary/injected-failure-v0-4` and returned HTTP 404. Only Spiderweb was retried. The retry persisted successfully on the valid canary branch.
+
+### Idempotency probe
+
+A second create attempt against the existing OVNIS canary receipt path was rejected with HTTP 422 because the path already existed and no replacement SHA was supplied. No duplicate record was created.
+
+### Review controls
+
+- Synthetic entity-collision case remained review-only; no identity auto-merge was authorized.
+- Synthetic OCR confidence `0.42` remained blocked from automatic export.
+- Page-level citation and document-binding controls remained unchanged.
+
+### Captured evidence
+
+`artifacts/foia_canary_v0_4/CANARY_MANIFEST.json` records destination repositories, branches, record IDs, commit SHAs, injected failure, retry scope, idempotency probe, and review-control dispositions.
+
+## Certification boundary
+
+This was a **live cross-repository isolated-branch persistence canary**, not a production `repository_dispatch` adapter canary.
+
+The production dispatch workflows were not used because at least one existing consumer commits promoted records directly into its default-branch production corpus. Therefore the following remain unverified:
+
+- downstream adapter transformation into each production domain schema;
+- callback acknowledgment into Centinelas via `centinelas-handoff-ack`;
+- live consumer-side duplicate flags;
+- live partial-failure retry through `FEDERATION_DISPATCH_TOKEN`.
 
 ## Disposition
 
-`CI_CERTIFIED_DRAFT_NO_MERGE`
+`ISOLATED_LIVE_PERSISTENCE_CERTIFIED_PRODUCTION_DISPATCH_NOT_CERTIFIED`
