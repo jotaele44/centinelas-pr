@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/centinelas/space_observations/sensor.schema.json",
+  "title": "Centinelas Space Observation Sensor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sensor_id", "platform_id", "name", "sensor_type", "measurement_domains", "capability_status", "capability_source_refs", "classification_guard", "provenance"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "sensor_id": {"type": "string", "pattern": "^sns_[a-f0-9]{32}$"},
+    "platform_id": {"type": "string", "pattern": "^plt_[a-f0-9]{32}$"},
+    "name": {"type": "string", "minLength": 1},
+    "sensor_type": {"enum": ["camera", "multispectral_imager", "infrared_imager", "radiometer", "radar", "lightning_mapper", "particle_detector", "magnetometer", "ephemeris_source", "unknown"]},
+    "measurement_domains": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "capability_status": {"enum": ["documented_public", "partially_documented", "unknown", "withheld"]},
+    "capability_source_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "classification_guard": {
+      "type": "object", "additionalProperties": false,
+      "required": ["public_only", "classified_capability_inference_prohibited", "negative_inference_prohibited"],
+      "properties": {
+        "public_only": {"const": true},
+        "classified_capability_inference_prohibited": {"const": true},
+        "negative_inference_prohibited": {"const": true}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_ids", "recorded_at", "extractor", "extractor_version", "record_sha256"],
+      "properties": {
+        "source_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "recorded_at": {"type": "string", "format": "date-time"},
+        "extractor": {"type": "string"},
+        "extractor_version": {"type": "string"},
+        "record_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}
