@@ -6,21 +6,21 @@ import hashlib
 import json
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class EvidenceTier(StrEnum):
+class EvidenceTier(str, Enum):
     T1 = "T1"
     T2 = "T2"
     T3 = "T3"
     T4 = "T4"
 
 
-class Destination(StrEnum):
+class Destination(str, Enum):
     CENTINELAS = "centinelas"
     THEHUB_EVIDENCE = "thehub_evidence"
     THEHUB_INTELLIGENCE = "thehub_intelligence"
@@ -32,7 +32,7 @@ class Destination(StrEnum):
     ARCHIVE_ONLY = "archive_only"
 
 
-class Disposition(StrEnum):
+class Disposition(str, Enum):
     EXPORT = "export"
     REVIEW = "review"
     REFERENCE_ONLY = "reference_only"
@@ -44,7 +44,7 @@ class Disposition(StrEnum):
     SUPERSEDED = "superseded"
 
 
-class ReceiptStatus(StrEnum):
+class ReceiptStatus(str, Enum):
     PENDING = "pending"
     ACKNOWLEDGED = "acknowledged"
     FAILED = "failed"
