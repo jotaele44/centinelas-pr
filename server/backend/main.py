@@ -245,6 +245,7 @@ def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
     from centinelas.classify.classifier import classify as do_classify
     from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
+    from centinelas.ingest.web import poll_scrape_sources
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch
@@ -260,10 +261,11 @@ def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
 
     # poll_all already isolates per-feed failures; guard the call itself so a hard
     # failure surfaces as a clean 502 rather than an unhandled 500. The Federal
-    # Register poller (config-gated, self-swallowing) adds federal coastal/permit
-    # coverage so the HTTP pipeline matches the CLI's intake sources.
+    # Register poller and the HTML listing scraper (both config-gated and
+    # self-swallowing) add federal coastal/permit and OGPe/JP/EPA coverage so the
+    # HTTP pipeline matches the CLI's intake sources.
     try:
-        items = poll_all() + poll_federal_register()
+        items = poll_all() + poll_federal_register() + poll_scrape_sources()
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"ingest failed: {exc}") from exc
     if req.limit:

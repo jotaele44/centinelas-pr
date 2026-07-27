@@ -1,0 +1,113 @@
+<!-- Trimmed reproduction of the Webflow CMS markup used by jp.pr.gov and
+     permisos.pr.gov. Structure (class names, tab panes, hidden bindings, the
+     date-div-also-carries-the-title-class quirk) mirrors the live pages so the
+     parser is tested against the shapes it actually meets. -->
+<html><body>
+
+<!-- ── Tabbed page (OGPe "Fuentes de Información" shape) ────────────────── -->
+<div class="w-tabs">
+  <div class="w-tab-pane" data-w-tab="Manuales">
+    <div class="collection-list w-dyn-items">
+      <div class="collection-item w-dyn-item" role="listitem">
+        <a class="link-block w-inline-block" href="/files/manual-pu.pdf">
+          <div class="documento-icon">&#xf15b;</div>
+          <div class="documento-title">Manual de Radicación de Trámite Permiso Único</div>
+          <div class="documento-date">12/13/2023</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-tab-pane" data-w-tab="Videos Informativos SBP">
+    <div class="collection-list w-dyn-items">
+      <div class="collection-item w-dyn-item" role="listitem">
+        <div class="documento-title">Video Tutorial Informativo para Radicar un Permiso Único</div>
+        <div class="documento-date">1/5/2024</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-tab-pane" data-w-tab="Vistas Públicas">
+    <div class="collection-list w-dyn-items">
+      <div class="collection-item w-dyn-item" role="listitem">
+        <a class="link-block-7 w-inline-block" href="https://teams.microsoft.com/l/meetup-join/19%3ameeting_ABC">
+          <div class="div-block-313">
+            <div class="documento-icon-2">&#xf26c;</div>
+            <div class="div-block-314">
+              <div class="documento-title-2">2025-663228-PU-438754</div>
+              <div class="documento-subtitle-2">PA'L SIN NOMBRE / Lymares Pérez</div>
+            </div>
+          </div>
+          <div class="div-block-315">
+            <div class="programa">Toa Baja</div>
+            <div class="documento-date-2">July 31, 2026 9:30 AM</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-tab-pane" data-w-tab="Documentos Ambientales">
+    <div class="collection-list w-dyn-items">
+      <div class="collection-item w-dyn-item" role="listitem">
+        <a class="link-block-2 w-inline-block" href="/files/dia-arroyo.pdf">
+          <div class="documento-title">2019-258911-REA-301363, EXPANSIÓN LATERAL SISTEMA DE RELLENO SANITARIO DE ARROYO</div>
+          <div class="documento-subtitle">Declaración de Impacto Ambiental para el municipio de Arroyo</div>
+          <div class="documento-date">2/12/2026</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Untabbed page (jp.pr.gov "Vistas Públicas" shape) ─────────────────── -->
+<div class="collection-list-2 w-dyn-items">
+
+  <!-- The FIRST div carries BOTH the date classes and .vista-publica-title, so a
+       naive title selector would return "July 24, 2026" instead of the title. -->
+  <div class="collection-item-16 w-dyn-item" role="listitem">
+    <div class="item-vistas-publicas">
+      <div class="vista-publica-title vistas-municipios-title date-only fecha-pot"
+           data-date-format="es">July 24, 2026</div>
+      <div class="vista-publica-title">VP - Poblado Castañer</div>
+      <div class="vista-publica-content">
+        <div class="vista-publica-rich-text w-richtext">
+          <ul role="list">
+            <li><a href="/files/JP/aviso-castaner.pdf">Aviso VP Periódico</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Webflow bindings: a conditionally-hidden badge and an empty bind.
+       Neither is visible to a reader, so neither may reach the body text. -->
+  <div class="collection-item-16 w-dyn-item" role="listitem">
+    <div class="res-esp-item-wrapper">
+      <div class="doc-list-item item-title">
+        <div class="item-icon">&#xf15b;</div>
+        <a class="doc-list-item-link w-inline-block" href="/files/JP/jpe-2026-006.pdf">
+          <div class="text-block-31098031114">Resolución JPE-2026-006</div>
+        </a>
+        <div class="text-block-31098031116 w-condition-invisible">[DEROGADO]</div>
+        <div class="placeholder w-dyn-bind-empty">This is some text inside of a div block.</div>
+      </div>
+      <div class="res-esp-date">May 26, 2026</div>
+    </div>
+  </div>
+
+  <!-- Entry with no link at all: must still get a unique synthetic source_url. -->
+  <div class="collection-item-16 w-dyn-item" role="listitem">
+    <div class="noticia-date">May 15, 2026</div>
+    <div class="noticia-title">Vista pública sobre deslinde de zona marítimo terrestre</div>
+  </div>
+
+  <!-- Second link-less entry sharing the same date — proves the slug (not just
+       the date) is what keeps their item_ids distinct. -->
+  <div class="collection-item-16 w-dyn-item" role="listitem">
+    <div class="noticia-date">May 15, 2026</div>
+    <div class="noticia-title">Segunda vista pública sobre calidad de agua</div>
+  </div>
+
+</div>
+</body></html>

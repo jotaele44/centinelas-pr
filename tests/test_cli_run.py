@@ -37,9 +37,11 @@ def test_run_persists_classified_items(tmp_path, monkeypatch):
         return [DomainLabel.ENVIRONMENTAL], 0.9, "test reasoning"
 
     monkeypatch.setattr("centinelas.ingest.rss.poll_all", fake_poll_all)
-    # The pipeline also polls the Federal Register API; isolate it from the network.
+    # The pipeline also polls the Federal Register API and the HTML listing
+    # scrapers; isolate both from the network.
     monkeypatch.setattr(
         "centinelas.ingest.federal_register.poll_federal_register", list)
+    monkeypatch.setattr("centinelas.ingest.web.poll_scrape_sources", list)
     monkeypatch.setattr("centinelas.classify.classifier.classify", fake_classify)
 
     result = runner.invoke(app, ["run", "--dry-run"])
