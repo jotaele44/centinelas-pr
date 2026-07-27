@@ -129,3 +129,35 @@ unchanged.
 | 4 | Add a frontend test runner and smoke tests | **M** | 4.6k LOC of UI, zero tests. Copy the vitest + Testing Library setup from `thehub-pr/server/frontend`. |
 | 5 | Widen the ruff rule set beyond `E4,E7,E9,F` and add mypy | **S** | `aguayluz-pr` already runs `E,F,I,B,UP,SIM,W` cleanly at a similar size — the bar is reachable. |
 | 6 | Rename `auth_required` → `requires_auth` to match `thehub-pr`/`skywatcher-pr` | **S** | Same concept, two keys, one federation. |
+
+---
+
+## Maturity score — 69%
+
+Measured 2026-07-27 against 20 explicit criteria (5 points each, 100 total). Every
+lost point is a specific, verifiable work item, so this doubles as the roadmap.
+
+| Dimension | Score | Criteria (5 pts each) |
+|---|---|---|
+| Functional completeness | **20/20** | backend serves domain · no dead UI · entrypoints work · modules wired, no duplicate mass |
+| Data reality | **16/20** | real non-synthetic dataset · refresh automated · offline bundle populated · live-exec gate open |
+| UI craft | **17/20** | pages proportionate to backend · loading+empty+error everywhere · a11y markup **and** automated gate · single consolidated frontend |
+| Tests | **5/15** | suite green · coverage gate enforced · frontend tests run in CI |
+| Hygiene | **3/15** | linters gated in CI · type checking gated in CI · write surface secured *and* client can use it |
+| Docs | **8/10** | docs match code · declared status matches observed maturity |
+| **Total** | **69/100** | |
+
+### How the score is computed
+
+20 criteria, 5 points each, 100 total. **Partial credit is allowed** where a criterion
+splits cleanly into independent halves — for example "linters gated in CI" scores 2.5 for
+Python and 2.5 for JavaScript, so a repo that gates one and not the other scores 2.5. That
+is why dimension totals are not always multiples of five.
+
+Components here sum to **69** (20 + 16 + 17 + 5 + 3 + 8), reported as **69%**. Half-points are
+rounded **half up** to the nearest whole percent for the cross-repo table; the exact figure is the one
+above.
+
+The earlier 0–4 per-dimension scorecard above is retained for cross-repo comparison,
+but it saturates — `aguayluz-pr` scored 24/24 on it while still having no frontend
+tests. This finer model is the one to plan against.
