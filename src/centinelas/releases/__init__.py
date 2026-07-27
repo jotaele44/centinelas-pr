@@ -20,20 +20,34 @@ from .models import (
     sha256_bytes,
     write_immutable_manifest,
 )
+from .runtime import (
+    AcquisitionResult,
+    DeltaRun,
+    SourceHealth,
+    compare_versions,
+    inspect_binary,
+    run_adapter,
+)
 
 __all__ = [
     "BASELINE_CUTOFF",
     "AcquisitionReceipt",
+    "AcquisitionResult",
     "BaselineManifest",
     "DeltaManifest",
+    "DeltaRun",
     "DocumentFinding",
     "FederalDocument",
     "FederalDocumentRelease",
     "ReleaseAdapter",
     "ReleaseState",
+    "SourceHealth",
     "SyntheticReleaseAdapter",
     "classify_release",
+    "compare_versions",
     "deterministic_id",
+    "inspect_binary",
+    "run_adapter",
     "sha256_bytes",
     "write_immutable_manifest",
 ]
