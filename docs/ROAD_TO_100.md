@@ -31,9 +31,10 @@ These are implemented, tested, and exercised against real data — not stubs.
 - **Proven at volume** — a real pipeline run over the configured RSS registry
   ingests and classifies **250+ live signals** end-to-end via the keyword tier
   alone (253 ingested / 133 routed / 120 gated in a representative dry run).
-- **84 tests** (81 baseline + 3 for the new `/run` endpoint), covering
-  classification, routing, dispatch, CLI, federation export/contract-compat, and
-  the desktop/API server.
+- **139 tests** across 19 files (re-measured 2026-07-27; was 84 when this line was
+  written), covering classification, routing, dispatch, CLI, federation
+  export/contract-compat, and the desktop/API server. The frontend has **no test
+  runner** — 4.6k LOC of UI is uncovered.
 
 ### Live-run record
 
@@ -170,3 +171,23 @@ python3 -c "import yaml; yaml.safe_load(open('.github/workflows/validate.yml'))"
 **Product completeness: ~90%**, with the remainder gated on live PR data sources,
 the sibling repos being live, and an API key — none of which can be resolved in an
 offline audit.
+
+---
+
+## Two completion numbers, and why they differ
+
+This ledger says **~90%**. [`MATURITY_AUDIT.md`](MATURITY_AUDIT.md) says **69%**.
+Both are correct; they measure different things and should be read together.
+
+| | Measures | Counts a thing "done" when |
+|---|---|---|
+| **`ROAD_TO_100.md`** (~90%) | code completeness against intended scope | the code exists, works, and is exercised — engine code closed; gap is live feeds and API keys |
+| **`MATURITY_AUDIT.md`** (69%) | professional maturity of the repo as an engineering artifact | a **gate** keeps it working: CI-enforced lint, types, coverage, and frontend tests |
+
+The spread is almost entirely **enforcement, not implementation**. Work that this
+ledger correctly counts as finished still costs maturity points while no CI gate
+protects it — a passing suite with no coverage floor, a `typecheck` script no
+workflow runs, a linter configured but not wired in.
+
+Neither number supersedes the other. Use this ledger to answer "what is left to
+build"; use the audit to answer "what would a reviewer refuse to merge".
