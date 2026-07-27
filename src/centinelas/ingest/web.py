@@ -26,7 +26,7 @@ import httpx
 import yaml
 from bs4 import BeautifulSoup
 
-from centinelas.models import EvidenceTier, RawItem
+from centinelas.models import RawItem
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +111,10 @@ def scrape_url(
         body_text=body_text,
         published_at=pub,
         captured_at=datetime.now(timezone.utc),
-        evidence_tier=EvidenceTier(tier),
+        # EvidenceTier is a typing.Literal alias — not callable; pydantic
+        # validates the value against the Literal on the model. Calling it
+        # raises "TypeError: Cannot instantiate typing.Literal" at runtime.
+        evidence_tier=tier,
     )
 
 
