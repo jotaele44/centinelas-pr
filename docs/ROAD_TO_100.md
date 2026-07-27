@@ -181,13 +181,11 @@ Both are correct; they measure different things and should be read together.
 
 | | Measures | Counts a thing "done" when |
 |---|---|---|
-| **`ROAD_TO_100.md`** (~90%) | code completeness against intended scope | the code exists, works, and is exercised — engine code closed; gap is live feeds and API keys |
-| **`MATURITY_AUDIT.md`** (69%) | professional maturity of the repo as an engineering artifact | a **gate** keeps it working: CI-enforced lint, types, coverage, and frontend tests |
+| **`ROAD_TO_100.md`** (~90%) | code completeness against intended scope | the code exists and works, with data- and network-blocked items called out separately |
+| **`MATURITY_AUDIT.md`** (69%) | maturity of the repo as an engineering artifact | a **CI gate** keeps it working |
 
-The spread is almost entirely **enforcement, not implementation**. Work that this
-ledger correctly counts as finished still costs maturity points while no CI gate
-protects it — a passing suite with no coverage floor, a `typecheck` script no
-workflow runs, a linter configured but not wired in.
+The spread is largely **enforcement rather than implementation**. Concretely, what this
+repo is missing on the audit's axis: no coverage floor; no mypy; a `typecheck` script no workflow runs; no frontend tests. Ruff **is** gated (`validate.yml` runs `ruff check .`), so the linter is not part of the gap.
 
-Neither number supersedes the other. Use this ledger to answer "what is left to
-build"; use the audit to answer "what would a reviewer refuse to merge".
+Neither number supersedes the other. Use this ledger to answer "what is left to build";
+use the audit to answer "what would a reviewer refuse to merge".
