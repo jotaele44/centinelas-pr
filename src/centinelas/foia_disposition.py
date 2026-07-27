@@ -1,8 +1,4 @@
-"""Auditable finding-level FOIA disposition and export routing.
-
-The engine is deterministic-first. Semantic scores may refine candidate routes but
-cannot bypass provenance, citation, confidence, duplicate, or review gates.
-"""
+"""Auditable finding-level FOIA disposition and export routing."""
 
 from __future__ import annotations
 
@@ -131,11 +127,21 @@ class ReviewCase(BaseModel):
 
 ROUTE_TERMS: dict[Destination, set[str]] = {
     Destination.OVNIS: {"uap", "ufo", "uso", "unidentified", "anomalous", "flying object"},
-    Destination.SKYWATCHER: {"aircraft", "tail number", "flight", "airspace", "radar", "surveillance"},
-    Destination.AGUAYLUZ: {"prepa", "aee", "luma", "prasa", "aaa", "reservoir", "water", "grid", "utility"},
-    Destination.MONEYSWEEP: {"contract", "award", "invoice", "grant", "payment", "procurement", "obligation"},
-    Destination.SPIDERWEB: {"officer", "director", "registered agent", "affiliate", "subsidiary", "relationship"},
-    Destination.CENTINELAS: {"investigation", "policy", "hearing", "notice", "release", "puerto rico"},
+    Destination.SKYWATCHER: {
+        "aircraft", "tail number", "flight", "airspace", "radar", "surveillance"
+    },
+    Destination.AGUAYLUZ: {
+        "prepa", "aee", "luma", "prasa", "aaa", "reservoir", "water", "grid", "utility"
+    },
+    Destination.MONEYSWEEP: {
+        "contract", "award", "invoice", "grant", "payment", "procurement", "obligation"
+    },
+    Destination.SPIDERWEB: {
+        "officer", "director", "registered agent", "affiliate", "subsidiary", "relationship"
+    },
+    Destination.CENTINELAS: {
+        "investigation", "policy", "hearing", "notice", "release", "puerto rico"
+    },
 }
 
 
@@ -160,39 +166,75 @@ class FOIADispositionEngine:
         relevant_to_puerto_rico: bool = True,
     ) -> list[RoutingDecision]:
         if duplicate:
-            return [self._decision(finding, Destination.ARCHIVE_ONLY, Disposition.REJECT_DUPLICATE, 1.0, ["DUPLICATE"])]
+            return [self._decision(
+                finding, Destination.ARCHIVE_ONLY, Disposition.REJECT_DUPLICATE, 1.0,
+                ["DUPLICATE"],
+            )]
         if not relevant_to_puerto_rico:
-            return [self._decision(finding, Destination.ARCHIVE_ONLY, Disposition.REJECT_IRRELEVANT, 1.0, ["OUT_OF_SCOPE"])]
+            return [self._decision(
+                finding, Destination.ARCHIVE_ONLY, Disposition.REJECT_IRRELEVANT, 1.0,
+                ["OUT_OF_SCOPE"],
+            )]
         if finding.sensitive:
-            return [self._decision(finding, Destination.ARCHIVE_ONLY, Disposition.HOLD_SENSITIVE, 1.0, ["SENSITIVE_CONTENT"])]
+            return [self._decision(
+                finding, Destination.ARCHIVE_ONLY, Disposition.HOLD_SENSITIVE, 1.0,
+                ["SENSITIVE_CONTENT"],
+            )]
 
-        decisions: list[RoutingDecision] = [
-            self._decision(finding, Destination.THEHUB_EVIDENCE, Disposition.EXPORT, 1.0, ["CANONICAL_EVIDENCE"])
-        ]
-        haystack = " ".join([finding.finding_type, finding.title, finding.summary, *finding.keywords]).lower()
-
+        decisions = [self._decision(
+            finding, Destination.THEHUB_EVIDENCE, Disposition.EXPORT, 1.0,
+            ["CANONICAL_EVIDENCE"],
+        )]
+        haystack = " ".join(
+            [finding.finding_type, finding.title, finding.summary, *finding.keywords]
+        ).lower()
         for destination, terms in ROUTE_TERMS.items():
             matched = sorted(term for term in terms if term in haystack)
             if not matched:
                 continue
             deterministic = min(0.95, 0.58 + (0.10 * len(matched)))
-            semantic = self.semantic_scorer(finding, destination) if self.semantic_scorer else deterministic
+            semantic = (
+                self.semantic_scorer(finding, destination)
+                if self.semantic_scorer else deterministic
+            )
             score = round((0.75 * deterministic) + (0.25 * semantic), 4)
             reasons = [f"TERM:{term.upper().replace(' ', '_')}" for term in matched]
-            disposition = self._classify(score, finding.extraction_confidence)
-            decisions.append(self._decision(finding, destination, disposition, score, reasons))
+            decisions.append(self._decision(
+                finding, destination,
+                self._classify(score, finding.extraction_confidence), score, reasons,
+            ))
 
-        downstream = [d for d in decisions if d.destination not in {Destination.THEHUB_EVIDENCE, Destination.ARCHIVE_ONLY}]
+        downstream = [
+            d for d in decisions
+            if d.destination not in {Destination.THEHUB_EVIDENCE, Destination.ARCHIVE_ONLY}
+        ]
         if downstream:
-            intelligence_score = max(d.score for d in downstream)
-            intelligence_disposition = Disposition.EXPORT if all(d.disposition == Disposition.EXPORT for d in downstream) else Disposition.REVIEW
-            decisions.append(self._decision(finding, Destination.THEHUB_INTELLIGENCE, intelligence_disposition, intelligence_score, ["CROSS_REPO_INDEX"])))
-        elif len(decisions) == 1:
-            decisions.append(self._decision(finding, Destination.ARCHIVE_ONLY, Disposition.ARCHIVE_ONLY, 1.0, ["NO_ROUTE_MATCH"])))
+            score = max(d.score for d in downstream)
+            disposition = (
+                Disposition.EXPORT
+                if all(d.disposition == Disposition.EXPORT for d in downstream)
+                else Disposition.REVIEW
+            )
+            decisions.append(self._decision(
+                finding, Destination.THEHUB_INTELLIGENCE, disposition, score,
+                ["CROSS_REPO_INDEX"],
+            ))
+        else:
+            decisions.append(self._decision(
+                finding, Destination.ARCHIVE_ONLY, Disposition.ARCHIVE_ONLY, 1.0,
+                ["NO_ROUTE_MATCH"],
+            ))
         return decisions
 
-    def build_review_case(self, finding: FOIAFinding, decisions: Iterable[RoutingDecision]) -> ReviewCase | None:
-        proposed = [d for d in decisions if d.disposition in {Disposition.REVIEW, Disposition.HOLD_SENSITIVE}]
+    def build_review_case(
+        self,
+        finding: FOIAFinding,
+        decisions: Iterable[RoutingDecision],
+    ) -> ReviewCase | None:
+        proposed = [
+            d for d in decisions
+            if d.disposition in {Disposition.REVIEW, Disposition.HOLD_SENSITIVE}
+        ]
         if not proposed:
             return None
         digest = hashlib.sha256(f"{finding.finding_id}:review".encode()).hexdigest()[:20]
@@ -255,4 +297,5 @@ class DurableOutbox:
     def read_all(self) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
-        return [json.loads(line) for line in self.path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        lines = self.path.read_text(encoding="utf-8").splitlines()
+        return [json.loads(line) for line in lines if line.strip()]
