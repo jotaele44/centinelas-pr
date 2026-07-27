@@ -14,6 +14,13 @@ on:
 permissions:
   contents: read
 
+# Serialise runs on the same ref without cancelling. This workflow can
+# publish, write data, or hand off to another repo, and killing it
+# mid-flight risks leaving that work half-done.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   maintenance:
     runs-on: ubuntu-latest
