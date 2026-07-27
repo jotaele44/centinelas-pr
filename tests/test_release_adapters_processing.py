@@ -1,6 +1,5 @@
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
 
@@ -22,7 +21,7 @@ def _pdf(text=b"Puerto Rico map table", *, images=False, attachments=False, reda
         page += b"/Subtype /Image "
     if attachments:
         page += b"/Type /EmbeddedFile "
-    page += (b"0 0 0 rg 10 10 20 20 re f " * redactions)
+    page += b"0 0 0 rg 10 10 20 20 re f " * redactions
     return b"%PDF-1.4\n" + page + b"\n%%EOF"
 
 
@@ -37,7 +36,9 @@ def test_explicit_policy_gates_and_pagination_resume(tmp_path):
     def transport(url, headers):
         calls.append(url)
         page = 2 if "page=2" in url else 1
-        body = json.dumps({"rows": [{"id": f"row-{page}"}], "has_next": page == 1}).encode()
+        body = json.dumps(
+            {"rows": [{"id": f"row-{page}"}], "has_next": page == 1}
+        ).encode()
         return 200, {"content-type": "application/json"}, body
 
     def parse(body):
@@ -57,7 +58,10 @@ def test_explicit_policy_gates_and_pagination_resume(tmp_path):
         terms_approved=True,
         limiter=RateLimiter(0),
     )
-    assert [row["id"] for row in adapter.enumerate_pages(parse)] == ["row-1", "row-2"]
+    assert [row["id"] for row in adapter.enumerate_pages(parse)] == [
+        "row-1",
+        "row-2",
+    ]
     assert json.loads(adapter.checkpoint_path.read_text())["next_page"] == 3
     assert len(adapter.receipts) == 2
 
@@ -147,7 +151,11 @@ def test_raw_receipts_are_stable(tmp_path):
         terms_approved=True,
         limiter=RateLimiter(0),
     )
-    list(adapter.enumerate_pages(lambda body: (json.loads(body)["rows"], False)))
+    list(
+        adapter.enumerate_pages(
+            lambda body: (json.loads(body)["rows"], False)
+        )
+    )
     path = tmp_path / "receipts.jsonl"
     adapter.write_receipts(path)
     row = json.loads(path.read_text())
