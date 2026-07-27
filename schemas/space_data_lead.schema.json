@@ -3,14 +3,78 @@
   "$id": "https://prii.local/schemas/centinelas/space_data_lead.schema.json",
   "title": "Centinelas Space Data Lead",
   "type": "object",
-  "additionalProperties": true,
-  "required": ["lead_id", "category", "subcategory", "source_id", "source_url", "discovered_at", "title", "discovery_provenance", "access_status", "temporal_coverage", "geographic_coverage", "sensor", "potential_case_links", "downstream_route", "evidence_tier", "confidence_score", "review_status", "content_fingerprint", "raw_binary_storage_prohibited", "confirmation_claim_prohibited"],
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "lead_id", "category", "subcategory", "signal_type", "source_id",
+    "source_url", "canonical_url", "title", "summary", "published_at", "dataset_version",
+    "catalog_identifier", "discovered_at", "last_verified_at", "discovery_provenance",
+    "access_status", "temporal_coverage", "geographic_coverage", "sensor",
+    "potential_case_links", "downstream_route", "evidence_tier", "confidence_score",
+    "review_status", "content_fingerprint", "dedup_key", "raw_binary_storage_prohibited",
+    "confirmation_claim_prohibited", "analyst_assertion", "negative_inference", "notes"
+  ],
   "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "lead_id": {"type": "string", "pattern": "^CENT-SPACE-[0-9]{4}-[A-F0-9]{16}$"},
     "category": {"const": "SPACE_AND_REMOTE_SENSING"},
     "subcategory": {"enum": ["SATELLITE_DATASET_RELEASE", "MISSION_ARCHIVE_RELEASE", "DECLASSIFIED_SPACE_RECORD", "ORBITAL_EPHEMERIS_UPDATE", "WEATHER_SATELLITE_ARCHIVE", "INFRARED_SENSOR_RECORD", "SHUTTLE_VIDEO_OR_TELEMETRY", "SPACE_SURVEILLANCE_RECORD", "FOIA_READING_ROOM_RELEASE", "SCIENTIFIC_REPROCESSING"]},
+    "signal_type": {"const": "space_data_discovery"},
+    "source_id": {"type": "string", "minLength": 1},
+    "source_url": {"type": "string", "format": "uri"},
+    "canonical_url": {"type": "string", "format": "uri"},
+    "title": {"type": "string", "minLength": 1},
+    "summary": {"type": ["string", "null"]},
+    "published_at": {"type": ["string", "null"], "format": "date-time"},
+    "dataset_version": {"type": ["string", "null"]},
+    "catalog_identifier": {"type": ["string", "null"]},
+    "discovered_at": {"type": "string", "format": "date-time"},
+    "last_verified_at": {"type": "string", "format": "date-time"},
+    "discovery_provenance": {
+      "type": "object", "additionalProperties": true,
+      "required": ["adapter_id", "retrieval_method", "retrieved_at", "http_status", "content_type", "content_sha256", "parser_version", "source_url"],
+      "properties": {
+        "adapter_id": {"type": "string"},
+        "retrieval_method": {"enum": ["rss", "api", "html_change", "sitemap", "manual"]},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "http_status": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+        "content_type": {"enum": ["application/json", "application/xml", "application/atom+xml", "application/rss+xml", "text/html", "text/plain", "text/xml", "text/csv"]},
+        "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "parser_version": {"type": "string"},
+        "source_url": {"type": "string", "format": "uri"}
+      }
+    },
+    "access_status": {"enum": ["public_direct", "public_search", "registration_required", "request_required", "onsite_only", "restricted_metadata_only", "blocked", "removed", "unknown"]},
+    "temporal_coverage": {"type": "object", "additionalProperties": true, "required": ["coverage_type", "start", "end", "precision", "timezone_basis", "uncertainty_seconds"]},
+    "geographic_coverage": {"type": "object", "additionalProperties": true, "required": ["coverage_type", "geometry", "jurisdictions", "global", "spatial_resolution_m", "location_uncertainty_m"]},
+    "sensor": {"type": "object", "additionalProperties": true, "required": ["platform", "platform_class", "sensor_name", "sensor_type", "spectral_or_measurement_domain", "capability_known", "capability_source_ref"]},
+    "potential_case_links": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": true,
+        "required": ["producer", "case_id", "link_basis", "link_strength", "not_a_confirmation"],
+        "properties": {"producer": {"const": "ovnis-pr"}, "not_a_confirmation": {"const": true}}
+      }
+    },
+    "downstream_route": {
+      "type": "object", "additionalProperties": false,
+      "required": ["primary", "secondary", "correlation_target", "route_status", "routing_reason"],
+      "properties": {
+        "primary": {"const": "satellite-observations-pr"},
+        "secondary": {"type": "array", "items": {"const": "ovnis-pr"}},
+        "correlation_target": {"const": "thehub-pr"},
+        "route_status": {"enum": ["new", "queued", "accepted", "rejected", "acquired", "normalized", "correlated"]},
+        "routing_reason": {"type": ["string", "null"]}
+      }
+    },
+    "evidence_tier": {"enum": ["T1", "T2", "T3", "T4"]},
+    "confidence_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "review_status": {"enum": ["new", "needs_review", "qualified", "duplicate", "out_of_scope", "superseded", "routed"]},
+    "content_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "dedup_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "raw_binary_storage_prohibited": {"const": true},
     "confirmation_claim_prohibited": {"const": true},
-    "confidence_score": {"type": "integer", "minimum": 0, "maximum": 100},
-    "content_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "analyst_assertion": {"type": ["string", "null"]},
+    "negative_inference": {"const": false},
+    "notes": {"type": ["string", "null"]}
   }
 }
