@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable, Protocol
 
@@ -21,7 +21,7 @@ def deterministic_id(prefix: str, *parts: object) -> str:
     return f"{prefix}_{hashlib.sha256(canonical.encode()).hexdigest()[:32]}"
 
 
-class ReleaseState(StrEnum):
+class ReleaseState(str, Enum):
     NEW_DOCUMENT = "NEW_DOCUMENT"
     NEW_DIGITIZATION = "NEW_DIGITIZATION"
     NEW_RELEASE_VERSION = "NEW_RELEASE_VERSION"
@@ -221,8 +221,6 @@ def classify_release(
             return ReleaseState.LESS_REDACTED_VERSION
         if new_redaction_count > old_redaction_count:
             return ReleaseState.MORE_REDACTED_VERSION
-    if metadata_changed and old_sha256 == new_sha256:
-        return ReleaseState.METADATA_REVISION
     if old_sha256 is None and new_sha256:
         return ReleaseState.NEW_DIGITIZATION
     if new_sha256 is None:
