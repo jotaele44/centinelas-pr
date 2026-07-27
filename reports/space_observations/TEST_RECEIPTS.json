@@ -1,0 +1,22 @@
+{
+  "suite": "centinelas-space-observations-phase0-1-migration",
+  "local_result": "passed",
+  "tests_passed": 8,
+  "runtime_seconds": 0.05,
+  "verified": [
+    "qualified lead acceptance",
+    "two clean replays",
+    "persistent deduplication after restart",
+    "100 percent run accounting",
+    "durable routing acknowledgement",
+    "failure isolation",
+    "production synthetic rejection",
+    "DSP unsupported claim rejection",
+    "negative inference rejection",
+    "ovnis-pr foreign case reference only",
+    "thehub-pr correlation boundary",
+    "distinct federation producer identity",
+    "no network acquisition"
+  ],
+  "authoritative_integration_gate": "GitHub Actions on draft PR"
+}
