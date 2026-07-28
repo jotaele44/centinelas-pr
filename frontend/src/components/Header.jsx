@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, Moon, ShieldCheck, Sun, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { useLanguage } from "@/lib/LanguageContext";
 
@@ -67,9 +67,7 @@ export default function Header() {
     <header className="w-full border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <ShieldCheck className="h-6 w-6" aria-hidden="true" />
-          </div>
+          <img src={`${import.meta.env.BASE_URL}icon-180.png`} alt="" aria-hidden="true" className="h-10 w-10 rounded-lg" />
           <div>
             <span className="text-lg font-bold text-foreground block leading-tight">Centinelas</span>
             <span className="text-xs text-muted-foreground block leading-tight">{t("Señal temprana → MoneySweep")}</span>
