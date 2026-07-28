@@ -1,5 +1,6 @@
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
@@ -19,32 +20,16 @@ from centinelas.releases.sandbox import (
     repair_pdf,
 )
 
-
-HTML_FIXTURES = {
-    "nara_ndc": b'<a class="release" data-id="rg341" href="/declassification/ndc/releases/rg341.pdf">RG 341 release</a>',
-    "cia_reading_room": b'<a href="/readingroom/document/cia-rdp-001">Puerto Rico memorandum</a>',
-    "nsa_releases": b'<a class="release" href="/Portals/75/documents/news-features/declassified-documents/pr.pdf">NSA release</a>',
-    "dia_reading_room": b'<a class="download" href="/FOIA/Documents/pr-report.pdf">DIA report</a>',
-    "nhhc": b'<a href="/research/archives/collections/roosevelt-roads.html">Roosevelt Roads collection</a>',
-    "doe_aec": b'<a href="/sites/default/files/puerto-rico-nuclear-center.pdf">AEC report</a>',
-    "air_force_blue_book": b'<a href="/files/research/blue-book/puerto-rico.pdf">Project Blue Book Puerto Rico</a>',
-}
+FIXTURE_PATH = (
+    Path(__file__).parent / "fixtures" / "federal_records" / "source_parser_fixtures.json"
+)
 
 
-def _nara_catalog_fixture():
-    return json.dumps(
-        {
-            "records": [
-                {
-                    "naId": "595618",
-                    "title": "Puerto Rico command history",
-                    "date": "1952",
-                    "recordGroupNumber": "341",
-                }
-            ],
-            "next": None,
-        }
-    ).encode()
+def _fixtures():
+    return {
+        key: value.encode()
+        for key, value in json.loads(FIXTURE_PATH.read_text()).items()
+    }
 
 
 def _pdf(text=b"", *, image=False):
@@ -56,9 +41,13 @@ def _pdf(text=b"", *, image=False):
     return b"%PDF-1.4\n" + page + b"\n%%EOF"
 
 
-def test_all_source_specific_parsers_use_recorded_shapes():
-    fixtures = dict(HTML_FIXTURES)
-    fixtures["nara_catalog"] = _nara_catalog_fixture()
+def _versions(binary):
+    by_binary = {spec.binary: spec.pinned_version for spec in EXECUTOR_REGISTRY.values()}
+    return by_binary[binary]
+
+
+def test_all_source_specific_parsers_use_retained_recorded_shapes():
+    fixtures = _fixtures()
     assert set(fixtures) == set(PARSER_REGISTRY)
     for adapter_id, body in fixtures.items():
         rows, has_next = PARSER_REGISTRY[adapter_id](body)
@@ -70,16 +59,13 @@ def test_all_source_specific_parsers_use_recorded_shapes():
 
 
 def test_two_clean_parser_runs_have_identical_normalized_digest():
-    parser = PARSER_REGISTRY["nara_catalog"]
-    first, _ = parser(_nara_catalog_fixture())
-    second, _ = parser(_nara_catalog_fixture())
-    first_digest = hashlib.sha256(
-        json.dumps(first, sort_keys=True, separators=(",", ":")).encode()
+    body = _fixtures()["nara_catalog"]
+    first, _ = PARSER_REGISTRY["nara_catalog"](body)
+    second, _ = PARSER_REGISTRY["nara_catalog"](body)
+    canonical = lambda rows: hashlib.sha256(
+        json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-    second_digest = hashlib.sha256(
-        json.dumps(second, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    assert first_digest == second_digest
+    assert canonical(first) == canonical(second)
 
 
 def test_parser_drift_fails_closed():
@@ -90,9 +76,10 @@ def test_parser_drift_fails_closed():
 
 
 def test_robots_and_terms_denials_remain_mandatory(tmp_path):
+    body = _fixtures()["nara_catalog"]
     adapter = build_adapter(
         "nara_catalog",
-        lambda _url, _headers: (200, {}, _nara_catalog_fixture()),
+        lambda _url, _headers: (200, {}, body),
         tmp_path,
         explicitly_enabled=True,
         limiter=RateLimiter(0),
@@ -102,7 +89,7 @@ def test_robots_and_terms_denials_remain_mandatory(tmp_path):
 
     adapter = build_adapter(
         "nara_catalog",
-        lambda _url, _headers: (200, {}, _nara_catalog_fixture()),
+        lambda _url, _headers: (200, {}, body),
         tmp_path / "terms",
         explicitly_enabled=True,
         robots_approved=True,
@@ -118,7 +105,7 @@ def test_executor_registry_is_pinned_and_network_disabled():
     assert all(spec.network_disabled for spec in EXECUTOR_REGISTRY.values())
 
 
-def test_executor_success_receipts_and_roundtrip(tmp_path):
+def test_executor_success_receipts_and_reproducible_roundtrip(tmp_path):
     def runner(command, *, input_bytes, limits):
         if command[0] == "tesseract":
             output = b"Puerto Rico map page"
@@ -128,7 +115,7 @@ def test_executor_success_receipts_and_roundtrip(tmp_path):
             output = b"PNG-PAGE"
         return ProcessResult(0, output, b"", 0.2, 1024, False)
 
-    sandbox = DocumentSandbox(runner)
+    sandbox = DocumentSandbox(runner, version_probe=_versions)
     rendered, render_receipt = render_pdf_pages(sandbox, _pdf(b"Puerto Rico"))
     repaired, repair_receipt = repair_pdf(sandbox, b"%PDF-1.4\n/Type /Page")
     text, confidence, ocr_receipt = ocr_page(sandbox, b"PNG")
@@ -136,16 +123,41 @@ def test_executor_success_receipts_and_roundtrip(tmp_path):
     assert repaired.endswith(b"%%EOF")
     assert text == "Puerto Rico map page"
     assert confidence > 0
-    assert {render_receipt.status, repair_receipt.status, ocr_receipt.status} == {"success"}
+    assert all(
+        receipt.status == "success" and receipt.version_verified
+        for receipt in (render_receipt, repair_receipt, ocr_receipt)
+    )
     path = tmp_path / "executor-receipts.jsonl"
     sandbox.write_receipts(path)
-    assert len(path.read_text().splitlines()) == 3
+    first = path.read_bytes()
+    sandbox.write_receipts(path)
+    assert path.read_bytes() == first
+
+
+def test_version_mismatch_and_unapproved_arguments_fail_before_execution():
+    called = []
+
+    def runner(command, *, input_bytes, limits):
+        called.append(command)
+        return ProcessResult(0, b"", b"", 0.0, 0)
+
+    mismatch = DocumentSandbox(runner, version_probe=lambda _binary: "0.0.0")
+    with pytest.raises(SandboxPolicyError):
+        render_pdf_pages(mismatch, b"pdf")
+
+    sandbox = DocumentSandbox(runner, version_probe=_versions)
+    with pytest.raises(SandboxPolicyError):
+        sandbox.execute("poppler", b"pdf", ("https://example.invalid/file.pdf",))
+    with pytest.raises(SandboxPolicyError):
+        sandbox.execute("poppler", b"pdf", ("-png", "INPUT", "OUTPUT"))
+    assert called == []
 
 
 def test_timeout_oom_and_network_attempt_are_rejected():
     timeout = DocumentSandbox(
         lambda command, *, input_bytes, limits: ProcessResult(0, b"", b"", 2.0, 1),
         SandboxLimits(timeout_seconds=1.0),
+        version_probe=_versions,
     )
     with pytest.raises(SandboxTimeout):
         render_pdf_pages(timeout, b"pdf")
@@ -153,28 +165,17 @@ def test_timeout_oom_and_network_attempt_are_rejected():
     oom = DocumentSandbox(
         lambda command, *, input_bytes, limits: ProcessResult(0, b"", b"", 0.1, 4096),
         SandboxLimits(memory_bytes=1024),
+        version_probe=_versions,
     )
     with pytest.raises(SandboxOutOfMemory):
         render_pdf_pages(oom, b"pdf")
 
     network = DocumentSandbox(
-        lambda command, *, input_bytes, limits: ProcessResult(0, b"", b"", 0.1, 1, True)
+        lambda command, *, input_bytes, limits: ProcessResult(0, b"", b"", 0.1, 1, True),
+        version_probe=_versions,
     )
     with pytest.raises(SandboxPolicyError):
         render_pdf_pages(network, b"pdf")
-
-
-def test_network_bearing_arguments_are_rejected_before_execution():
-    called = []
-
-    def runner(command, *, input_bytes, limits):
-        called.append(command)
-        return ProcessResult(0, b"", b"", 0.0, 0)
-
-    sandbox = DocumentSandbox(runner)
-    with pytest.raises(SandboxPolicyError):
-        sandbox.execute("poppler", b"pdf", ("https://example.invalid/file.pdf",))
-    assert called == []
 
 
 def test_corrupt_object_stream_and_page_review_flags():
