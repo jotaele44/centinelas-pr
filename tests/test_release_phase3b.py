@@ -46,6 +46,12 @@ def _versions(binary):
     return by_binary[binary]
 
 
+def _canonical_digest(rows):
+    return hashlib.sha256(
+        json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
 def test_all_source_specific_parsers_use_retained_recorded_shapes():
     fixtures = _fixtures()
     assert set(fixtures) == set(PARSER_REGISTRY)
@@ -62,10 +68,7 @@ def test_two_clean_parser_runs_have_identical_normalized_digest():
     body = _fixtures()["nara_catalog"]
     first, _ = PARSER_REGISTRY["nara_catalog"](body)
     second, _ = PARSER_REGISTRY["nara_catalog"](body)
-    canonical = lambda rows: hashlib.sha256(
-        json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    assert canonical(first) == canonical(second)
+    assert _canonical_digest(first) == _canonical_digest(second)
 
 
 def test_parser_drift_fails_closed():
