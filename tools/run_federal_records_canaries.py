@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Run low-rate, metadata-only federal-record source canaries.
 
-This command never downloads linked document binaries. It retains robots, policy,
+The command never downloads linked document binaries. It retains robots, policy,
 and index responses plus deterministic ledgers for two independent enumerations.
-Every source is explicitly listed and enabled for this canary invocation only.
+A fetched policy page is evidence of availability, not a legal interpretation.
 """
 from __future__ import annotations
 
@@ -12,10 +12,9 @@ import hashlib
 import json
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 import urllib.robotparser
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +28,7 @@ class SourceCanary:
     adapter_id: str
     index_url: str
     robots_url: str
-    terms_url: str
+    policy_url: str
 
 
 SOURCES: tuple[SourceCanary, ...] = (
@@ -96,7 +95,10 @@ def canonical_digest(value: Any) -> str:
 def fetch(url: str, *, timeout: float) -> tuple[int, str, bytes]:
     request = urllib.request.Request(
         url,
-        headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/json;q=0.9,*/*;q=0.1"},
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/json;q=0.9,*/*;q=0.1",
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -113,14 +115,19 @@ def robots_decision(source: SourceCanary, body: bytes) -> tuple[bool, str]:
     return allowed, "allowed" if allowed else "denied"
 
 
-def write_bytes(root: Path, adapter_id: str, run_number: int, name: str, body: bytes) -> Path:
+def write_bytes(root: Path, adapter_id: str, run_number: int, name: str, body: bytes) -> None:
     target = root / adapter_id / f"run-{run_number}" / name
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(body)
-    return target
 
 
-def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float) -> dict[str, Any]:
+def run_source(
+    source: SourceCanary,
+    root: Path,
+    *,
+    delay: float,
+    timeout: float,
+) -> dict[str, Any]:
     parser = PARSER_REGISTRY[source.adapter_id]
     policy_runs: list[dict[str, Any]] = []
     enumerations: list[dict[str, Any]] = []
@@ -129,16 +136,22 @@ def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float
     for run_number in (1, 2):
         if run_number > 1:
             time.sleep(delay)
-        robots_status, robots_final_url, robots_body = fetch(source.robots_url, timeout=timeout)
+        robots_status, robots_final_url, robots_body = fetch(
+            source.robots_url,
+            timeout=timeout,
+        )
         write_bytes(root, source.adapter_id, run_number, "robots.txt", robots_body)
-        terms_status, terms_final_url, terms_body = fetch(source.terms_url, timeout=timeout)
-        write_bytes(root, source.adapter_id, run_number, "terms.html", terms_body)
+        policy_status, policy_final_url, policy_body = fetch(
+            source.policy_url,
+            timeout=timeout,
+        )
+        write_bytes(root, source.adapter_id, run_number, "policy.html", policy_body)
 
         robots_allowed = False
         robots_note = "robots fetch failed"
         if 200 <= robots_status < 300:
             robots_allowed, robots_note = robots_decision(source, robots_body)
-        terms_approved = 200 <= terms_status < 300 and len(terms_body.strip()) > 0
+        policy_available = 200 <= policy_status < 300 and bool(policy_body.strip())
         policy_runs.append(
             {
                 "run": run_number,
@@ -147,25 +160,38 @@ def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float
                 "robots_sha256": sha256(robots_body),
                 "robots_allowed": robots_allowed,
                 "robots_note": robots_note,
-                "terms_url": terms_final_url,
-                "terms_status": terms_status,
-                "terms_sha256": sha256(terms_body),
-                "terms_reviewed": terms_approved,
-                "terms_disposition": "no automated-use conflict detected by canary" if terms_approved else "unavailable",
+                "policy_url": policy_final_url,
+                "policy_status": policy_status,
+                "policy_sha256": sha256(policy_body),
+                "policy_page_available": policy_available,
+                "manual_terms_review_required": True,
+                "policy_disposition": (
+                    "policy page captured; no legal conclusion made"
+                    if policy_available
+                    else "policy page unavailable"
+                ),
             }
         )
 
         if not robots_allowed:
-            failures.append({"run": run_number, "class": "ROBOTS_DENIAL", "detail": robots_note})
+            failures.append(
+                {"run": run_number, "class": "ROBOTS_DENIAL", "detail": robots_note}
+            )
             continue
-        if not terms_approved:
-            failures.append({"run": run_number, "class": "TERMS_UNAVAILABLE", "detail": str(terms_status)})
+        if not policy_available:
+            failures.append(
+                {
+                    "run": run_number,
+                    "class": "POLICY_PAGE_UNAVAILABLE",
+                    "detail": str(policy_status),
+                }
+            )
             continue
 
         time.sleep(delay)
         status, final_url, body = fetch(source.index_url, timeout=timeout)
         write_bytes(root, source.adapter_id, run_number, "index.raw", body)
-        response = {
+        response: dict[str, Any] = {
             "run": run_number,
             "request_url": source.index_url,
             "final_url": final_url,
@@ -176,16 +202,21 @@ def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float
             "documents_downloaded": 0,
         }
         if not 200 <= status < 300:
-            failures.append({"run": run_number, "class": "HTTP_BLOCK", "detail": str(status)})
+            failures.append(
+                {"run": run_number, "class": "HTTP_BLOCK", "detail": str(status)}
+            )
             enumerations.append(response)
             continue
         try:
             records, has_next = parser(body)
         except ParserDriftError as exc:
-            failures.append({"run": run_number, "class": "PARSER_DRIFT", "detail": str(exc)})
+            failures.append(
+                {"run": run_number, "class": "PARSER_DRIFT", "detail": str(exc)}
+            )
             response["parser_error"] = str(exc)
             enumerations.append(response)
             continue
+
         normalized = sorted(records, key=lambda row: row["source_key"])
         write_bytes(
             root,
@@ -198,7 +229,9 @@ def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float
             {
                 "record_count": len(normalized),
                 "has_next": bool(has_next),
-                "inventory_digest": canonical_digest([row["source_key"] for row in normalized]),
+                "inventory_digest": canonical_digest(
+                    [row["source_key"] for row in normalized]
+                ),
                 "parser_output_digest": canonical_digest(normalized),
             }
         )
@@ -208,15 +241,24 @@ def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float
     deterministic = (
         len(successful) == 2
         and successful[0]["inventory_digest"] == successful[1]["inventory_digest"]
-        and successful[0]["parser_output_digest"] == successful[1]["parser_output_digest"]
+        and successful[0]["parser_output_digest"]
+        == successful[1]["parser_output_digest"]
     )
     if len(successful) == 2 and not deterministic:
-        failures.append({"class": "NONDETERMINISTIC_INVENTORY", "detail": "two-run digests differ"})
+        failures.append(
+            {
+                "class": "NONDETERMINISTIC_INVENTORY",
+                "detail": "two-run digests differ",
+            }
+        )
 
     recommendation = "DISABLE"
     if deterministic and not failures:
-        recommendation = "ELIGIBLE_FOR_LIMITED_METADATA_MONITORING"
-    elif all(row["class"] not in {"ROBOTS_DENIAL", "TERMS_UNAVAILABLE"} for row in failures):
+        recommendation = "ELIGIBLE_FOR_LIMITED_METADATA_MONITORING_AFTER_MANUAL_POLICY_REVIEW"
+    elif all(
+        row["class"] not in {"ROBOTS_DENIAL", "POLICY_PAGE_UNAVAILABLE"}
+        for row in failures
+    ):
         recommendation = "DISABLE_PENDING_PARSER_OR_ACCESS_REMEDIATION"
 
     result = {
@@ -228,6 +270,7 @@ def run_source(source: SourceCanary, root: Path, *, delay: float, timeout: float
         "deterministic": deterministic,
         "failures": failures,
         "recommendation": recommendation,
+        "manual_policy_review_required": True,
         "no_document_publication": True,
         "no_bulk_acquisition": True,
     }
@@ -248,8 +291,10 @@ def main() -> int:
     results: list[dict[str, Any]] = []
     for source in SOURCES:
         try:
-            results.append(run_source(source, args.out, delay=args.delay, timeout=args.timeout))
-        except Exception as exc:  # preserve the rest of the source canaries
+            results.append(
+                run_source(source, args.out, delay=args.delay, timeout=args.timeout)
+            )
+        except Exception as exc:  # continue with the remaining source canaries
             results.append(
                 {
                     "adapter_id": source.adapter_id,
@@ -257,6 +302,7 @@ def main() -> int:
                     "deterministic": False,
                     "failures": [{"class": type(exc).__name__, "detail": str(exc)}],
                     "recommendation": "DISABLE",
+                    "manual_policy_review_required": True,
                     "no_document_publication": True,
                     "no_bulk_acquisition": True,
                 }
@@ -270,18 +316,22 @@ def main() -> int:
         }
         for row in results
     ]
+    eligible_label = (
+        "ELIGIBLE_FOR_LIMITED_METADATA_MONITORING_AFTER_MANUAL_POLICY_REVIEW"
+    )
     reproducibility = {
         "all_sources_deterministic": all(row.get("deterministic") for row in results),
         "eligible_sources": [
             row["adapter_id"]
             for row in results
-            if row["recommendation"] == "ELIGIBLE_FOR_LIMITED_METADATA_MONITORING"
+            if row["recommendation"] == eligible_label
         ],
         "disabled_sources": [
             row["adapter_id"]
             for row in results
-            if row["recommendation"] != "ELIGIBLE_FOR_LIMITED_METADATA_MONITORING"
+            if row["recommendation"] != eligible_label
         ],
+        "manual_policy_review_required": True,
         "ledger_digest": canonical_digest(results),
         "documents_downloaded": 0,
         "baseline_mutated": False,
