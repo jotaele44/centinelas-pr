@@ -1,0 +1,13 @@
+{
+  "approval_id": "federal-records-limited-metadata-pilot-20260728",
+  "budget_scope": "metadata index requests only",
+  "daily_request_budget_per_source": 4,
+  "requests_used": {
+    "nara_ndc": 2,
+    "dia_reading_room": 2,
+    "air_force_blue_book": 2
+  },
+  "budget_exceeded": false,
+  "pages_per_request": 1,
+  "linked_binary_requests": 0
+}
