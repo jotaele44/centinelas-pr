@@ -9,7 +9,8 @@ const seedSources = [
   { name: "Senado de Puerto Rico", source_type: "legislature", coverage_tier: "P0", status: "manual", beat_tags: ["legislature", "hearings", "votes"] },
   { name: "Cámara de Representantes", source_type: "legislature", coverage_tier: "P0", status: "manual", beat_tags: ["legislature", "committees"] },
   { name: "PR.gov", source_type: "central_government", coverage_tier: "P0", status: "manual", beat_tags: ["executive", "agencies"] },
-  { name: "ASG / subastas", source_type: "procurement", coverage_tier: "P0", status: "manual", beat_tags: ["contracts", "rfp"] },
+  { name: "ASG / subastas", source_type: "procurement", coverage_tier: "P0", status: "active", beat_tags: ["contracts", "rfp"] },
+  { name: "ASG / noticias", source_type: "procurement", coverage_tier: "P1", status: "active", beat_tags: ["press", "procurement"] },
   { name: "Municipios de Puerto Rico", source_type: "municipal", coverage_tier: "P0", status: "manual", beat_tags: ["municipal", "agendas"] },
   { name: "Rama Judicial / expedientes", source_type: "court", coverage_tier: "P1", status: "manual", beat_tags: ["courts", "litigation"] },
 ];

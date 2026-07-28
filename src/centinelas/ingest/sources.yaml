@@ -263,6 +263,10 @@ federal_register:
 #   html_table  — a header-row + data-row HTML table
 #   rss_detail  — an RSS index whose items are stubs, so each linked notice
 #                 page is fetched for its body (crawl depth 2)
+#   asg_cards   — ASG's hand-rolled Bootstrap card listings, whose per-field CSS
+#                 selectors come from config (item/title/date/body/link);
+#                 paginates via `max_pages` and, when the cards carry no date,
+#                 resolves one from each entry's page via `detail_date_label`
 scrape:
   enabled: true
   sources:
@@ -307,6 +311,42 @@ scrape:
       parser: webflow_cms
       tier: "T2"
       section: "Comunicado de la Junta de Planificación"
+
+    # ASG is the central procurement authority (Ley 73-2019): its bid index is
+    # the pre-award counterpart to the contracts MoneySweep catalogs after the
+    # fact. https://asg.pr.gov/transparencia is deliberately NOT listed — it is
+    # a nine-tile navigation page with no records of its own; these two are the
+    # leaves under it that actually publish.
+    - name: "ASG — Licitaciones (Subastas)"
+      url: "https://asg.pr.gov/subastas?order_by=-creado"
+      parser: asg_cards
+      tier: "T1"
+      section: "Licitación de la Administración de Servicios Generales"
+      item_selector: ".card-media-info"
+      title_selectors: [".subasta-card-number", ".subasta-card-method", ".subasta-card-agency"]
+      body_selectors: [".subasta-card-purpose", ".subasta-card-agency", ".subasta-card-method"]
+      link_selector: "a[href]"
+      # Bid cards carry no date, so each entry's page is fetched for its opening
+      # date. Sorted newest-first, two pages (~54 bids) covers a routine poll;
+      # raise max_pages to backfill the full 64-page index.
+      detail_date_label: "Acto de Apertura"
+      max_pages: 2
+
+    - name: "ASG — Noticias"
+      url: "https://asg.pr.gov/noticias/"
+      parser: asg_cards
+      tier: "T2"
+      section: "Noticia de la Administración de Servicios Generales"
+      # The lead story is marked up as article.blog-featured with an <h2>, not
+      # article.blog-card with a .blog-card-title. Matching only the latter
+      # silently drops whichever story ASG is currently promoting.
+      item_selector: "article.blog-card, article.blog-featured"
+      title_selectors: [".blog-card-title", ".blog-featured-body h2"]
+      date_selector: ".blog-card-meta span:last-of-type"
+      body_selectors: ["p"]
+      link_selector: "a.blog-link"
+      # Dated on the card, so no detail fetch. Two pages is the whole archive.
+      max_pages: 2
 
     - name: "EPA Region 2 — Puerto Rico NPDES Permits"
       url: "https://www.epa.gov/npdes-permits/puerto-rico-npdes-permits"
