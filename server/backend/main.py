@@ -23,7 +23,11 @@ from pydantic import BaseModel
 from centinelas.ingest.rss import _load_sources
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", str(REPO_ROOT / ".centinelas")))
+DATA_DIR = Path(
+    os.environ.get("CENTINELAS_DATA_DIR")
+    or os.environ.get("PRII_CENTINELAS_DATA_HOME")
+    or str(REPO_ROOT / ".centinelas")
+)
 QUEUE_DIR = DATA_DIR / "queue"
 CLASSIFIED_DIR = DATA_DIR / "classified"
 DISPATCHED_DIR = DATA_DIR / "dispatched"

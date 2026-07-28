@@ -3,9 +3,8 @@
 @tailwind utilities;
 
 /*
- * Neutral surface palette with red reserved for alert / urgency / primary CTA.
- * Previously every token hue was red (0deg), so the whole app read as an alarm
- * state. Fonts are a system stack (no render-blocking external @import).
+ * Warm neutral surfaces with the icon's accessible orange as product identity.
+ * Red remains reserved for destructive and urgency semantics.
  */
 @layer base {
   :root {
@@ -24,12 +23,11 @@
     --accent: 210 16% 94%;
     --accent-foreground: 222 22% 22%;
 
-    /* Red stays the brand / primary / urgency signal. */
-    --primary: 0 68.5% 49.8%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 25.2 87.6% 47.5%;
+    --primary-foreground: 0 0% 0%;
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 0 68.5% 49.8%;
+    --ring: 25.2 87.6% 47.5%;
 
     --radius: 0.75rem;
 
@@ -54,11 +52,11 @@
     --accent: 217 18% 22%;
     --accent-foreground: 210 20% 96%;
 
-    --primary: 0 72% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 25.2 87.6% 54%;
+    --primary-foreground: 0 0% 0%;
     --destructive: 0 62% 52%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 0 72% 58%;
+    --ring: 25.2 87.6% 54%;
   }
 }
 
