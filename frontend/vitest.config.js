@@ -2,8 +2,10 @@ import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
-// Rendered from thehub-pr/federation-templates/baseline/vitest.config.js.
-// Do not hand-edit — template-drift.yml fails the build if you do.
+// Modelled on thehub-pr/server/frontend/vitest.config.js. Deliberately a
+// local file rather than a rendered federation template: templating it
+// would make every JSX frontend drifted until all five had the harness,
+// which would block landing tests one repo at a time.
 //
 // Deliberately separate from vite.config.js rather than merging it: the build
 // config carries offline-export plumbing (vite-plugin-singlefile) and federation
