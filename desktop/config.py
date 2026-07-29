@@ -12,6 +12,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # User-facing window title of the desktop app.
 APP_TITLE = "Centinelas"
+APP_ID = "Centinelas"
+BRAND_ACCENT = "#df630d"
+BRAND_ACCENT_STRONG = "#9f3e00"
+ICON_PATH = REPO_ROOT / "assets" / "branding" / "icon-256.png"
+SETUP_VERSION = 1
+DATA_ENV_VAR = "CENTINELAS_DATA_DIR"
+SETUP_ACTION = "desktop.seed:seed"
 
 # Dotted import path of the FastAPI application object.
 APP_IMPORT = "server.backend.main:app"
