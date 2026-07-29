@@ -26,6 +26,8 @@ CONSOLE = os.environ.get("PRII_CONSOLE") == "1"
 datas = [
     (str(REPO_ROOT / "frontend" / "dist"), "frontend/dist"),
     (str(REPO_ROOT / "data" / "reference"), "data/reference"),
+    (str(REPO_ROOT / "data" / "signals"), "data/signals"),
+    (str(BRANDING / "icon-256.png"), "assets/branding"),
     # centinelas.ingest.rss loads sources.yaml relative to its own module file.
     (str(REPO_ROOT / "src" / "centinelas" / "ingest" / "sources.yaml"), "centinelas/ingest"),
 ]
@@ -52,6 +54,8 @@ a = Analysis(
         "prii_desktop.launcher",
         "prii_desktop.appserver",
         "prii_desktop.config",
+        "prii_desktop.setup_center",
+        "desktop.seed",
     ],
     noarchive=False,
 )
@@ -79,4 +83,8 @@ if sys.platform == "darwin":
         name=f"{APP_NAME}.app",
         icon=str(BRANDING / "AppIcon.icns"),
         bundle_identifier="pr.prii.centinelas",
+        info_plist={
+            "CFBundleDisplayName": "Centinelas",
+            "CFBundleName": "Centinelas",
+        },
     )
