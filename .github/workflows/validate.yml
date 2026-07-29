@@ -148,9 +148,9 @@ jobs:
   # path-triggered and does not fire on a frontend-only PR. So a lint regression
   # or a broken build could merge unnoticed.
   #
-  # Gates `lint` and `build`, matching skywatcher-pr and thehub-pr. `typecheck`
-  # is deliberately not added here: this package has never had a JS gate, and
-  # turning on two at once risks a red build over pre-existing findings.
+  # Gates `lint`, `test` and `build`, matching thehub-pr. `typecheck` is still
+  # deliberately absent: this repo's jsconfig `include` is broader than the
+  # other producers', so it would type-check the co-located test files too.
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -167,5 +167,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Lint
         run: npm run lint
+      - name: Tests
+        run: npm run test
       - name: Build
         run: npm run build

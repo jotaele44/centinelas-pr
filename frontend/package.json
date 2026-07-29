@@ -4,12 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
+    "dev": "vite",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p ./jsconfig.json"
   },
   "dependencies": {
     "@pr-federation/react": "https://github.com/jotaele44/thehub-pr/releases/download/federation-design-v0.3.0/pr-federation-react-0.3.0.tgz",
@@ -30,6 +32,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -42,10 +47,13 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^15.14.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^2.1.9",
+    "vitest-axe": "^0.1.0"
   },
   "description": "Centinelas-PR frontend: Puerto Rico civic/legislative pre-officialization signal monitor (linked to MoneySweep) plus universal 6-domain online-intelligence intake and routing visibility for the PR federation."
 }
