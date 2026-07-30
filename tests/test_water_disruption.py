@@ -35,7 +35,9 @@ def test_candidate_is_always_candidate_and_dedup_is_deterministic(tmp_path):
     evidence = producer.capture_evidence("prasa", "https://example.test/a", "Interrupción", "Sin agua por avería", when)
     one = producer.extract_candidate(evidence, ["Caguas"], "main-1")
     two = producer.extract_candidate(evidence, ["Caguas"], "main-1")
-    assert one == two
+    assert one["candidate_id"] == two["candidate_id"]
+    assert one["dedup_key"] == two["dedup_key"]
+    assert len(producer.store.read("candidates")) == 1
     assert one["truth_state"] == "candidate"
     assert one["confidence"]["overall"] <= 1
 
@@ -54,7 +56,8 @@ def test_outbox_idempotency_and_non_destructive_retraction(tmp_path):
     candidate = producer.extract_candidate(evidence, ["Caguas"])
     first = producer.dispatch(candidate["candidate_id"], "KEY-1")
     second = producer.dispatch(candidate["candidate_id"], "KEY-1")
-    assert first == second
+    assert first["outbox_id"] == second["outbox_id"]
+    assert len(producer.store.read("outbox")) == 1
     assert first["status"] == "shadow_queued"
     assert first["notifications_enabled"] is False
     retraction = producer.retract(candidate["candidate_id"], "wrong municipality", "RET-1")
