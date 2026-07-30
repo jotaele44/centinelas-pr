@@ -1,0 +1,1885 @@
+{
+  "candidate_count": 248,
+  "candidates": [
+    {
+      "id": "analysis_module:scripts/build_signal_ledger.py",
+      "kind": "analysis_module",
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_module:scripts/emit_dispatches.py",
+      "kind": "analysis_module",
+      "path": "scripts/emit_dispatches.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_module:scripts/federation_export.py",
+      "kind": "analysis_module",
+      "path": "scripts/federation_export.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_module:scripts/record_handoff_ack.py",
+      "kind": "analysis_module",
+      "path": "scripts/record_handoff_ack.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_module:scripts/run_maintenance.py",
+      "kind": "analysis_module",
+      "path": "scripts/run_maintenance.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_module:scripts/validate_pr_grid.py",
+      "kind": "analysis_module",
+      "path": "scripts/validate_pr_grid.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_module:scripts/validate_skills.py",
+      "kind": "analysis_module",
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED"
+    },
+    {
+      "id": "analysis_symbol:scripts/build_signal_ledger.py:build_ledger",
+      "kind": "analysis_symbol",
+      "line": 89,
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "build_ledger"
+    },
+    {
+      "id": "analysis_symbol:scripts/build_signal_ledger.py:feed_source_id",
+      "kind": "analysis_symbol",
+      "line": 51,
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "feed_source_id"
+    },
+    {
+      "id": "analysis_symbol:scripts/build_signal_ledger.py:item_to_signal",
+      "kind": "analysis_symbol",
+      "line": 61,
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "item_to_signal"
+    },
+    {
+      "id": "analysis_symbol:scripts/build_signal_ledger.py:main",
+      "kind": "analysis_symbol",
+      "line": 107,
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "main"
+    },
+    {
+      "id": "analysis_symbol:scripts/build_signal_ledger.py:source_name_to_id",
+      "kind": "analysis_symbol",
+      "line": 57,
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "source_name_to_id"
+    },
+    {
+      "id": "analysis_symbol:scripts/emit_dispatches.py:build_dispatch_body",
+      "kind": "analysis_symbol",
+      "line": 66,
+      "path": "scripts/emit_dispatches.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "build_dispatch_body"
+    },
+    {
+      "id": "analysis_symbol:scripts/emit_dispatches.py:iter_payloads",
+      "kind": "analysis_symbol",
+      "line": 54,
+      "path": "scripts/emit_dispatches.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "iter_payloads"
+    },
+    {
+      "id": "analysis_symbol:scripts/emit_dispatches.py:main",
+      "kind": "analysis_symbol",
+      "line": 139,
+      "path": "scripts/emit_dispatches.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "main"
+    },
+    {
+      "id": "analysis_symbol:scripts/emit_dispatches.py:post_dispatch",
+      "kind": "analysis_symbol",
+      "line": 83,
+      "path": "scripts/emit_dispatches.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "post_dispatch"
+    },
+    {
+      "id": "analysis_symbol:scripts/emit_dispatches.py:run",
+      "kind": "analysis_symbol",
+      "line": 95,
+      "path": "scripts/emit_dispatches.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "run"
+    },
+    {
+      "id": "analysis_symbol:scripts/federation_export.py:build_streams",
+      "kind": "analysis_symbol",
+      "line": 68,
+      "path": "scripts/federation_export.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "build_streams"
+    },
+    {
+      "id": "analysis_symbol:scripts/federation_export.py:main",
+      "kind": "analysis_symbol",
+      "line": 243,
+      "path": "scripts/federation_export.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "main"
+    },
+    {
+      "id": "analysis_symbol:scripts/federation_export.py:write_package",
+      "kind": "analysis_symbol",
+      "line": 210,
+      "path": "scripts/federation_export.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "write_package"
+    },
+    {
+      "id": "analysis_symbol:scripts/run_maintenance.py:main",
+      "kind": "analysis_symbol",
+      "line": 22,
+      "path": "scripts/run_maintenance.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "main"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_pr_grid.py:main",
+      "kind": "analysis_symbol",
+      "line": 19,
+      "path": "scripts/validate_pr_grid.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "main"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_pr_grid.py:sha",
+      "kind": "analysis_symbol",
+      "line": 12,
+      "path": "scripts/validate_pr_grid.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "sha"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_activation",
+      "kind": "analysis_symbol",
+      "line": 349,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_activation"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_boundary_policy",
+      "kind": "analysis_symbol",
+      "line": 260,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_boundary_policy"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_command_resolution",
+      "kind": "analysis_symbol",
+      "line": 217,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_command_resolution"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_coverage_accounting",
+      "kind": "analysis_symbol",
+      "line": 296,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_coverage_accounting"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_drift",
+      "kind": "analysis_symbol",
+      "line": 380,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_drift"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_export_contract",
+      "kind": "analysis_symbol",
+      "line": 329,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_export_contract"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_mode_safety",
+      "kind": "analysis_symbol",
+      "line": 276,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_mode_safety"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_path_resolution",
+      "kind": "analysis_symbol",
+      "line": 235,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_path_resolution"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_skill_registry",
+      "kind": "analysis_symbol",
+      "line": 196,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_skill_registry"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:check_skill_structure",
+      "kind": "analysis_symbol",
+      "line": 118,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "check_skill_structure"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:main",
+      "kind": "analysis_symbol",
+      "line": 418,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "main"
+    },
+    {
+      "id": "analysis_symbol:scripts/validate_skills.py:run_all",
+      "kind": "analysis_symbol",
+      "line": 413,
+      "path": "scripts/validate_skills.py",
+      "signal": "ANALYSIS_NOT_GUI_RENDERED",
+      "symbol": "run_all"
+    },
+    {
+      "detail": "GET /handoffs",
+      "id": "backend_endpoint:server/backend/main.py:GET /handoffs",
+      "kind": "backend_endpoint",
+      "line": 166,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "GET /health",
+      "id": "backend_endpoint:server/backend/main.py:GET /health",
+      "kind": "backend_endpoint",
+      "line": 77,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "GET /items",
+      "id": "backend_endpoint:server/backend/main.py:GET /items",
+      "kind": "backend_endpoint",
+      "line": 89,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "GET /items/{item_id}",
+      "id": "backend_endpoint:server/backend/main.py:GET /items/{item_id}",
+      "kind": "backend_endpoint",
+      "line": 109,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "GET /queue",
+      "id": "backend_endpoint:server/backend/main.py:GET /queue",
+      "kind": "backend_endpoint",
+      "line": 119,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "GET /sources",
+      "id": "backend_endpoint:server/backend/main.py:GET /sources",
+      "kind": "backend_endpoint",
+      "line": 127,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "GET /status",
+      "id": "backend_endpoint:server/backend/main.py:GET /status",
+      "kind": "backend_endpoint",
+      "line": 136,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "POST /handoffs/{item_id}",
+      "id": "backend_endpoint:server/backend/main.py:POST /handoffs/{item_id}",
+      "kind": "backend_endpoint",
+      "line": 179,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "detail": "POST /run",
+      "id": "backend_endpoint:server/backend/main.py:POST /run",
+      "kind": "backend_endpoint",
+      "line": 226,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "cli_surface:scripts/build_signal_ledger.py",
+      "kind": "cli_surface",
+      "path": "scripts/build_signal_ledger.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "cli_surface:scripts/emit_dispatches.py",
+      "kind": "cli_surface",
+      "path": "scripts/emit_dispatches.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "cli_surface:scripts/federation_export.py",
+      "kind": "cli_surface",
+      "path": "scripts/federation_export.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "cli_surface:scripts/run_maintenance.py",
+      "kind": "cli_surface",
+      "path": "scripts/run_maintenance.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "cli_surface:scripts/validate_pr_grid.py",
+      "kind": "cli_surface",
+      "path": "scripts/validate_pr_grid.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "cli_surface:scripts/validate_skills.py",
+      "kind": "cli_surface",
+      "path": "scripts/validate_skills.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "cli_surface:src/centinelas/cli.py",
+      "kind": "cli_surface",
+      "path": "src/centinelas/cli.py",
+      "signal": "TERMINAL_REQUIRED"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/appClient.js:appClient",
+      "kind": "frontend_api_client",
+      "line": 317,
+      "path": "frontend/src/api/appClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "appClient"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:API_BASE",
+      "kind": "frontend_api_client",
+      "line": 11,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "API_BASE"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:createHandoff",
+      "kind": "frontend_api_client",
+      "line": 47,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "createHandoff"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getHandoffs",
+      "kind": "frontend_api_client",
+      "line": 46,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getHandoffs"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getHealth",
+      "kind": "frontend_api_client",
+      "line": 40,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getHealth"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getItem",
+      "kind": "frontend_api_client",
+      "line": 42,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getItem"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getItems",
+      "kind": "frontend_api_client",
+      "line": 41,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getItems"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getQueue",
+      "kind": "frontend_api_client",
+      "line": 43,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getQueue"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getSources",
+      "kind": "frontend_api_client",
+      "line": 44,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getSources"
+    },
+    {
+      "id": "frontend_api_client:frontend/src/api/pipelineClient.js:getStatus",
+      "kind": "frontend_api_client",
+      "line": 45,
+      "path": "frontend/src/api/pipelineClient.js",
+      "signal": "GUI_NOT_BACKEND_WIRED",
+      "symbol": "getStatus"
+    },
+    {
+      "detail": "button#d1a223462e45",
+      "id": "gui_control:frontend/src/components/ErrorBoundary.jsx:button#d1a223462e45",
+      "kind": "gui_control",
+      "line": 41,
+      "path": "frontend/src/components/ErrorBoundary.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#01cafc34fdc7",
+      "id": "gui_control:frontend/src/components/Header.jsx:button#01cafc34fdc7",
+      "kind": "gui_control",
+      "line": 52,
+      "path": "frontend/src/components/Header.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#02308fb60c0d",
+      "id": "gui_control:frontend/src/components/Header.jsx:button#02308fb60c0d",
+      "kind": "gui_control",
+      "line": 37,
+      "path": "frontend/src/components/Header.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#d1a223462e45",
+      "id": "gui_control:frontend/src/components/Header.jsx:button#d1a223462e45",
+      "kind": "gui_control",
+      "line": 83,
+      "path": "frontend/src/components/Header.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#b06ecd327bfa",
+      "id": "gui_control:frontend/src/lib/PageNotFound.jsx:button#b06ecd327bfa",
+      "kind": "gui_control",
+      "line": 63,
+      "path": "frontend/src/lib/PageNotFound.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#f0f71e9142cd",
+      "id": "gui_control:frontend/src/pages/Entities.jsx:input#f0f71e9142cd",
+      "kind": "gui_control",
+      "line": 50,
+      "path": "frontend/src/pages/Entities.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#aebef5ea3e4a",
+      "id": "gui_control:frontend/src/pages/ForgotPassword.jsx:button#aebef5ea3e4a",
+      "kind": "gui_control",
+      "line": 64,
+      "path": "frontend/src/pages/ForgotPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "form#4feac408f1de",
+      "id": "gui_control:frontend/src/pages/ForgotPassword.jsx:form#4feac408f1de",
+      "kind": "gui_control",
+      "line": 46,
+      "path": "frontend/src/pages/ForgotPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#e716f6ebae55",
+      "id": "gui_control:frontend/src/pages/ForgotPassword.jsx:input#e716f6ebae55",
+      "kind": "gui_control",
+      "line": 51,
+      "path": "frontend/src/pages/ForgotPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#f6560d48e473",
+      "id": "gui_control:frontend/src/pages/Handoff.jsx:button#f6560d48e473",
+      "kind": "gui_control",
+      "line": 126,
+      "path": "frontend/src/pages/Handoff.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#c83cb284d2c3",
+      "id": "gui_control:frontend/src/pages/Handoff.jsx:input#c83cb284d2c3",
+      "kind": "gui_control",
+      "line": 107,
+      "path": "frontend/src/pages/Handoff.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#162d9b4a2632",
+      "id": "gui_control:frontend/src/pages/Login.jsx:button#162d9b4a2632",
+      "kind": "gui_control",
+      "line": 51,
+      "path": "frontend/src/pages/Login.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#aebef5ea3e4a",
+      "id": "gui_control:frontend/src/pages/Login.jsx:button#aebef5ea3e4a",
+      "kind": "gui_control",
+      "line": 114,
+      "path": "frontend/src/pages/Login.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "form#4feac408f1de",
+      "id": "gui_control:frontend/src/pages/Login.jsx:form#4feac408f1de",
+      "kind": "gui_control",
+      "line": 75,
+      "path": "frontend/src/pages/Login.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#531151fe1338",
+      "id": "gui_control:frontend/src/pages/Login.jsx:input#531151fe1338",
+      "kind": "gui_control",
+      "line": 102,
+      "path": "frontend/src/pages/Login.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#e716f6ebae55",
+      "id": "gui_control:frontend/src/pages/Login.jsx:input#e716f6ebae55",
+      "kind": "gui_control",
+      "line": 80,
+      "path": "frontend/src/pages/Login.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#2a34eafc3e65",
+      "id": "gui_control:frontend/src/pages/Pipeline.jsx:button#2a34eafc3e65",
+      "kind": "gui_control",
+      "line": 138,
+      "path": "frontend/src/pages/Pipeline.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#d1a223462e45",
+      "id": "gui_control:frontend/src/pages/Pipeline.jsx:button#d1a223462e45",
+      "kind": "gui_control",
+      "line": 130,
+      "path": "frontend/src/pages/Pipeline.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#162d9b4a2632",
+      "id": "gui_control:frontend/src/pages/Register.jsx:button#162d9b4a2632",
+      "kind": "gui_control",
+      "line": 143,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#4f369a1b805b",
+      "id": "gui_control:frontend/src/pages/Register.jsx:button#4f369a1b805b",
+      "kind": "gui_control",
+      "line": 121,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#88c01ebf49e0",
+      "id": "gui_control:frontend/src/pages/Register.jsx:button#88c01ebf49e0",
+      "kind": "gui_control",
+      "line": 105,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#aebef5ea3e4a",
+      "id": "gui_control:frontend/src/pages/Register.jsx:button#aebef5ea3e4a",
+      "kind": "gui_control",
+      "line": 217,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "form#4feac408f1de",
+      "id": "gui_control:frontend/src/pages/Register.jsx:form#4feac408f1de",
+      "kind": "gui_control",
+      "line": 167,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#31b049b0e198",
+      "id": "gui_control:frontend/src/pages/Register.jsx:input#31b049b0e198",
+      "kind": "gui_control",
+      "line": 189,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#57cee654283d",
+      "id": "gui_control:frontend/src/pages/Register.jsx:input#57cee654283d",
+      "kind": "gui_control",
+      "line": 205,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#e716f6ebae55",
+      "id": "gui_control:frontend/src/pages/Register.jsx:input#e716f6ebae55",
+      "kind": "gui_control",
+      "line": 172,
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "button#aebef5ea3e4a",
+      "id": "gui_control:frontend/src/pages/ResetPassword.jsx:button#aebef5ea3e4a",
+      "kind": "gui_control",
+      "line": 103,
+      "path": "frontend/src/pages/ResetPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "form#4feac408f1de",
+      "id": "gui_control:frontend/src/pages/ResetPassword.jsx:form#4feac408f1de",
+      "kind": "gui_control",
+      "line": 69,
+      "path": "frontend/src/pages/ResetPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#57cee654283d",
+      "id": "gui_control:frontend/src/pages/ResetPassword.jsx:input#57cee654283d",
+      "kind": "gui_control",
+      "line": 91,
+      "path": "frontend/src/pages/ResetPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#a3bdcd36dc12",
+      "id": "gui_control:frontend/src/pages/ResetPassword.jsx:input#a3bdcd36dc12",
+      "kind": "gui_control",
+      "line": 74,
+      "path": "frontend/src/pages/ResetPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#f0f71e9142cd",
+      "id": "gui_control:frontend/src/pages/Signals.jsx:input#f0f71e9142cd",
+      "kind": "gui_control",
+      "line": 54,
+      "path": "frontend/src/pages/Signals.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "select#dedd3fc57d2c",
+      "id": "gui_control:frontend/src/pages/Signals.jsx:select#dedd3fc57d2c",
+      "kind": "gui_control",
+      "line": 58,
+      "path": "frontend/src/pages/Signals.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#f0f71e9142cd",
+      "id": "gui_control:frontend/src/pages/SignalsTable.jsx:input#f0f71e9142cd",
+      "kind": "gui_control",
+      "line": 63,
+      "path": "frontend/src/pages/SignalsTable.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "input#f0f71e9142cd",
+      "id": "gui_control:frontend/src/pages/Sources.jsx:input#f0f71e9142cd",
+      "kind": "gui_control",
+      "line": 56,
+      "path": "frontend/src/pages/Sources.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Entities.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Entities.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/EntityDetail.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/EntityDetail.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/ForgotPassword.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/ForgotPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Handoff.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Handoff.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Home.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Home.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Login.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Login.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/MatterDetail.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/MatterDetail.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Matters.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Matters.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Monitor.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Monitor.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Pipeline.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Pipeline.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/PipelineItemDetail.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/PipelineItemDetail.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Register.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Register.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/ResetPassword.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/ResetPassword.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Signals.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Signals.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/SignalsTable.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/SignalsTable.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "id": "gui_page:frontend/src/pages/Sources.jsx",
+      "kind": "gui_page",
+      "path": "frontend/src/pages/Sources.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "*",
+      "id": "gui_route:frontend/src/App.jsx:*",
+      "kind": "gui_route",
+      "line": 103,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/",
+      "id": "gui_route:frontend/src/App.jsx:/",
+      "kind": "gui_route",
+      "line": 62,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/ForgotPassword",
+      "id": "gui_route:frontend/src/App.jsx:/ForgotPassword",
+      "kind": "gui_route",
+      "line": 100,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/Login",
+      "id": "gui_route:frontend/src/App.jsx:/Login",
+      "kind": "gui_route",
+      "line": 98,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/Register",
+      "id": "gui_route:frontend/src/App.jsx:/Register",
+      "kind": "gui_route",
+      "line": 99,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/ResetPassword",
+      "id": "gui_route:frontend/src/App.jsx:/ResetPassword",
+      "kind": "gui_route",
+      "line": 101,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/autores",
+      "id": "gui_route:frontend/src/App.jsx:/autores",
+      "kind": "gui_route",
+      "line": 79,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/entidad/:slug",
+      "id": "gui_route:frontend/src/App.jsx:/entidad/:slug",
+      "kind": "gui_route",
+      "line": 77,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/entidades",
+      "id": "gui_route:frontend/src/App.jsx:/entidades",
+      "kind": "gui_route",
+      "line": 76,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/forgot-password",
+      "id": "gui_route:frontend/src/App.jsx:/forgot-password",
+      "kind": "gui_route",
+      "line": 93,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/handoff",
+      "id": "gui_route:frontend/src/App.jsx:/handoff",
+      "kind": "gui_route",
+      "line": 68,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/login",
+      "id": "gui_route:frontend/src/App.jsx:/login",
+      "kind": "gui_route",
+      "line": 91,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/matters",
+      "id": "gui_route:frontend/src/App.jsx:/matters",
+      "kind": "gui_route",
+      "line": 65,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/matters/:id",
+      "id": "gui_route:frontend/src/App.jsx:/matters/:id",
+      "kind": "gui_route",
+      "line": 66,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/monitor",
+      "id": "gui_route:frontend/src/App.jsx:/monitor",
+      "kind": "gui_route",
+      "line": 63,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/pipeline",
+      "id": "gui_route:frontend/src/App.jsx:/pipeline",
+      "kind": "gui_route",
+      "line": 71,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/pipeline/:itemId",
+      "id": "gui_route:frontend/src/App.jsx:/pipeline/:itemId",
+      "kind": "gui_route",
+      "line": 72,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/register",
+      "id": "gui_route:frontend/src/App.jsx:/register",
+      "kind": "gui_route",
+      "line": 92,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/reset-password",
+      "id": "gui_route:frontend/src/App.jsx:/reset-password",
+      "kind": "gui_route",
+      "line": 94,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/signals",
+      "id": "gui_route:frontend/src/App.jsx:/signals",
+      "kind": "gui_route",
+      "line": 64,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/sources",
+      "id": "gui_route:frontend/src/App.jsx:/sources",
+      "kind": "gui_route",
+      "line": 67,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/tabla",
+      "id": "gui_route:frontend/src/App.jsx:/tabla",
+      "kind": "gui_route",
+      "line": 75,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_NOT_BACKEND_WIRED"
+    },
+    {
+      "detail": "/ForgotPassword",
+      "id": "gui_unreachable:frontend/src/App.jsx:/ForgotPassword",
+      "kind": "gui_unreachable",
+      "line": 100,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_WORKFLOW_UNREACHABLE"
+    },
+    {
+      "detail": "/Login",
+      "id": "gui_unreachable:frontend/src/App.jsx:/Login",
+      "kind": "gui_unreachable",
+      "line": 98,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_WORKFLOW_UNREACHABLE"
+    },
+    {
+      "detail": "/Register",
+      "id": "gui_unreachable:frontend/src/App.jsx:/Register",
+      "kind": "gui_unreachable",
+      "line": 99,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_WORKFLOW_UNREACHABLE"
+    },
+    {
+      "detail": "/ResetPassword",
+      "id": "gui_unreachable:frontend/src/App.jsx:/ResetPassword",
+      "kind": "gui_unreachable",
+      "line": 101,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_WORKFLOW_UNREACHABLE"
+    },
+    {
+      "detail": "/autores",
+      "id": "gui_unreachable:frontend/src/App.jsx:/autores",
+      "kind": "gui_unreachable",
+      "line": 79,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_WORKFLOW_UNREACHABLE"
+    },
+    {
+      "detail": "/reset-password",
+      "id": "gui_unreachable:frontend/src/App.jsx:/reset-password",
+      "kind": "gui_unreachable",
+      "line": 94,
+      "path": "frontend/src/App.jsx",
+      "signal": "GUI_WORKFLOW_UNREACHABLE"
+    },
+    {
+      "detail": "seeddata#6ed941543723",
+      "id": "mock_marker:frontend/src/api/appClient.js:seeddata#6ed941543723",
+      "kind": "mock_marker",
+      "line": 32,
+      "path": "frontend/src/api/appClient.js",
+      "signal": "PRODUCTION_PLACEHOLDER_OR_MOCK"
+    },
+    {
+      "detail": "seeddata#c573b16aef92",
+      "id": "mock_marker:frontend/src/api/appClient.js:seeddata#c573b16aef92",
+      "kind": "mock_marker",
+      "line": 1,
+      "path": "frontend/src/api/appClient.js",
+      "signal": "PRODUCTION_PLACEHOLDER_OR_MOCK"
+    },
+    {
+      "detail": "seeddata#c5c43459b34e",
+      "id": "mock_marker:frontend/src/api/appClient.js:seeddata#c5c43459b34e",
+      "kind": "mock_marker",
+      "line": 42,
+      "path": "frontend/src/api/appClient.js",
+      "signal": "PRODUCTION_PLACEHOLDER_OR_MOCK"
+    },
+    {
+      "detail": "seeddata#f8bffe68834d",
+      "id": "mock_marker:frontend/src/api/appClient.js:seeddata#f8bffe68834d",
+      "kind": "mock_marker",
+      "line": 40,
+      "path": "frontend/src/api/appClient.js",
+      "signal": "PRODUCTION_PLACEHOLDER_OR_MOCK"
+    },
+    {
+      "detail": "seeddata#445c73d0aeb8",
+      "id": "mock_marker:frontend/src/data/seedData.js:seeddata#445c73d0aeb8",
+      "kind": "mock_marker",
+      "line": 12,
+      "path": "frontend/src/data/seedData.js",
+      "signal": "PRODUCTION_PLACEHOLDER_OR_MOCK"
+    },
+    {
+      "id": "python_module:desktop/__init__.py",
+      "kind": "python_module",
+      "path": "desktop/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:desktop/app_server.py",
+      "kind": "python_module",
+      "path": "desktop/app_server.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:desktop/config.py",
+      "kind": "python_module",
+      "path": "desktop/config.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:desktop/launch.py",
+      "kind": "python_module",
+      "path": "desktop/launch.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:desktop/seed.py",
+      "kind": "python_module",
+      "path": "desktop/seed.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:desktop/setup.py",
+      "kind": "python_module",
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:maintenance/__init__.py",
+      "kind": "python_module",
+      "path": "maintenance/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:maintenance/adapters/__init__.py",
+      "kind": "python_module",
+      "path": "maintenance/adapters/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:maintenance/adapters/local.py",
+      "kind": "python_module",
+      "path": "maintenance/adapters/local.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:server/backend/__init__.py",
+      "kind": "python_module",
+      "path": "server/backend/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:server/backend/main.py",
+      "kind": "python_module",
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/__init__.py",
+      "kind": "python_module",
+      "path": "src/centinelas/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/classify/__init__.py",
+      "kind": "python_module",
+      "path": "src/centinelas/classify/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/classify/classifier.py",
+      "kind": "python_module",
+      "path": "src/centinelas/classify/classifier.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/classify/enrich.py",
+      "kind": "python_module",
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/classify/labels.py",
+      "kind": "python_module",
+      "path": "src/centinelas/classify/labels.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/classify/rules.py",
+      "kind": "python_module",
+      "path": "src/centinelas/classify/rules.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/cli.py",
+      "kind": "python_module",
+      "path": "src/centinelas/cli.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/foia_disposition.py",
+      "kind": "python_module",
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/ingest/__init__.py",
+      "kind": "python_module",
+      "path": "src/centinelas/ingest/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/ingest/federal_register.py",
+      "kind": "python_module",
+      "path": "src/centinelas/ingest/federal_register.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/ingest/rss.py",
+      "kind": "python_module",
+      "path": "src/centinelas/ingest/rss.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/ingest/web.py",
+      "kind": "python_module",
+      "path": "src/centinelas/ingest/web.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/models.py",
+      "kind": "python_module",
+      "path": "src/centinelas/models.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/natural_features.py",
+      "kind": "python_module",
+      "path": "src/centinelas/natural_features.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/route/__init__.py",
+      "kind": "python_module",
+      "path": "src/centinelas/route/__init__.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/route/dispatch.py",
+      "kind": "python_module",
+      "path": "src/centinelas/route/dispatch.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_module:src/centinelas/route/router.py",
+      "kind": "python_module",
+      "path": "src/centinelas/route/router.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED"
+    },
+    {
+      "id": "python_symbol:desktop/launch.py:main",
+      "kind": "python_symbol",
+      "line": 24,
+      "path": "desktop/launch.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "main"
+    },
+    {
+      "id": "python_symbol:desktop/seed.py:item_from_signal",
+      "kind": "python_symbol",
+      "line": 45,
+      "path": "desktop/seed.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "item_from_signal"
+    },
+    {
+      "id": "python_symbol:desktop/seed.py:pipeline_has_state",
+      "kind": "python_symbol",
+      "line": 32,
+      "path": "desktop/seed.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "pipeline_has_state"
+    },
+    {
+      "id": "python_symbol:desktop/seed.py:seed",
+      "kind": "python_symbol",
+      "line": 70,
+      "path": "desktop/seed.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "seed"
+    },
+    {
+      "id": "python_symbol:desktop/seed.py:source_name",
+      "kind": "python_symbol",
+      "line": 39,
+      "path": "desktop/seed.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "source_name"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:ensure_hub_sibling",
+      "kind": "python_symbol",
+      "line": 53,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ensure_hub_sibling"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:is_complete",
+      "kind": "python_symbol",
+      "line": 42,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "is_complete"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:main",
+      "kind": "python_symbol",
+      "line": 111,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "main"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:run",
+      "kind": "python_symbol",
+      "line": 37,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "run"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:setup_frontend",
+      "kind": "python_symbol",
+      "line": 90,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "setup_frontend"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:setup_python",
+      "kind": "python_symbol",
+      "line": 70,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "setup_python"
+    },
+    {
+      "id": "python_symbol:desktop/setup.py:venv_python",
+      "kind": "python_symbol",
+      "line": 31,
+      "path": "desktop/setup.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "venv_python"
+    },
+    {
+      "id": "python_symbol:maintenance/adapters/local.py:check_routing_contracts",
+      "kind": "python_symbol",
+      "line": 114,
+      "path": "maintenance/adapters/local.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "check_routing_contracts"
+    },
+    {
+      "id": "python_symbol:maintenance/adapters/local.py:check_signal_ledger_integrity",
+      "kind": "python_symbol",
+      "line": 47,
+      "path": "maintenance/adapters/local.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "check_signal_ledger_integrity"
+    },
+    {
+      "id": "python_symbol:maintenance/adapters/local.py:run_checks",
+      "kind": "python_symbol",
+      "line": 154,
+      "path": "maintenance/adapters/local.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "run_checks"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:HandoffRequest",
+      "kind": "python_symbol",
+      "line": 160,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "HandoffRequest"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:RunRequest",
+      "kind": "python_symbol",
+      "line": 153,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "RunRequest"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:create_handoff",
+      "kind": "python_symbol",
+      "line": 180,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "create_handoff"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:handoffs",
+      "kind": "python_symbol",
+      "line": 167,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "handoffs"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:health",
+      "kind": "python_symbol",
+      "line": 78,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "health"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:item_detail",
+      "kind": "python_symbol",
+      "line": 110,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "item_detail"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:items",
+      "kind": "python_symbol",
+      "line": 90,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "items"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:queue",
+      "kind": "python_symbol",
+      "line": 120,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "queue"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:run_pipeline",
+      "kind": "python_symbol",
+      "line": 227,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "run_pipeline"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:sources",
+      "kind": "python_symbol",
+      "line": 128,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "sources"
+    },
+    {
+      "id": "python_symbol:server/backend/main.py:status",
+      "kind": "python_symbol",
+      "line": 137,
+      "path": "server/backend/main.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "status"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/classifier.py:build_classified_item",
+      "kind": "python_symbol",
+      "line": 104,
+      "path": "src/centinelas/classify/classifier.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "build_classified_item"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/classifier.py:classify",
+      "kind": "python_symbol",
+      "line": 70,
+      "path": "src/centinelas/classify/classifier.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "classify"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/enrich.py:extract",
+      "kind": "python_symbol",
+      "line": 221,
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "extract"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/enrich.py:extract_agencies",
+      "kind": "python_symbol",
+      "line": 111,
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "extract_agencies"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/enrich.py:extract_beat",
+      "kind": "python_symbol",
+      "line": 157,
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "extract_beat"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/enrich.py:extract_estimated_value",
+      "kind": "python_symbol",
+      "line": 64,
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "extract_estimated_value"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/enrich.py:extract_recipients",
+      "kind": "python_symbol",
+      "line": 183,
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "extract_recipients"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/enrich.py:extract_signal_stage",
+      "kind": "python_symbol",
+      "line": 141,
+      "path": "src/centinelas/classify/enrich.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "extract_signal_stage"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/labels.py:DomainLabel",
+      "kind": "python_symbol",
+      "line": 4,
+      "path": "src/centinelas/classify/labels.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "DomainLabel"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/rules.py:is_critical_signal",
+      "kind": "python_symbol",
+      "line": 245,
+      "path": "src/centinelas/classify/rules.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "is_critical_signal"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/rules.py:keyword_classify",
+      "kind": "python_symbol",
+      "line": 137,
+      "path": "src/centinelas/classify/rules.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "keyword_classify"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/rules.py:permit_subtypes",
+      "kind": "python_symbol",
+      "line": 218,
+      "path": "src/centinelas/classify/rules.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "permit_subtypes"
+    },
+    {
+      "id": "python_symbol:src/centinelas/classify/rules.py:water_utility_subtypes",
+      "kind": "python_symbol",
+      "line": 177,
+      "path": "src/centinelas/classify/rules.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "water_utility_subtypes"
+    },
+    {
+      "id": "python_symbol:src/centinelas/cli.py:classify",
+      "kind": "python_symbol",
+      "line": 66,
+      "path": "src/centinelas/cli.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "classify"
+    },
+    {
+      "id": "python_symbol:src/centinelas/cli.py:ingest",
+      "kind": "python_symbol",
+      "line": 40,
+      "path": "src/centinelas/cli.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ingest"
+    },
+    {
+      "id": "python_symbol:src/centinelas/cli.py:route",
+      "kind": "python_symbol",
+      "line": 99,
+      "path": "src/centinelas/cli.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "route"
+    },
+    {
+      "id": "python_symbol:src/centinelas/cli.py:run",
+      "kind": "python_symbol",
+      "line": 134,
+      "path": "src/centinelas/cli.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "run"
+    },
+    {
+      "id": "python_symbol:src/centinelas/cli.py:status",
+      "kind": "python_symbol",
+      "line": 176,
+      "path": "src/centinelas/cli.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "status"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:Destination",
+      "kind": "python_symbol",
+      "line": 23,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "Destination"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:Disposition",
+      "kind": "python_symbol",
+      "line": 35,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "Disposition"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:DurableOutbox",
+      "kind": "python_symbol",
+      "line": 271,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "DurableOutbox"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:EvidenceTier",
+      "kind": "python_symbol",
+      "line": 16,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "EvidenceTier"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:ExportReceipt",
+      "kind": "python_symbol",
+      "line": 131,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ExportReceipt"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:FOIADispositionEngine",
+      "kind": "python_symbol",
+      "line": 163,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "FOIADispositionEngine"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:FOIADocument",
+      "kind": "python_symbol",
+      "line": 72,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "FOIADocument"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:FOIAFinding",
+      "kind": "python_symbol",
+      "line": 83,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "FOIAFinding"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:FOIARelease",
+      "kind": "python_symbol",
+      "line": 61,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "FOIARelease"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:FederationEnvelope",
+      "kind": "python_symbol",
+      "line": 119,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "FederationEnvelope"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:PageCitation",
+      "kind": "python_symbol",
+      "line": 54,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "PageCitation"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:ReceiptStatus",
+      "kind": "python_symbol",
+      "line": 47,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ReceiptStatus"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:ReviewCase",
+      "kind": "python_symbol",
+      "line": 144,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ReviewCase"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:ReviewQueue",
+      "kind": "python_symbol",
+      "line": 311,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ReviewQueue"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:RoutingDecision",
+      "kind": "python_symbol",
+      "line": 107,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "RoutingDecision"
+    },
+    {
+      "id": "python_symbol:src/centinelas/foia_disposition.py:build_federation_envelope",
+      "kind": "python_symbol",
+      "line": 249,
+      "path": "src/centinelas/foia_disposition.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "build_federation_envelope"
+    },
+    {
+      "id": "python_symbol:src/centinelas/ingest/federal_register.py:poll_federal_register",
+      "kind": "python_symbol",
+      "line": 81,
+      "path": "src/centinelas/ingest/federal_register.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "poll_federal_register"
+    },
+    {
+      "id": "python_symbol:src/centinelas/ingest/rss.py:poll_all",
+      "kind": "python_symbol",
+      "line": 60,
+      "path": "src/centinelas/ingest/rss.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "poll_all"
+    },
+    {
+      "id": "python_symbol:src/centinelas/ingest/rss.py:poll_feed",
+      "kind": "python_symbol",
+      "line": 85,
+      "path": "src/centinelas/ingest/rss.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "poll_feed"
+    },
+    {
+      "id": "python_symbol:src/centinelas/ingest/web.py:poll_scrape_sources",
+      "kind": "python_symbol",
+      "line": 603,
+      "path": "src/centinelas/ingest/web.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "poll_scrape_sources"
+    },
+    {
+      "id": "python_symbol:src/centinelas/ingest/web.py:scrape_listing",
+      "kind": "python_symbol",
+      "line": 550,
+      "path": "src/centinelas/ingest/web.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "scrape_listing"
+    },
+    {
+      "id": "python_symbol:src/centinelas/ingest/web.py:scrape_url",
+      "kind": "python_symbol",
+      "line": 82,
+      "path": "src/centinelas/ingest/web.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "scrape_url"
+    },
+    {
+      "id": "python_symbol:src/centinelas/models.py:ClassifiedItem",
+      "kind": "python_symbol",
+      "line": 38,
+      "path": "src/centinelas/models.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "ClassifiedItem"
+    },
+    {
+      "id": "python_symbol:src/centinelas/models.py:DispatchRecord",
+      "kind": "python_symbol",
+      "line": 63,
+      "path": "src/centinelas/models.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "DispatchRecord"
+    },
+    {
+      "id": "python_symbol:src/centinelas/models.py:RawItem",
+      "kind": "python_symbol",
+      "line": 15,
+      "path": "src/centinelas/models.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "RawItem"
+    },
+    {
+      "id": "python_symbol:src/centinelas/natural_features.py:resolve_natural_feature",
+      "kind": "python_symbol",
+      "line": 48,
+      "path": "src/centinelas/natural_features.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "resolve_natural_feature"
+    },
+    {
+      "id": "python_symbol:src/centinelas/route/dispatch.py:dispatch",
+      "kind": "python_symbol",
+      "line": 98,
+      "path": "src/centinelas/route/dispatch.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "dispatch"
+    },
+    {
+      "id": "python_symbol:src/centinelas/route/dispatch.py:dispatch_many",
+      "kind": "python_symbol",
+      "line": 163,
+      "path": "src/centinelas/route/dispatch.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "dispatch_many"
+    },
+    {
+      "id": "python_symbol:src/centinelas/route/dispatch.py:dispatch_to_targets",
+      "kind": "python_symbol",
+      "line": 167,
+      "path": "src/centinelas/route/dispatch.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "dispatch_to_targets"
+    },
+    {
+      "id": "python_symbol:src/centinelas/route/router.py:build_payload",
+      "kind": "python_symbol",
+      "line": 37,
+      "path": "src/centinelas/route/router.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "build_payload"
+    },
+    {
+      "id": "python_symbol:src/centinelas/route/router.py:resolve_targets",
+      "kind": "python_symbol",
+      "line": 95,
+      "path": "src/centinelas/route/router.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "resolve_targets"
+    },
+    {
+      "id": "python_symbol:src/centinelas/route/router.py:route",
+      "kind": "python_symbol",
+      "line": 107,
+      "path": "src/centinelas/route/router.py",
+      "signal": "BACKEND_NOT_GUI_SURFACED",
+      "symbol": "route"
+    }
+  ],
+  "generated_at": "2026-07-29T19:07:25+00:00",
+  "manifest_sha256": "4ca2aaab1d7c5468793cef0d7c30fe2a6b8df59d4349e864f46325a907ba8504",
+  "repository": "jotaele44/centinelas-pr",
+  "schema_version": "prii.gui-parity-baseline/v1",
+  "signal_counts": {
+    "ANALYSIS_NOT_GUI_RENDERED": 35,
+    "BACKEND_NOT_GUI_SURFACED": 113,
+    "GUI_NOT_BACKEND_WIRED": 82,
+    "GUI_WORKFLOW_UNREACHABLE": 6,
+    "PRODUCTION_PLACEHOLDER_OR_MOCK": 5,
+    "TERMINAL_REQUIRED": 7
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "schema_version": "prii.gui-capability/v1",
+  "repository": "jotaele44/centinelas-pr",
+  "policy": {
+    "mode": "ratchet",
+    "baseline": ".federation/gui-parity-baseline.json",
+    "require_discoverable_gui": true,
+    "require_e2e": true,
+    "terminal_free_user_path": true
+  },
+  "discovery": {
+    "backend_roots": [
+      "server/backend"
+    ],
+    "production_roots": [
+      "src/centinelas",
+      "desktop",
+      "maintenance"
+    ],
+    "analysis_roots": [
+      "scripts"
+    ],
+    "frontend_roots": [
+      "frontend/src"
+    ],
+    "frontend_capability_roots": [
+      "frontend/src/pages"
+    ],
+    "frontend_api_roots": [
+      "frontend/src/api"
+    ],
+    "route_files": [
+      "frontend/src/App.jsx"
+    ],
+    "navigation_files": [
+      "frontend/src/components/Header.jsx"
+    ],
+    "implicit_routes": [],
+    "exclude": [
+      "**/tests/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/components/ui/**",
+      "scripts/check_gui_parity.py"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "legislative-monitor",
+      "classification": "client_only",
+      "status": "active",
+      "requires_terminal": false,
+      "frontend": {
+        "routes": [
+          "/",
+          "/monitor",
+          "/signals",
+          "/matters",
+          "/matters/:id",
+          "/sources",
+          "/tabla",
+          "/entidades",
+          "/entidad/:slug"
+        ],
+        "e2e_routes": [
+          "/",
+          "/monitor",
+          "/signals",
+          "/matters",
+          "/sources",
+          "/entidades"
+        ],
+        "components": [
+          "frontend/src/api/appClient.js",
+          "frontend/src/pages/Home.jsx",
+          "frontend/src/pages/Monitor.jsx",
+          "frontend/src/pages/Signals.jsx",
+          "frontend/src/pages/SignalsTable.jsx",
+          "frontend/src/pages/Matters.jsx",
+          "frontend/src/pages/MatterDetail.jsx",
+          "frontend/src/pages/Sources.jsx",
+          "frontend/src/pages/Entities.jsx",
+          "frontend/src/pages/EntityDetail.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/components/Header.jsx",
+          "frontend/src/pages/Signals.jsx",
+          "frontend/src/pages/Matters.jsx",
+          "frontend/src/pages/Entities.jsx"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_gui_parity.py",
+          "frontend/src/lib/lifecycle.test.js"
+        ],
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "universal-intake-pipeline",
+      "classification": "operator",
+      "status": "active",
+      "requires_terminal": false,
+      "backend": {
+        "files": [
+          "server/backend/main.py"
+        ],
+        "endpoints": [
+          "GET /items",
+          "GET /items/{item_id}",
+          "GET /queue",
+          "GET /sources",
+          "GET /status",
+          "GET /handoffs",
+          "POST /handoffs/{item_id}",
+          "POST /run"
+        ]
+      },
+      "frontend": {
+        "routes": [
+          "/pipeline",
+          "/pipeline/:itemId",
+          "/handoff"
+        ],
+        "e2e_routes": [
+          "/pipeline",
+          "/handoff"
+        ],
+        "components": [
+          "frontend/src/api/pipelineClient.js",
+          "frontend/src/pages/Pipeline.jsx",
+          "frontend/src/pages/PipelineItemDetail.jsx",
+          "frontend/src/pages/Handoff.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/components/Header.jsx",
+          "frontend/src/pages/Pipeline.jsx"
+        ]
+      },
+      "tests": {
+        "backend": [
+          "tests/test_run_endpoint.py",
+          "tests/test_handoff_endpoint.py"
+        ],
+        "contract": [
+          "tests/test_gui_parity.py"
+        ],
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "service-health",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Health probing supports launch and CI readiness; it is not an end-user workflow.",
+      "backend": {
+        "files": [
+          "server/backend/main.py"
+        ],
+        "endpoints": [
+          "GET /health"
+        ]
+      },
+      "tests": {
+        "backend": [
+          "tests/test_server_smoke.py"
+        ]
+      }
+    }
+  ],
+  "exceptions": []
+}
