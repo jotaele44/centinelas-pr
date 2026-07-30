@@ -20,6 +20,7 @@ import Sources from './pages/Sources';
 import Handoff from './pages/Handoff';
 import Pipeline from './pages/Pipeline';
 import PipelineItemDetail from './pages/PipelineItemDetail';
+import WaterDisruption from './pages/WaterDisruption';
 import Layout from './components/Layout';
 import SignalsTable from './pages/SignalsTable';
 import Entities from './pages/Entities';
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
         {/* Universal 6-domain intake pipeline (FastAPI backend, separate from the localStorage legislative layer). */}
         <Route path="/pipeline" element={<Pipeline />} />
         <Route path="/pipeline/:itemId" element={<PipelineItemDetail />} />
+        <Route path="/water-disruption" element={<WaterDisruption />} />
 
         {/* Signal-centric views converted from the legacy legislative surface. */}
         <Route path="/tabla" element={<SignalsTable />} />

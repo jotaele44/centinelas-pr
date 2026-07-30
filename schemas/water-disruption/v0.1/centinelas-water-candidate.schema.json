@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/water-disruption/v0.1/centinelas-water-candidate.schema.json",
+  "title": "Centinelas water disruption candidate envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "candidate_id", "producer", "produced_at", "payload_sha256", "candidate", "evidence"],
+  "properties": {
+    "schema_version": {"const": "prii.water-disruption/v0.1"},
+    "event_id": {"type": "string", "pattern": "^WDE-[a-f0-9]{24}$"},
+    "candidate_id": {"type": "string", "pattern": "^WDC-[a-f0-9]{24}$"},
+    "producer": {"const": "centinelas-pr"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "payload_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "idempotency_key": {"type": "string", "minLength": 16},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence_reference"}},
+    "retraction": {"$ref": "#/$defs/retraction"}
+  },
+  "$defs": {
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_family", "subtype", "truth_state", "reported_at", "service_effect", "location", "confidence", "dedup_key", "source_accounting_run_id"],
+      "properties": {
+        "event_family": {"const": "water_service_disruption"},
+        "subtype": {"enum": ["broken_main", "broken_tubing", "leak", "emergency_repair", "scheduled_repair", "valve_work", "planned_shutdown", "service_outage", "low_pressure", "intermittent_service", "pump_failure", "well_failure", "tank_failure", "treatment_failure", "boil_water", "water_quality", "restoration", "unknown"]},
+        "truth_state": {"const": "candidate"},
+        "reported_at": {"type": "string", "format": "date-time"},
+        "event_started_at": {"type": ["string", "null"], "format": "date-time"},
+        "expected_restoration_at": {"type": ["string", "null"], "format": "date-time"},
+        "service_effect": {"enum": ["outage", "low_pressure", "intermittent", "quality_advisory", "possible_disruption", "restored", "unknown"]},
+        "status_claim": {"enum": ["reported", "acknowledged_by_source", "repair_planned", "repair_in_progress", "partial_restoration", "restored", "retracted", "unknown"]},
+        "location": {"$ref": "#/$defs/location"},
+        "infrastructure_mentions": {"type": "array", "items": {"type": "string"}},
+        "affected_areas_text": {"type": "array", "items": {"type": "string"}},
+        "estimated_customers": {"type": ["integer", "null"], "minimum": 0},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "dedup_key": {"type": "string", "minLength": 16},
+        "source_accounting_run_id": {"type": "string", "minLength": 8},
+        "requires_human_review": {"type": "boolean"}
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_text", "municipality", "resolution_status"],
+      "properties": {
+        "raw_text": {"type": "string"},
+        "municipality": {"type": ["string", "null"]},
+        "barrio": {"type": ["string", "null"]},
+        "sector": {"type": ["string", "null"]},
+        "road": {"type": ["string", "null"]},
+        "latitude": {"type": ["number", "null"], "minimum": -90, "maximum": 90},
+        "longitude": {"type": ["number", "null"], "minimum": -180, "maximum": 180},
+        "resolution_status": {"enum": ["exact", "approximate", "municipality_only", "unresolved"]}
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_reliability", "claim_specificity", "location_resolution", "corroboration", "freshness", "overall", "model_version"],
+      "properties": {
+        "source_reliability": {"type": "number", "minimum": 0, "maximum": 1},
+        "claim_specificity": {"type": "number", "minimum": 0, "maximum": 1},
+        "location_resolution": {"type": "number", "minimum": 0, "maximum": 1},
+        "corroboration": {"type": "number", "minimum": 0, "maximum": 1},
+        "freshness": {"type": "number", "minimum": 0, "maximum": 1},
+        "overall": {"type": "number", "minimum": 0, "maximum": 1},
+        "model_version": {"type": "string"}
+      }
+    },
+    "evidence_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "source_id", "source_tier", "canonical_url", "content_sha256", "captured_at", "append_only"],
+      "properties": {
+        "evidence_id": {"type": "string", "pattern": "^WDE-[a-f0-9]{24}$"},
+        "source_id": {"type": "string"},
+        "source_tier": {"enum": ["T1", "T2", "T3", "T4"]},
+        "canonical_url": {"type": "string", "format": "uri"},
+        "publisher_timestamp": {"type": ["string", "null"], "format": "date-time"},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "parser_version": {"type": "string"},
+        "append_only": {"const": true},
+        "supersedes_evidence_id": {"type": ["string", "null"]}
+      }
+    },
+    "retraction": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["retraction_id", "reason", "issued_at", "evidence_id"],
+      "properties": {
+        "retraction_id": {"type": "string"},
+        "reason": {"enum": ["source_retracted", "source_corrected", "duplicate", "wrong_location", "wrong_event_type", "stale_repost", "other"]},
+        "issued_at": {"type": "string", "format": "date-time"},
+        "evidence_id": {"type": "string"},
+        "notes": {"type": "string"}
+      }
+    }
+  }
+}

@@ -35,7 +35,12 @@
     "navigation_files": [
       "frontend/src/components/Header.jsx"
     ],
-    "implicit_routes": [],
+    "implicit_routes": [
+      {
+        "path": "/water-disruption/console",
+        "file": "server/backend/water_disruption_api.py"
+      }
+    ],
     "exclude": [
       "**/tests/**",
       "**/*.test.*",
@@ -150,6 +155,104 @@
         ],
         "e2e": [
           "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "water-disruption-shadow-producer",
+      "classification": "operator",
+      "status": "active",
+      "requires_terminal": false,
+      "backend": {
+        "files": [
+          "server/backend/water_disruption_api.py",
+          "src/centinelas/generated/water_disruption_client.py",
+          "src/centinelas/water_disruption.py"
+        ],
+        "endpoints": [
+          "GET /console",
+          "GET /sources",
+          "GET /runs",
+          "GET /evidence/{evidence_id}",
+          "GET /candidates",
+          "GET /outbox",
+          "POST /capture",
+          "POST /candidates/{candidate_id}/dispatch",
+          "POST /outbox/{outbox_id}/deliver",
+          "POST /candidates/{candidate_id}/retract"
+        ],
+        "symbols": [
+          "server/backend/water_disruption_api.py:CaptureRequest",
+          "server/backend/water_disruption_api.py:RetractRequest",
+          "server/backend/water_disruption_api.py:DeliverRequest",
+          "server/backend/water_disruption_api.py:console",
+          "server/backend/water_disruption_api.py:sources",
+          "server/backend/water_disruption_api.py:runs",
+          "server/backend/water_disruption_api.py:evidence",
+          "server/backend/water_disruption_api.py:candidates",
+          "server/backend/water_disruption_api.py:outbox",
+          "server/backend/water_disruption_api.py:capture",
+          "server/backend/water_disruption_api.py:dispatch",
+          "server/backend/water_disruption_api.py:deliver",
+          "server/backend/water_disruption_api.py:retract",
+          "src/centinelas/generated/water_disruption_client.py:WaterDisruptionClient",
+          "src/centinelas/water_disruption.py:AppendOnlyJsonl",
+          "src/centinelas/water_disruption.py:SourceRecord",
+          "src/centinelas/water_disruption.py:WaterDisruptionProducer",
+          "src/centinelas/water_disruption.py:canonical_json",
+          "src/centinelas/water_disruption.py:sha256",
+          "src/centinelas/water_disruption.py:six_hour_bucket",
+          "src/centinelas/water_disruption.py:stable_id"
+        ]
+      },
+      "frontend": {
+        "routes": [
+          "/water-disruption",
+          "/water-disruption/console"
+        ],
+        "e2e_routes": [
+          "/water-disruption"
+        ],
+        "components": [
+          "frontend/src/components/Header.jsx",
+          "frontend/src/pages/WaterDisruption.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/components/Header.jsx"
+        ]
+      },
+      "tests": {
+        "backend": [
+          "tests/test_water_disruption.py",
+          "tests/test_water_disruption_api.py"
+        ],
+        "contract": [
+          "tests/test_gui_parity.py"
+        ],
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "water-disruption-shadow-certification",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Fail-closed certification is a CI and release-integrity control; operators use the discoverable shadow console rather than invoking the script directly.",
+      "analysis": {
+        "files": [
+          "scripts/certify_water_disruption_shadow.py"
+        ],
+        "symbols": [
+          "scripts/certify_water_disruption_shadow.py:main",
+          "scripts/certify_water_disruption_shadow.py:require"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_water_disruption.py",
+          "tests/test_water_disruption_api.py"
         ]
       }
     },
