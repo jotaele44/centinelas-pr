@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "alert_result_record.v0.1.schema.json",
+  "title": "AlertResultRecord v0.1",
+  "type": "object",
+  "required": ["schema_version", "alert_result_id", "email_record_id", "result_position", "displayed_title", "parse_confidence", "review_status"],
+  "properties": {
+    "schema_version": {"const": "alert_result_record.v0.1"},
+    "alert_result_id": {"type": "string", "minLength": 1},
+    "email_record_id": {"type": "string", "minLength": 1},
+    "result_position": {"type": "integer", "minimum": 0},
+    "displayed_title": {"type": "string"},
+    "displayed_url": {"type": ["string", "null"]},
+    "resolved_url": {"type": ["string", "null"]},
+    "parse_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "review_status": {"enum": ["unreviewed", "accepted_as_lead", "duplicate", "irrelevant", "rejected"]}
+  },
+  "additionalProperties": true
+}
