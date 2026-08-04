@@ -1,0 +1,19 @@
+schema_version: email_source_profile.v0.1
+source_profile_id: google_alerts_primary
+enabled: false
+provider: gmail
+account_alias: centinelas_primary
+gmail_search: >-
+  from:(googlealerts-noreply@google.com) label:Centinelas/GoogleAlerts -in:spam -in:trash
+required_labels:
+  - Centinelas/GoogleAlerts
+excluded_labels:
+  - Centinelas/Ignore
+maximum_messages_per_run: 250
+download_raw_rfc822: false
+download_attachments: metadata_only
+default_evidence_tier: T4
+default_signal_stage: raw_observation
+require_operator_review: true
+auto_promote: false
+federation_export_allowed: false
