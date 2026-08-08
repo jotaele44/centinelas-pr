@@ -10,7 +10,7 @@ import hashlib
 import json
 import re
 import unicodedata
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin
@@ -22,6 +22,7 @@ LISTING_URL = "https://www.fs.usda.gov/r08/elyunque/alerts"
 _HEADERS = {"User-Agent": "centinelas-monitor/1.0", "Accept": "text/html,application/xhtml+xml"}
 _DATE_RE = re.compile(r"\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s+(\d{4})\b", re.I)
 _ORDER_RE = re.compile(r"(?:Forest\s+Order|Order)\s*(?:No\.?|#)?\s*([A-Z0-9-]{4,})", re.I)
+_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\n+")
 
 
 def _fold(text: str) -> str:
@@ -74,26 +75,47 @@ class Scope:
     context: str
 
 
+def _local_context(title: str, text: str, needle: str) -> str:
+    """Return only sentences/lines naming the asset, plus the alert title.
+
+    This prevents a closure sentence for one trail from contaminating another
+    asset merely mentioned elsewhere on the same multi-trail status page.
+    """
+    wanted = _fold(needle)
+    parts = [p.strip() for p in _SENTENCE_RE.split(text) if p.strip()]
+    matched = [p for p in parts if wanted in _fold(p)]
+    return " ".join([title, *matched]) if matched else title
+
+
 def _scope_contexts(title: str, text: str, bindings: dict) -> list[Scope]:
-    folded = _fold(f"{title}\n{text}")
+    folded_all = _fold(f"{title}\n{text}")
     scopes: list[Scope] = []
     for needle, spec in bindings.items():
-        if _fold(needle) in folded:
-            scopes.append(Scope(spec["scope_type"], spec["scope_name"], spec["asset_key"], folded))
+        if _fold(needle) in folded_all:
+            scopes.append(Scope(
+                spec["scope_type"], spec["scope_name"], spec["asset_key"],
+                _local_context(title, text, needle),
+            ))
 
-    # Only bind this partial trail closure when BOTH endpoints/scope and closure language
-    # are present in the official text. This is a semantic segment key, not geometry.
-    if "los picachos" in folded and "el yunque" in folded and ("closed" in folded or "closure" in folded):
-        scopes.append(Scope(
-            "trail_segment",
-            "El Yunque Trail — Los Picachos spur to peak",
-            "elyunque.trail.el_yunque.los_picachos_to_peak",
-            folded,
-        ))
+    # Bind the partial El Yunque Trail segment only when a sentence/line itself
+    # names Los Picachos + El Yunque and carries closure/restriction language.
+    for part in [p.strip() for p in _SENTENCE_RE.split(text) if p.strip()]:
+        folded = _fold(part)
+        if (
+            "los picachos" in folded
+            and "el yunque" in folded
+            and any(word in folded for word in ("closed", "closure", "restricted"))
+        ):
+            scopes.append(Scope(
+                "trail_segment",
+                "El Yunque Trail — Los Picachos spur to peak",
+                "elyunque.trail.el_yunque.los_picachos_to_peak",
+                f"{title} {part}",
+            ))
+            break
 
     if not scopes:
-        scopes.append(Scope("unknown", title.strip() or "Unresolved El Yunque alert scope", None, folded))
-    # stable de-duplication by asset/scope name
+        scopes.append(Scope("unknown", title.strip() or "Unresolved El Yunque alert scope", None, f"{title} {text}"))
     uniq: dict[tuple[str | None, str], Scope] = {}
     for scope in scopes:
         uniq[(scope.asset_key, scope.scope_name)] = scope
@@ -127,7 +149,7 @@ def semantic_hash(record: dict) -> str:
 def parse_alert(*, title: str, url: str, detail_html: str, observed_at: datetime, bindings: dict,
                 listing_confirmed: bool = True) -> list[dict]:
     soup = BeautifulSoup(detail_html, "html.parser")
-    text = " ".join(soup.stripped_strings)
+    text = "\n".join(s.strip() for s in soup.stripped_strings if s.strip())
     effective_start = _first_date(text)
     order = _ORDER_RE.search(text)
     source_hash = _sha(detail_html)
@@ -146,7 +168,7 @@ def parse_alert(*, title: str, url: str, detail_html: str, observed_at: datetime
             "observed_at": _iso(observed_at), "evidence_tier": "T1",
             "scope_type": scope.scope_type, "scope_name": scope.scope_name, "asset_key": scope.asset_key,
             "status": status, "status_basis": basis, "confidence": 1.0,
-            "restriction_text": " ".join(text.split())[:4000],
+            "restriction_text": " ".join(scope.context.split())[:4000],
             "corroboration": {
                 "authority_count": 1, "document_count": 2 if listing_confirmed else 1,
                 "listing_confirmed": listing_confirmed, "detail_confirmed": True,
