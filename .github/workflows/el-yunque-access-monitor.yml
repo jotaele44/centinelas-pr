@@ -33,9 +33,9 @@ jobs:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
         run: |
           if [ "${{ github.event.inputs.dry_run || 'false' }}" = "true" ]; then
-            python scripts/monitor_el_yunque_access.py --dry-run
+            python tools/el_yunque_access_monitor.py --dry-run
           else
-            python scripts/monitor_el_yunque_access.py
+            python tools/el_yunque_access_monitor.py
           fi
       - name: Persist state, transitions, health, and outbox
         if: ${{ always() }}
