@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from centinelas.ingest.usfs_el_yunque import listing_links, parse_alert
-from scripts.monitor_el_yunque_access import compute_transitions
+REPO = Path(__file__).resolve().parent.parent
+TOOLS = REPO / "tools"
+sys.path.insert(0, str(TOOLS))
+
+from el_yunque_access_monitor import compute_transitions, listing_links, parse_alert  # noqa: E402
 
 FIXTURES = Path(__file__).parent / "fixtures"
 BINDINGS = {
