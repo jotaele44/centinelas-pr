@@ -1,0 +1,13 @@
+{
+  "schema_version":"1.0.0","repository":"jotaele44/centinelas-pr","audit_date":"2026-08-04","normalized_score":75.35,
+  "weights":{"code_completeness":20,"main_branch_availability":15,"ci_enforcement":15,"data_materialization":15,"operator_verification":15,"gui_completeness":10,"federation_readiness":10},
+  "dimensions":{"code_completeness":92,"main_branch_availability":88,"ci_enforcement":75,"data_materialization":55,"operator_verification":65,"gui_completeness":70,"federation_readiness":75},
+  "items":[
+    {"id":"CEN-001","title":"Land isolated-clone runtime","state":"open_pr","owner":"centinelas-pr","blocker":"final_head_ci","dependency":["PR-78"],"evidence":["pull/78"],"exit_criteria":"Isolated install, test, frontend and desktop build pass from main without sibling repositories."},
+    {"id":"CEN-002","title":"Reconcile workspace policy authority","state":"open_pr","owner":"centinelas-pr","blocker":"overlapping_authority","dependency":["PR-77","CEN-001"],"evidence":["pull/77"],"exit_criteria":"One non-conflicting workspace policy is merged and aligned with TheHub."},
+    {"id":"CEN-003","title":"Disposition rescued frontend and signal history","state":"rescue_pr","owner":"centinelas-pr","blocker":"human_adjudication","dependency":["PR-79"],"evidence":["pull/79"],"exit_criteria":"Every rescued path is retained, superseded or rejected with no stale signal promotion."},
+    {"id":"CEN-004","title":"Decide producer-contract skill removal","state":"governance_only","owner":"centinelas-pr","blocker":"authority_decision","dependency":["PR-80"],"evidence":["pull/80"],"exit_criteria":"Skill is explicitly retained or removed with federation contract coverage preserved."},
+    {"id":"CEN-005","title":"Build Puerto Rico pre-official source tranche","state":"main_gap","owner":"centinelas-pr","blocker":"source_adapters","dependency":[],"evidence":["docs/ROAD_TO_100.md"],"exit_criteria":"Bounded PREB, AAA, COR3 and legislative sources run with complete acquisition accounting."},
+    {"id":"CEN-006","title":"Implement Matter stages 0-6 and MoneySweep handoff","state":"cross_repo_dependency","owner":"centinelas-pr,moneysweep-pr","blocker":"shared_store_and_live_intake","dependency":["CEN-005"],"evidence":["docs/ROAD_TO_100.md"],"exit_criteria":"Signals transition through a durable Matter lifecycle and reconcile to official MoneySweep records."}
+  ]
+}
