@@ -154,12 +154,14 @@ def parse_alert(*, title: str, url: str, detail_html: str, observed_at: datetime
                 listing_confirmed: bool = True) -> list[dict]:
     soup = BeautifulSoup(detail_html, "html.parser")
     text = "\n".join(value.strip() for value in soup.stripped_strings if value.strip())
-    effective_start = first_date(text)
     order = _ORDER_RE.search(text)
     source_hash = sha(detail_html)
     alert_id = "usfs-elyunque-" + sha(url)[:20]
+    scopes = scope_contexts(title, text, bindings)
+    page_start = first_date(text) if len(scopes) == 1 else None
     rows: list[dict] = []
-    for scope in scope_contexts(title, text, bindings):
+    for scope in scopes:
+        effective_start = first_date(scope.context) or page_start
         status, basis = infer_status(scope.context, observed_at, effective_start)
         row = {
             "schema_version": "1.0", "kind": "access_condition",
@@ -286,7 +288,8 @@ def dispatch(staged: list[Path], *, dry_run: bool) -> None:
                 raise RuntimeError(f"unexpected dispatch HTTP {response.status}")
 
 
-def poll(now: datetime) -> list[dict]:
+def poll(now: datetime, previous: dict[str, dict] | None = None) -> list[dict]:
+    previous = previous or {}
     cfg = read_json(CONFIG, {})
     bindings = cfg["asset_bindings"]
     listing_html = fetch_html(cfg.get("source_listing_url", LISTING_URL))
@@ -298,7 +301,8 @@ def poll(now: datetime) -> list[dict]:
         try:
             detail = fetch_html(url)
         except Exception as exc:
-            print(f"detail unavailable {url}: {exc}")
+            print(f"detail unavailable {url}: {exc}; preserving prior state for this alert")
+            records.extend(row for row in previous.values() if row.get("source_url") == url)
             continue
         records.extend(parse_alert(title=title, url=url, detail_html=detail, observed_at=now, bindings=bindings))
     if not records:
@@ -317,7 +321,7 @@ def main() -> int:
     now = datetime.now(timezone.utc)
     previous = read_json(STATE, {})
     try:
-        observed = poll(now)
+        observed = poll(now, previous)
     except Exception as exc:
         write_json(HEALTH, {"status": "stale", "checked_at": now.isoformat(), "last_error": str(exc), "preserved_condition_count": len(previous)})
         print(f"monitor stale; preserved {len(previous)} condition(s): {exc}")
