@@ -80,7 +80,7 @@ def _parse_utc_timestamp(value: Any) -> datetime | None:
     return parsed.astimezone(timezone.utc)
 
 
-def production_input_errors(
+def _production_input_errors(
     signals: List[Dict[str, Any]],
     *,
     now: datetime,
@@ -301,7 +301,7 @@ def main() -> int:
     now = now_dt.replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
     if args.mode == "production":
-        input_errors = production_input_errors(
+        input_errors = _production_input_errors(
             signals,
             now=now_dt,
             max_age_hours=args.max_age_hours,
