@@ -14,10 +14,9 @@ Writes `exports/federation/{sources,entities,relationships,observations}.jsonl`
 + a Hub-conformant `manifest.json` (federation_export_manifest). Stdlib only,
 consistent with the sibling OVNIS producer.
 
-Rows carry `synthetic` = the signal's `is_synthetic` flag. The seed ledger
-(`data/signals/example_signals.jsonl`) is entirely synthetic, so `--mode
-production` rejects it: Centinelas has no real signal intake yet
-(`ready_for_hub_live_execution=false`).
+Rows carry `synthetic` = the signal's `is_synthetic` flag. Production mode is
+fail-closed: it rejects synthetic rows, an empty ledger, missing/invalid capture
+timestamps, and a ledger whose newest capture exceeds `--max-age-hours`.
 
 Deterministic IDs: `src_/ent_/rel_/obs_` + sha256(key)[:32].
 """
@@ -38,6 +37,7 @@ CONTRACT_VERSION = "1.0.0"
 PRODUCER_SCRIPT = "scripts/federation_export.py"
 DEFAULT_LEDGER = REPO_ROOT / "data/signals/example_signals.jsonl"
 DEFAULT_SOURCES = REPO_ROOT / "data/reference/source_registry.csv"
+DEFAULT_MAX_AGE_HOURS = 168.0
 
 STREAM_SCHEMA = {
     "sources": "federation_source.schema.json",
@@ -65,6 +65,52 @@ def _load_source_registry(path: Path) -> Dict[str, Dict[str, str]]:
         return {row["source_id"]: row for row in csv.DictReader(fh)}
 
 
+def _parse_utc_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def production_input_errors(
+    signals: List[Dict[str, Any]],
+    *,
+    now: datetime,
+    max_age_hours: float,
+) -> List[str]:
+    """Return fail-closed production-input errors for the live ledger."""
+    if not signals:
+        return ["production export rejects an empty live signal ledger"]
+    if max_age_hours <= 0:
+        return ["--max-age-hours must be greater than zero in production mode"]
+
+    captures: List[datetime] = []
+    for index, signal in enumerate(signals, start=1):
+        captured = _parse_utc_timestamp(signal.get("captured_at"))
+        if captured is None:
+            return [f"production signal row {index} has missing or invalid captured_at"]
+        captures.append(captured)
+
+    newest = max(captures)
+    age_hours = (now.astimezone(timezone.utc) - newest).total_seconds() / 3600.0
+    if age_hours < -1.0:
+        return [f"production ledger newest captured_at is {abs(age_hours):.1f}h in the future"]
+    if age_hours > max_age_hours:
+        return [
+            "production live signal ledger is stale: "
+            f"newest capture age={age_hours:.1f}h exceeds max={max_age_hours:.1f}h"
+        ]
+    return []
+
+
 def build_streams(
     signals: List[Dict[str, Any]],
     registry: Dict[str, Dict[str, str]],
@@ -82,7 +128,6 @@ def build_streams(
         reg_id = sig.get("source_id")
         reg = registry.get(reg_id, {})
 
-        # --- source (source family) ---
         source_id = _fid("src", reg_id or "unknown")
         if source_id not in sources:
             sources[source_id] = {
@@ -97,7 +142,6 @@ def build_streams(
                 "extracted_at": now,
             }
 
-        # --- matter entity ---
         matter_id = sig.get("matter_id") or sig.get("signal_id")
         matter_ent = _fid("ent", "matter", matter_id)
         entities.setdefault(matter_ent, {
@@ -114,7 +158,6 @@ def build_streams(
             "extracted_at": now,
         })
 
-        # --- agency entities + involves_agency ---
         for agency in sig.get("agencies", []) or []:
             agency_ent = _fid("ent", "agency", _norm(agency))
             entities.setdefault(agency_ent, {
@@ -135,7 +178,6 @@ def build_streams(
                 rel_id, source_id, matter_ent, agency_ent, "involves_agency",
                 confidence, synthetic, created, now))
 
-        # --- municipality entities + located_in ---
         for muni in sig.get("municipalities", []) or []:
             muni_ent = _fid("ent", "municipality", _norm(muni))
             entities.setdefault(muni_ent, {
@@ -156,7 +198,6 @@ def build_streams(
                 rel_id, source_id, matter_ent, muni_ent, "located_in",
                 confidence, synthetic, created, now))
 
-        # --- observation (the signal itself) ---
         obs_id = _fid("obs", "signal", sig.get("signal_id"))
         observations[obs_id] = {
             "observation_id": obs_id,
@@ -246,19 +287,36 @@ def main() -> int:
     ap.add_argument("--sources", default=str(DEFAULT_SOURCES))
     ap.add_argument("--out", default=str(REPO_ROOT / "exports/federation"))
     ap.add_argument("--mode", default="test", choices=["test", "production"])
+    ap.add_argument(
+        "--max-age-hours",
+        type=float,
+        default=DEFAULT_MAX_AGE_HOURS,
+        help="maximum age of newest captured_at accepted in production mode (default: 168h)",
+    )
     args = ap.parse_args()
 
     signals = [json.loads(line) for line in Path(args.ledger).read_text().splitlines() if line.strip()]
     registry = _load_source_registry(Path(args.sources))
-    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    if args.mode == "production":
+        input_errors = production_input_errors(
+            signals,
+            now=now_dt,
+            max_age_hours=args.max_age_hours,
+        )
+        if input_errors:
+            print("FAIL — " + "; ".join(input_errors))
+            return 1
+
     streams = build_streams(signals, registry, now)
 
     if args.mode == "production":
         synthetic = [r for s in streams.values() for r in s if r.get("synthetic")]
         if synthetic:
             print(
-                f"FAIL — {len(synthetic)} synthetic rows are not allowed in production mode; "
-                "Centinelas has no real (non-synthetic) signal intake yet"
+                f"FAIL — {len(synthetic)} synthetic rows are not allowed in production mode"
             )
             return 1
 
