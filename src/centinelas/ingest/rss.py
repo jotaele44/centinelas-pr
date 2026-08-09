@@ -1,4 +1,4 @@
-"""RSS/Atom feed poller using feedparser."""
+"""RSS/Atom feed poller using bounded HTTP fetches plus feedparser parsing."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import feedparser
+import httpx
 import yaml
 
 from centinelas.models import RawItem
@@ -14,6 +15,7 @@ from centinelas.models import RawItem
 log = logging.getLogger(__name__)
 
 _SOURCES_PATH = Path(__file__).parent / "sources.yaml"
+_FEED_TIMEOUT_SECONDS = 10.0
 
 
 def _load_sources() -> list[dict]:
@@ -57,6 +59,13 @@ def _entry_to_raw_item(entry: dict, source_name: str, tier: str) -> RawItem | No
     )
 
 
+def _fetch_feed(url: str):
+    """Fetch one feed with a hard timeout, then parse only the received bytes."""
+    response = httpx.get(url, timeout=_FEED_TIMEOUT_SECONDS, follow_redirects=True)
+    response.raise_for_status()
+    return feedparser.parse(response.content)
+
+
 def poll_all() -> list[RawItem]:
     """Poll all feeds defined in sources.yaml. Returns deduplicated RawItems."""
     sources = _load_sources()
@@ -69,7 +78,7 @@ def poll_all() -> list[RawItem]:
         tier = source.get("tier", "T2")
 
         try:
-            feed = feedparser.parse(url)
+            feed = _fetch_feed(url)
             for entry in feed.entries:
                 item = _entry_to_raw_item(entry, name, tier)
                 if item and item.item_id not in seen_ids:
@@ -83,11 +92,11 @@ def poll_all() -> list[RawItem]:
 
 
 def poll_feed(url: str, source_name: str = "", tier: str = "T2") -> list[RawItem]:
-    """Poll a single feed URL."""
+    """Poll a single feed URL with the same bounded fetch policy."""
     seen_ids: set[str] = set()
     items: list[RawItem] = []
     try:
-        feed = feedparser.parse(url)
+        feed = _fetch_feed(url)
         for entry in feed.entries:
             item = _entry_to_raw_item(entry, source_name or url, tier)
             if item and item.item_id not in seen_ids:
