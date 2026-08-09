@@ -33,6 +33,9 @@ dev = [
     "pytest-cov>=5",
     "pytest-httpx>=0.30.0",
     "ruff>=0.4.0",
+    # API contract tests import FastAPI directly. Include it in the declared
+    # clean-checkout dev environment so `setup` followed by `test_suite` works.
+    "fastapi>=0.111.0",
 ]
 server = [
     "fastapi>=0.111.0",
