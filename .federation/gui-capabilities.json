@@ -257,6 +257,38 @@
       }
     },
     {
+      "id": "project-lead-federation-routing",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Project-lead detection and scoped downstream dispatch are machine-to-machine federation controls. Human operators continue to use the existing pipeline and handoff UI; this internal capability must not create a separate terminal-only operator path.",
+      "backend": {
+        "files": [
+          "src/centinelas/project_leads.py"
+        ],
+        "symbols": [
+          "src/centinelas/project_leads.py:build_project_lead",
+          "src/centinelas/project_leads.py:project_lead_id",
+          "src/centinelas/project_leads.py:qualifies_project_lead"
+        ]
+      },
+      "analysis": {
+        "files": [
+          "scripts/emit_project_lead_dispatches.py"
+        ],
+        "symbols": [
+          "scripts/emit_project_lead_dispatches.py:build_project_handoff",
+          "scripts/emit_project_lead_dispatches.py:main",
+          "scripts/emit_project_lead_dispatches.py:run"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_project_leads.py"
+        ]
+      }
+    },
+    {
       "id": "service-health",
       "classification": "internal",
       "status": "active",
