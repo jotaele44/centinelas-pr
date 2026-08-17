@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "project_lead.v1.schema.json",
+  "title": "Centinelas Project Lead v1",
+  "description": "Shared discovery envelope for independent MoneySweep and SpiderWeb investigation. A lead is not an identity assertion.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "lead_id",
+    "origin_item_id",
+    "origin_producer",
+    "source_url",
+    "source_title_raw",
+    "captured_at",
+    "identity_effect",
+    "discovery_state"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "lead_id": { "type": "string", "pattern": "^prjlead_[a-f0-9]{32}$" },
+    "origin_item_id": { "type": "string", "minLength": 1 },
+    "origin_producer": { "const": "centinelas-pr" },
+    "source_url": { "type": "string", "format": "uri" },
+    "source_title_raw": { "type": "string" },
+    "published_at": { "type": "string", "format": "date-time" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "municipality_candidates": { "type": "array", "items": { "type": "string" } },
+    "agency_candidates": { "type": "array", "items": { "type": "string" } },
+    "recipient_candidates": { "type": "array", "items": { "type": "string" } },
+    "estimated_value_claim": { "type": ["number", "null"] },
+    "signal_stage_claim": { "type": ["string", "null"] },
+    "beat": { "type": ["string", "null"] },
+    "identity_effect": { "const": "NONE" },
+    "discovery_state": { "const": "DETECTED" }
+  },
+  "additionalProperties": false
+}
