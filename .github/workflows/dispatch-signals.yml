@@ -1,13 +1,9 @@
-name: Dispatch signals to MoneySweep
+name: Dispatch signals to MoneySweep + project leads to SpiderWeb
 
-# Event-driven export hop 1: run the Centinelas pipeline (ingest -> classify ->
-# route) and emit a GitHub repository_dispatch to moneysweep-pr for each fresh
-# FINANCIAL/POLITICAL signal above the confidence gate. moneysweep-pr's
-# centinelas-intake.yml listens for these and ingests them.
-#
-# Manual-only (workflow_dispatch), consistent with the federation's operator-triggered
-# egress policy. Emission is dry-run unless confirm=YES, and requires the
-# FEDERATION_DISPATCH_TOKEN secret (a token with contents:write on moneysweep-pr).
+# Existing event-driven finance path is preserved: all routed MoneySweep signals
+# are emitted exactly as before.  Minimal extension: only payloads carrying the
+# explicit project_lead envelope are additionally emitted to SpiderWeb.  Generic
+# non-project SpiderWeb discovery remains untouched.
 
 on:
   workflow_dispatch:
@@ -27,9 +23,6 @@ permissions:
 env:
   CENTINELAS_OUTBOUND_DIR: .centinelas/outbound
 
-# Serialise runs on the same ref without cancelling. This workflow can
-# publish, write data, or hand off to another repo, and killing it
-# mid-flight risks leaving that work half-done.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -46,7 +39,6 @@ jobs:
 
       - name: Install
         run: |
-          # PRII_FETCH_HUB: ensure shared federation libs resolve
           if [ ! -d ../thehub-pr ]; then git clone --depth 1 --branch "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" https://github.com/jotaele44/thehub-pr.git ../thehub-pr || git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr; fi
           command -v uv >/dev/null 2>&1 || python -m pip install -q uv
           uv pip install --system -e ".[dev,export]"
@@ -59,7 +51,7 @@ jobs:
           echo "Staged payloads:"
           find "$CENTINELAS_OUTBOUND_DIR" -name '*.json' -print 2>/dev/null | sort || true
 
-      - name: Emit repository_dispatch to moneysweep-pr
+      - name: Emit existing MoneySweep path
         env:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
         run: |
@@ -68,6 +60,16 @@ jobs:
           else
             echo "confirm != YES — dry-run (no POST)."
             python3 scripts/emit_dispatches.py --only-repo moneysweep-pr --dry-run
+          fi
+
+      - name: Emit project-lead-only SpiderWeb fanout
+        env:
+          FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+        run: |
+          if [ "$(printf '%s' "${{ github.event.inputs.confirm }}" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
+            python3 scripts/emit_project_lead_dispatches.py
+          else
+            python3 scripts/emit_project_lead_dispatches.py --dry-run
           fi
 
       - name: Upload staged payloads artifact
