@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Emit only project-lead SpiderWeb handoffs from Centinelas outbound staging.
 
-This deliberately does not activate generic SpiderWeb dispatch.  Existing
+This deliberately does not activate generic SpiderWeb dispatch. Existing
 non-project discovery routing remains unchanged while qualifying finance project
-leads gain the second investigative lane requested by the federation design.
+leads gain the second investigative lane. SpiderWeb already owns an idempotent
+``centinelas-handoff`` receiver, so this adapter conforms to that contract rather
+than inventing a second event type.
 """
 
 from __future__ import annotations
@@ -14,11 +16,33 @@ import os
 import sys
 from pathlib import Path
 
-from emit_dispatches import build_dispatch_body, post_dispatch
+from emit_dispatches import _bounded_signal, post_dispatch
 
 TARGET_REPO = "spiderweb-pr"
-EVENT_TYPE = "centinelas-signal"
+EVENT_TYPE = "centinelas-handoff"
 DEFAULT_OWNER = "jotaele44"
+
+
+def build_project_handoff(item_id: str, payload: dict) -> dict:
+    """Build the existing SpiderWeb handoff envelope for one project lead.
+
+    ``lead_id`` is a deterministic correlation handle, not identity evidence. The
+    idempotency key is namespaced so it cannot collide with older generic handoffs.
+    """
+    lead = payload.get("project_lead")
+    if not isinstance(lead, dict) or not lead.get("lead_id"):
+        raise ValueError("project_lead.lead_id is required")
+    lead_id = str(lead["lead_id"])
+    return {
+        "event_type": EVENT_TYPE,
+        "client_payload": {
+            "item_id": item_id,
+            "target": TARGET_REPO,
+            "idempotency_key": f"project-lead:{lead_id}",
+            "lead_id": lead_id,
+            "signal": _bounded_signal(payload),
+        },
+    }
 
 
 def run(outbound: Path, owner: str, token: str | None, dry_run: bool) -> int:
@@ -40,7 +64,12 @@ def run(outbound: Path, owner: str, token: str | None, dry_run: bool) -> int:
         if not isinstance(lead, dict) or not lead.get("lead_id"):
             continue
         item_id = str(payload.get("item_id") or path.stem)
-        body = build_dispatch_body(item_id, TARGET_REPO, payload, EVENT_TYPE)
+        try:
+            body = build_project_handoff(item_id, payload)
+        except ValueError as exc:
+            print(f"FAILED {item_id}: {exc}", file=sys.stderr)
+            failed += 1
+            continue
         if dry_run:
             print(f"[dry-run] project lead {lead['lead_id']} -> {owner}/{TARGET_REPO}")
             emitted += 1
@@ -62,7 +91,10 @@ def run(outbound: Path, owner: str, token: str | None, dry_run: bool) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--outbound", default=os.environ.get("CENTINELAS_OUTBOUND_DIR", ".centinelas/outbound"))
+    parser.add_argument(
+        "--outbound",
+        default=os.environ.get("CENTINELAS_OUTBOUND_DIR", ".centinelas/outbound"),
+    )
     parser.add_argument("--owner", default=DEFAULT_OWNER)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
