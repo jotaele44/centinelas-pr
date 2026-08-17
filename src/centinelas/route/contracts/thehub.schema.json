@@ -17,6 +17,17 @@
     "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
     "classifier_reasoning": { "type": "string" },
     "routed_to": { "type": "string" },
-    "routed_at": { "type": "string", "format": "date-time" }
+    "routed_at": { "type": "string", "format": "date-time" },
+    "project_lead": {
+      "type": "object",
+      "description": "Discovery provenance only. It cannot substitute for MoneySweep/SpiderWeb producer assertions or prove a cross-producer binding.",
+      "required": ["lead_id", "origin_item_id", "identity_effect", "discovery_state"],
+      "properties": {
+        "lead_id": { "type": "string", "pattern": "^prjlead_[a-f0-9]{32}$" },
+        "origin_item_id": { "type": "string" },
+        "identity_effect": { "const": "NONE" },
+        "discovery_state": { "const": "DETECTED" }
+      }
+    }
   }
 }
