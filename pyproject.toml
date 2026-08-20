@@ -33,6 +33,7 @@ dev = [
     "pytest-cov>=5",
     "pytest-httpx>=0.30.0",
     "ruff>=0.4.0",
+    "mypy>=1.11.0",
 ]
 server = [
     "fastapi>=0.111.0",
@@ -72,11 +73,6 @@ select = ["E4", "E7", "E9", "F"]
 # raises "TypeError: Cannot instantiate typing.Literal" at runtime. ingest/rss.py
 # already carried a comment about that exact trap; web.py had been missed.
 #
-# The remaining findings are known and accepted: `tier: str` passed where the
-# model declares Literal["T1".."T4"] (pydantic validates the value at runtime —
-# this is the established convention in rss.py and federal_register.py too), and
-# one mypy false positive on datetime(*value[:6], tzinfo=...) where it cannot
-# infer the unpacked tuple length.
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true

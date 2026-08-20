@@ -152,6 +152,15 @@ export default function Items() {
             )
         )
 
+    def test_discovery_uses_canonical_repo_root(self) -> None:
+        alias_root = self.root.parent / "alias-root"
+        try:
+            alias_root.symlink_to(self.root, target_is_directory=True)
+        except OSError:
+            self.skipTest("directory symlinks are unavailable")
+        files = parity._iter_files(alias_root, ["server/backend"], {".py"}, [])
+        self.assertEqual([self.root.resolve() / "server/backend/main.py"], files)
+
     def test_expired_staged_capability_and_exception_are_rejected(self) -> None:
         manifest = self._manifest()
         manifest["capabilities"][0].update(
