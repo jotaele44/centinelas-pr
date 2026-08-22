@@ -27,7 +27,9 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install monitor dependencies
-        run: python -m pip install -e ".[dev,export]"
+        run: python -m pip install -e ".[dev]"
+      - name: Smoke-test monitor from clean checkout
+        run: python tools/el_yunque_access_monitor.py --help
       - name: Poll official USDA Forest Service alerts
         env:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}

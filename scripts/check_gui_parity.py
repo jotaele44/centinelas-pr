@@ -173,11 +173,12 @@ def _iter_files(
     suffixes: set[str],
     excludes: Iterable[str],
 ) -> list[Path]:
+    repo_root = repo_root.resolve()
     found: set[Path] = set()
     for configured in roots:
         candidate = (repo_root / configured).resolve()
         try:
-            candidate.relative_to(repo_root.resolve())
+            candidate.relative_to(repo_root)
         except ValueError:
             continue
         paths = [candidate] if candidate.is_file() else candidate.rglob("*") if candidate.exists() else []
@@ -413,6 +414,7 @@ def _discover_frontend(
 def discover_candidates(
     repo_root: Path, manifest: dict[str, Any]
 ) -> list[dict[str, Any]]:
+    repo_root = repo_root.resolve()
     discovery = manifest.get("discovery", {})
     records = [
         *_discover_python(repo_root, discovery),

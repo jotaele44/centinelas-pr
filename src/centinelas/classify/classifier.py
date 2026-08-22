@@ -49,7 +49,11 @@ def _llm_classify(title: str, body: str) -> tuple[list[DomainLabel], float, str]
         messages=[{"role": "user", "content": text}],
     )
 
-    raw = response.content[0].text.strip()
+    block = response.content[0]
+    raw_text = getattr(block, "text", None)
+    if not isinstance(raw_text, str):
+        raise ValueError("LLM response did not contain a text block")
+    raw = raw_text.strip()
     data = json.loads(raw)
 
     labels: list[DomainLabel] = []

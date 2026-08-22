@@ -12,7 +12,7 @@ const navItems = [
   { to: "/entidades", label: "Entidades" },
   { to: "/sources", label: "Fuentes" },
   { to: "/pipeline", label: "Pipeline" },
-  { to: "/water-disruption", label: "Water Shadow" },
+  { to: "/water-disruption", label: "Interrupciones de agua" },
   { to: "/handoff", label: "Handoff" },
 ];
 

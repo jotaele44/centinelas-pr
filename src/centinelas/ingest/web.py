@@ -20,13 +20,14 @@ import re
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 import httpx
 import yaml
 from bs4 import BeautifulSoup
 
-from centinelas.models import RawItem
+from centinelas.models import EvidenceTier, RawItem
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +100,8 @@ def scrape_url(
     title = ""
     tag = soup.find("meta", property="og:title") or soup.find("title")
     if tag:
-        title = tag.get("content") or tag.get_text()
+        content = tag.get("content")
+        title = content if isinstance(content, str) else tag.get_text()
     title = title.strip()
 
     # Prefer article body; fall back to <p> tags
@@ -126,7 +128,7 @@ def scrape_url(
         # EvidenceTier is a typing.Literal alias — not callable; pydantic
         # validates the value against the Literal on the model. Calling it
         # raises "TypeError: Cannot instantiate typing.Literal" at runtime.
-        evidence_tier=tier,
+        evidence_tier=cast(EvidenceTier, tier),
     )
 
 
@@ -239,7 +241,11 @@ def _feed_entry_date(entry) -> datetime | None:
         value = entry.get(field)
         if value:
             try:
-                return datetime(*value[:6], tzinfo=timezone.utc)
+                parts = tuple(value[:6])
+                return datetime(
+                    parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
+                    tzinfo=timezone.utc,
+                )
             except (TypeError, ValueError):
                 pass
     return None
@@ -290,10 +296,14 @@ def _parse_webflow_items(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[
     # same for untabbed pages whose whole listing is one record type.
     if tabs:
         wanted = {t.strip() for t in tabs}
+        def tab_name(pane) -> str:
+            value = pane.get("data-w-tab")
+            return value.strip() if isinstance(value, str) else ""
+
         containers = [
-            (pane, (pane.get("data-w-tab") or "").strip())
+            (pane, tab_name(pane))
             for pane in soup.select(".w-tab-pane")
-            if (pane.get("data-w-tab") or "").strip() in wanted
+            if tab_name(pane) in wanted
         ]
     else:
         containers = [(soup, cfg.get("section", ""))]
@@ -309,7 +319,7 @@ def _parse_webflow_items(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[
 
             title = _visible_text(title_node) if title_node else ""
             links = [
-                urljoin(base_url, a["href"])
+                urljoin(base_url, str(a["href"]))
                 for a in item.find_all("a", href=True)
                 if not _is_hidden(a)
             ]
@@ -372,7 +382,11 @@ def _parse_html_table(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[dic
         if not any(values.values()):
             continue
 
-        title = " — ".join(v for c in title_columns if (v := values.get(c, "").strip()))
+        title = " — ".join(
+            value
+            for column in title_columns
+            if (value := str(values.get(column, "")).strip())
+        )
         if not title:
             continue
 
@@ -382,8 +396,8 @@ def _parse_html_table(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[dic
         entries.append({
             "title": title,
             "body": body[:_MAX_BODY_CHARS],
-            "published_at": _parse_date(values.get(date_column, "")) if date_column else None,
-            "url": urljoin(base_url, link["href"]) if link else "",
+            "published_at": _parse_date(str(values.get(date_column, ""))) if date_column else None,
+            "url": urljoin(base_url, str(link["href"])) if link else "",
         })
     return entries
 

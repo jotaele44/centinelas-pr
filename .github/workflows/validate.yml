@@ -50,6 +50,8 @@ jobs:
         run: |
           command -v uv >/dev/null 2>&1 || python -m pip install -q uv
           uv pip install --system -e ".[dev]" httpx -r server/backend/requirements.txt
+      - name: El Yunque clean-install smoke
+        run: python tools/el_yunque_access_monitor.py --help
       - name: Federation manifest gate
         run: |
           python - <<'PY'
@@ -115,9 +117,8 @@ jobs:
       - name: Install
         run: |
           command -v uv >/dev/null 2>&1 || python -m pip install -q uv
-          uv pip install --system -e ".[dev]" mypy
-      - name: Mypy (report-only)
-        continue-on-error: true
+          uv pip install --system -e ".[dev]"
+      - name: Mypy
         run: python -m mypy
 
   frontend:
