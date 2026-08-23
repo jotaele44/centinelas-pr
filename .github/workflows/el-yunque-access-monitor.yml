@@ -31,8 +31,9 @@ jobs:
       - name: Poll official USDA Forest Service alerts
         env:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
-          if [ "${{ github.event.inputs.dry_run || 'false' }}" = "true" ]; then
+          if [ "${DRY_RUN:-false}" = "true" ]; then
             python tools/el_yunque_access_monitor.py --dry-run
           else
             python tools/el_yunque_access_monitor.py
