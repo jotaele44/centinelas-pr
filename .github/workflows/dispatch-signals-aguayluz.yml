@@ -54,16 +54,18 @@ jobs:
       - name: Run pipeline (ingest -> classify -> route, stage to outbound)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LIMIT: ${{ github.event.inputs.limit }}
         run: |
-          centinelas run --limit "${{ github.event.inputs.limit }}"
+          centinelas run --limit "$LIMIT"
           echo "Staged payloads:"
           find "$CENTINELAS_OUTBOUND_DIR" -name '*.json' -print 2>/dev/null | sort || true
 
       - name: Emit repository_dispatch to aguayluz-pr
         env:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+          CONFIRM: ${{ github.event.inputs.confirm }}
         run: |
-          if [ "$(printf '%s' "${{ github.event.inputs.confirm }}" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
+          if [ "$(printf '%s' "$CONFIRM" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
             python3 scripts/emit_dispatches.py --only-repo aguayluz-pr
           else
             echo "confirm != YES — dry-run (no POST)."
