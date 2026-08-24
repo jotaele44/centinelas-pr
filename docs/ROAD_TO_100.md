@@ -1,125 +1,41 @@
-# Road to 100%
+# Road to 100 — normalized federation score
 
-A leverage-ordered ledger of what stands between Centinelas-PR today and a
-"100% complete" federation node. It separates work that can be **closed in
-code here** from work that is **blocked on data access or network** (live PR
-pre-official feeds, an `ANTHROPIC_API_KEY`, and the sibling repos being live).
+**Audit date:** 2026-08-19
+**Scoring model:** code completeness 20%; main-branch availability 15%; CI enforcement 15%; data materialization 15%; operator verification 15%; GUI completeness 10%; federation readiness 10%.
 
-**Current completion: ~90%** (was ~85% before this PR; the two remaining
-code-closable gaps below are now closed).
+## Current normalized score: 75.35 / 100
 
----
+| Dimension | Weight | Score | Weighted |
+|---|---:|---:|---:|
+| Code completeness | 20 | 92 | 18.40 |
+| Main-branch availability | 15 | 88 | 13.20 |
+| CI enforcement | 15 | 75 | 11.25 |
+| Data materialization | 15 | 55 | 8.25 |
+| Operator verification | 15 | 65 | 9.75 |
+| GUI completeness | 10 | 70 | 7.00 |
+| Federation readiness | 10 | 75 | 7.50 |
 
-## Where the engine already stands (done)
+The former ~90% figure measured offline code completeness. It is historical and is not used for cross-repository comparison.
 
-These are implemented, tested, and exercised against real data — not stubs.
+## State reconciliation
 
-- **Two-tier classifier** — deterministic keyword rules as the fast path, with a
-  Claude Haiku fallback for ambiguous/unmatched items. The LLM tier degrades
-  *gracefully* to keyword rules when no `ANTHROPIC_API_KEY` is present or the
-  network is unreachable (`src/centinelas/classify/classifier.py`).
-- **Six-domain routing with contract schemas** — `ENVIRONMENTAL`, `FINANCIAL`,
-  `POLITICAL`, `GEO_GEOLOGY`, `ANOMALOUS`, `MILITARY_AEROSPACE` map to sibling
-  repos, with the MoneySweep anchor receiving the finance/location enrichment its
-  intake contract declares (`src/centinelas/route/router.py`, `schemas/`).
-- **Confidence gate** — sub-threshold items are `skipped`, not dispatched, keeping
-  low-confidence noise out of the downstream event pipeline
-  (`CENTINELAS_ROUTE_MIN_CONFIDENCE`, default 0.55).
-- **Event-driven federation egress** — `CENTINELAS_OUTBOUND_DIR` stages payloads
-  per-repo for `scripts/emit_dispatches.py` to POST as `repository_dispatch`
-  events, so no sibling checkout is required in CI.
-- **Proven at volume** — a real pipeline run over the configured RSS registry
-  ingests and classifies **250+ live signals** end-to-end via the keyword tier
-  alone (253 ingested / 133 routed / 120 gated in a representative dry run).
-- **84 tests** (81 baseline + 3 for the new `/run` endpoint), covering
-  classification, routing, dispatch, CLI, federation export/contract-compat, and
-  the desktop/API server.
+- The classifier, confidence gate, routing contracts, dispatch path, water taxonomy and backend run surface are on `main`.
+- PR #78 merged on `main`; isolated-clone runtime and immutable shared-package sources are now authoritative.
+- PR #77 is superseded for runtime setup by the merged isolated-clone contract. Any remaining workspace-policy text must be reconciled independently with TheHub.
+- PR #79 is rescued branch history, not certified current implementation.
+- PR #80 is a governance-only skill disposition and no longer blocks runtime delivery.
+- Production export is fail-closed for empty, malformed, future-dated, synthetic, or stale ledgers. Hub live execution remains blocked until acquisition refreshes the committed ledger and downstream validation succeeds.
+- The Water Disruption shadow console is wired through API discovery, navigation, failure/retry UI, unit coverage, and GUI-parity E2E coverage.
+- The central product gap remains Puerto Rico pre-official source acquisition and a durable Matter lifecycle through MoneySweep.
 
----
+## Priority exit sequence
 
-## Remaining — code (closable here)
+1. Refresh the live ledger through a bounded, receipt-producing Puerto Rico acquisition run and validate the production export downstream.
+2. Dispose of rescued and governance-only PRs without importing stale data by assumption.
+3. Complete PREB, AAA, COR3, and legislative acquisition accounting and expose freshness/failure state to operators.
+4. Certify shared Matter stages 0–6 and MoneySweep reconciliation across repositories.
+5. Exercise the LLM tier with secret-safe production receipts while preserving deterministic fallback.
 
-Both items below are **closed by this PR**.
+## Machine-readable authority
 
-- [x] **Implement the deferred `POST /run`** (`server/backend/main.py`).
-  The read-only visibility API now has an HTTP twin of `centinelas run`: it reuses
-  the exact `poll_all → classify → dispatch` path the CLI exposes, writes
-  classified items where `/items` and `/status` read them, and honours the same
-  offline contract (unreachable feeds → fewer/zero items; missing key → keyword
-  fallback; `dry_run` skips cross-repo writes but persists local bookkeeping).
-  Returns a JSON run summary. Covered by `tests/test_run_endpoint.py`
-  (TestClient, keyword-tier only, no API key).
-- [x] **Gate `ruff` in CI** (`.github/workflows/validate.yml`).
-  A dedicated `lint` job now runs `ruff check .` (ruff was configured but never
-  enforced). The existing tree was brought to a clean state so the gate passes
-  rather than blocking on pre-existing lint debt.
-
----
-
-## Remaining — data / network-blocked (cannot be closed offline)
-
-These are **not code gaps** — they need external access the audit environment
-does not have. Listed highest-leverage first.
-
-1. **PR-specific pre-official source intake.**
-   The live registry (`src/centinelas/ingest/sources.yaml`) is generic global-topic
-   RSS (Defense News, NOAA, USGS, …). The README's core thesis is *pre-officialization
-   Puerto Rico signals*: legislative calendars and committee agendas, municipal
-   assembly agendas, agency press releases, procurement notices / RFPs, public-hearing
-   notices, and public-board agendas (PREPA, AAA, Ports, UPR, COR3, PREB filings).
-   These are largely not RSS — they require per-source scrapers/adapters and live
-   endpoints. This is the single biggest gap between the working *engine* and the
-   *product* the README describes. **Blocked on: live PR source access + adapters.**
-
-2. **Full Centinelas ↔ MoneySweep matter-lifecycle handoff (stages 0–6).**
-   The README defines a shared `Matter` lifecycle (Stage 0 raw observation →
-   Stage 4 officialized in MoneySweep → Stage 6 audit/impact) with a
-   `HandoffCandidate` when a downstream official record appears. Today's dispatch
-   emits per-signal payloads with `signal_stage`/`beat` enrichment, but the
-   end-to-end matter object, stage transitions, and `matched_to_moneysweep`
-   handoff are **partly aspirational**. **Blocked on: MoneySweep live intake +
-   shared matter store.**
-
-3. **LLM classification tier in production.**
-   The Claude Haiku path is implemented and falls back cleanly, but exercising it
-   (vs. keyword-only) needs an `ANTHROPIC_API_KEY`. All offline verification here
-   runs the keyword tier. **Blocked on: API key / network.**
-
----
-
-## Verification (offline)
-
-```bash
-# targeted suite (excludes 3 files that import the git-only prii_* packages,
-# which cannot install offline; they run in CI where those packages are present)
-python3 -m pytest tests/ -q -k "classif or rout or dispatch or run" \
-  --ignore=tests/test_federation_export.py \
-  --ignore=tests/test_federation_contract_compat.py \
-  --ignore=tests/test_maintenance.py
-
-# lint gate (the same command CI now enforces)
-ruff check .
-
-# workflow stays valid YAML
-python3 -c "import yaml; yaml.safe_load(open('.github/workflows/validate.yml'))"
-```
-
----
-
-## Scorecard
-
-| Track | State |
-|---|---|
-| Classifier (keyword + LLM fallback) | Done |
-| Six-domain routing + contracts | Done |
-| Confidence gate + event egress | Done |
-| `POST /run` endpoint | **Closed this PR** |
-| `ruff` CI gate | **Closed this PR** |
-| PR pre-official source intake | Data-blocked |
-| Matter-lifecycle handoff (stages 0–6) | Partly aspirational / data-blocked |
-| LLM tier in production | Key/network-blocked |
-
-**Code completeness: ~100% of what is closable offline is closed.**
-**Product completeness: ~90%**, with the remainder gated on live PR data sources,
-the sibling repos being live, and an API key — none of which can be resolved in an
-offline audit.
+See `docs/unfinished_implementation_ledger.v1.json`. Only evidence on `main` closes an item; draft PRs remain candidates.

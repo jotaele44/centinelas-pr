@@ -18,9 +18,8 @@ module.exports = {
     extend: {
 
       fontFamily: {
-        heading: ['"Bebas Neue"', 'sans-serif'],
-        body: ['"Montserrat"', 'sans-serif'],
-        sans: ['"Montserrat"', 'sans-serif'],
+        sans: ['ui-sans-serif', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+        heading: ['ui-sans-serif', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
       },
 
       colors: {

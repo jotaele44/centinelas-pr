@@ -1,0 +1,35 @@
+name: Federation template drift
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    env:
+      PRII_TEMPLATE_REF: fe155d2494f1f3eef007bf66f6367d45995ef3d1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Fetch pinned canonical templates outside workspace
+        run: |
+          template_root="$RUNNER_TEMP/prii-thehub-templates"
+          git clone --filter=blob:none --no-checkout https://github.com/jotaele44/thehub-pr.git "$template_root"
+          git -C "$template_root" checkout --detach "$PRII_TEMPLATE_REF"
+          test "$(git -C "$template_root" rev-parse HEAD)" = "$PRII_TEMPLATE_REF"
+          echo "PRII_TEMPLATE_ROOT=$template_root" >> "$GITHUB_ENV"
+          test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install pyyaml
+      - name: Assert no drift from canonical federation templates
+        run: python "$PRII_TEMPLATE_ROOT/tools/render_federation_templates.py" --repo centinelas-pr --repo-root "$GITHUB_WORKSPACE" --check

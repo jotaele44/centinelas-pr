@@ -17,15 +17,23 @@ dependencies = [
     "jsonschema>=4.21.0",
     "typer>=0.12.0",
     "rich>=13.7.0",
-    "prii-maintenance @ git+https://github.com/jotaele44/thehub-pr.git@3c9e51e3de406f8455605a06fabd4823452d9b63#subdirectory=packages/prii_maintenance",
-    "prii-export-utils @ git+https://github.com/jotaele44/thehub-pr.git@c007a728910128efebcda79bdbe6b9b33212551e#subdirectory=packages/prii_export_utils",
+    # Shared federation libraries are resolved from immutable Git sources below
+    # so this project installs from an isolated clone.
+    "prii-maintenance",
+    "prii-export-utils",
 ]
+
+[tool.uv.sources]
+prii-maintenance = { git = "https://github.com/jotaele44/thehub-pr.git", rev = "f2b81769924689b4d959554928810b1d7b7ef3d6", subdirectory = "packages/prii_maintenance" }
+prii-export-utils = { git = "https://github.com/jotaele44/thehub-pr.git", rev = "f2b81769924689b4d959554928810b1d7b7ef3d6", subdirectory = "packages/prii_export_utils" }
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pytest-cov>=5",
     "pytest-httpx>=0.30.0",
     "ruff>=0.4.0",
+    "mypy>=1.11.0",
 ]
 server = [
     "fastapi>=0.111.0",
@@ -47,3 +55,45 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+# Keep the repository's established lint contract explicit. Ruff's default rule
+# set can expand between releases because the development dependency is unpinned.
+select = ["E4", "E7", "E9", "F"]
+
+# ── mypy ─────────────────────────────────────────────────────────────────────
+# Gradually-typed baseline, matching spiderweb-pr and moneysweep-pr. Scoped to
+# the src/centinelas package. follow_imports = "silent" means modules reached by
+# import but outside the scope are followed for symbols without reporting their
+# own errors, so the check stays focused as typing coverage widens. Non-gating
+# in CI to start (see .github/workflows/validate.yml).
+#
+# Adding this check is what surfaced a live bug in ingest/web.py: it called
+# EvidenceTier(tier), but EvidenceTier is a typing.Literal alias and calling one
+# raises "TypeError: Cannot instantiate typing.Literal" at runtime. ingest/rss.py
+# already carried a comment about that exact trap; web.py had been missed.
+#
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+follow_imports = "silent"
+files = ["src/centinelas"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/centinelas"]
+omit = ["tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+# Ratchet, not a target: 75% measured when this landed, floor set at
+# 72% so normal variation across the CI Python matrix does not cause false
+# failures. Raise it as coverage improves; never lower it to make a build pass.
+fail_under = 72
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

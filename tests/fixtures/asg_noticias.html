@@ -1,0 +1,61 @@
+<!-- Trimmed reproduction of the ASG news index (asg.pr.gov/noticias/). Unlike
+     the bid cards these ARE dated on the listing, in Spanish abbreviated form
+     ("08 Dic 2025"), so no detail fetch is needed.
+
+     The first entry is the promoted lead story: it is an <article
+     class="blog-featured"> titled with a plain <h2>, not an <article
+     class="blog-card"> with a .blog-card-title. Both shapes are kept here
+     because matching only the latter silently drops whichever story ASG is
+     currently featuring. -->
+<html><body>
+<section class="blog-shell">
+  <div class="blog-wrap">
+
+    <article class="blog-featured">
+      <img src="https://example.invalid/oea.jpg" alt="" class="blog-featured-image">
+      <div class="blog-featured-body">
+        <span class="blog-kicker">Destacado</span>
+        <h2>La OEA concede premio a la plataforma de compras de la Administración de Servicios Generales</h2>
+        <p>La organización que agrupa a sobre una treintena de países en América elogió la solución que ha reducido el tiempo de un proceso de subasta en 85%</p>
+        <div class="blog-card-meta">
+          <span>Noticia</span>
+          <span>08 Dic 2025</span>
+        </div>
+        <a class="blog-link" href="/noticias/la-oea-concede-premio-a-la-plataforma-de-compras">Leer publicación</a>
+      </div>
+    </article>
+
+    <div class="blog-grid">
+      <article class="blog-card">
+        <img src="https://example.invalid/controles.jpg" alt="" class="blog-card-image">
+        <div class="blog-card-meta">
+          <span>Noticia</span>
+          <span>10 Feb 2026</span>
+        </div>
+        <h3 class="blog-card-title">ASG refuerza controles en compras del gobierno</h3>
+        <p>La agencia anunció nuevos requisitos de fiscalización para las subastas informales.</p>
+        <a href="/noticias/asg-refuerza-controles-en-compras-del-gobierno" class="blog-link">Leer más</a>
+      </article>
+
+      <article class="blog-card">
+        <img src="https://example.invalid/mercadito.jpg" alt="" class="blog-card-image">
+        <div class="blog-card-meta">
+          <span>Noticia</span>
+          <span>23 May 2025</span>
+        </div>
+        <h3 class="blog-card-title">La GSA lanza Mercadito, la primera plataforma de comercio electrónico del gobierno en Latinoamérica.</h3>
+        <p>La iniciativa consolida los contratos públicos en un catálogo digital para optimizar las compras del gobierno de Puerto Rico.</p>
+        <a href="/noticias/la-gsa-lanza-mercadito" class="blog-link">Leer más</a>
+      </article>
+    </div>
+
+    <nav aria-label="Paginacion noticias">
+      <ul class="pagination">
+        <li class="page-item"><span class="page-link page-status">Página 1 de 2</span></li>
+        <li class="page-item"><a class="page-link" href="?page=2">Próxima</a></li>
+      </ul>
+    </nav>
+
+  </div>
+</section>
+</body></html>

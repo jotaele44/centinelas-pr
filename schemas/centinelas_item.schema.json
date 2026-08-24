@@ -24,7 +24,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["ENVIRONMENTAL", "FINANCIAL", "POLITICAL", "GEO_GEOLOGY", "ANOMALOUS", "MILITARY_AEROSPACE", "UNCLASSIFIED"]
+        "enum": ["ENVIRONMENTAL", "FINANCIAL", "POLITICAL", "GEO_GEOLOGY", "ANOMALOUS", "MILITARY_AEROSPACE", "SAFETY_COMPLIANCE", "UNCLASSIFIED"]
       },
       "minItems": 1
     },

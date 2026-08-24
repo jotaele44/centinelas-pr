@@ -27,31 +27,45 @@ permissions:
 env:
   CENTINELAS_OUTBOUND_DIR: .centinelas/outbound
 
+# Serialise runs on the same ref without cancelling. This workflow can
+# publish, write data, or hand off to another repo, and killing it
+# mid-flight risks leaving that work half-done.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install
-        run: python -m pip install -e ".[dev,export]"
+        run: |
+          # PRII_FETCH_HUB: ensure shared federation libs resolve
+          if [ ! -d ../thehub-pr ]; then git clone --depth 1 --branch "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" https://github.com/jotaele44/thehub-pr.git ../thehub-pr || git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr; fi
+          command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+          uv pip install --system -e ".[dev,export]"
 
       - name: Run pipeline (ingest -> classify -> route, stage to outbound)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LIMIT: ${{ github.event.inputs.limit }}
         run: |
-          centinelas run --limit "${{ github.event.inputs.limit }}"
+          centinelas run --limit "$LIMIT"
           echo "Staged payloads:"
           find "$CENTINELAS_OUTBOUND_DIR" -name '*.json' -print 2>/dev/null | sort || true
 
       - name: Emit repository_dispatch to moneysweep-pr
         env:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+          CONFIRM: ${{ github.event.inputs.confirm }}
         run: |
-          if [ "$(printf '%s' "${{ github.event.inputs.confirm }}" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
+          if [ "$(printf '%s' "$CONFIRM" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
             python3 scripts/emit_dispatches.py --only-repo moneysweep-pr
           else
             echo "confirm != YES — dry-run (no POST)."
@@ -60,7 +74,7 @@ jobs:
 
       - name: Upload staged payloads artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: centinelas-outbound
           path: .centinelas/outbound

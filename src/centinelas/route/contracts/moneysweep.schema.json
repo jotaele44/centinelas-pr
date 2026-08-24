@@ -24,10 +24,15 @@
       "items": { "type": "string" },
       "description": "Pre-officialization location enrichment; PR municipality names when the classifier could extract them (empty otherwise). MoneySweep re-derives from title/body_text when absent."
     },
+    "recipients": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Awardee/recipient names (who won the contract), when extracted; distinct from the awarding agency. MoneySweep uses the first to set recipient_entity_id."
+    },
     "agencies": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Agencies/entities implicated by the signal, when extracted."
+      "description": "Awarding agencies/funders implicated by the signal, when extracted."
     },
     "estimated_value": {
       "type": ["number", "null"],

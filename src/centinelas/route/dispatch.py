@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import logging
 import os
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+from jsonschema import ValidationError, validate
 
 from centinelas.models import ClassifiedItem, DispatchRecord
 from centinelas.route.router import route
@@ -21,6 +26,34 @@ _DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas"))
 # noise out of the downstream MoneySweep/Hub event pipeline. Env-overridable to mirror
 # the repo's existing env-var config style (see CENTINELAS_REPOS_DIR above).
 _DEFAULT_ROUTE_MIN_CONFIDENCE = 0.55
+HANDOFF_TARGETS = frozenset(
+    {"spiderweb-pr", "aguayluz-pr", "moneysweep-pr", "skywatcher-pr"}
+)
+_CONTRACT_DIR = Path(__file__).parent / "contracts"
+_GITHUB_API = "https://api.github.com"
+
+
+def _idempotency_key(item_id: str, target: str, payload: dict) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(f"{item_id}\0{target}\0{canonical}".encode()).hexdigest()
+    return f"centinelas:{item_id}:{target}:{digest[:20]}"
+
+
+def _repository_dispatch(target: str, body: dict, token: str) -> int:
+    owner = os.environ.get("CENTINELAS_GITHUB_OWNER", "jotaele44")
+    request = urllib.request.Request(
+        f"{_GITHUB_API}/repos/{owner}/{target}/dispatches",
+        data=json.dumps(body).encode(),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Content-Type": "application/json",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:
+        return response.status
 
 
 def _route_min_confidence() -> float:
@@ -129,3 +162,107 @@ def dispatch(item: ClassifiedItem, dry_run: bool = False) -> DispatchRecord:
 
 def dispatch_many(items: list[ClassifiedItem], dry_run: bool = False) -> list[DispatchRecord]:
     return [dispatch(item, dry_run=dry_run) for item in items]
+
+
+def dispatch_to_targets(
+    item: ClassifiedItem,
+    targets: list[str],
+    *,
+    dry_run: bool = False,
+) -> dict:
+    """Manually hand one classified item to explicit federation destinations.
+
+    Unlike :func:`dispatch`, this operator action is not restricted to targets
+    inferred from classifier labels. Payload construction still goes through
+    ``build_payload`` so every destination receives its canonical contract.
+    A receipt is returned for each target, allowing the UI to show partial
+    success and retry only failed destinations.
+    """
+    from centinelas.route.router import build_payload
+
+    requested = list(dict.fromkeys(targets))
+    invalid = [target for target in requested if target not in HANDOFF_TARGETS]
+    if invalid:
+        raise ValueError(f"unsupported handoff target(s): {', '.join(invalid)}")
+    if not requested:
+        raise ValueError("at least one handoff target is required")
+
+    attempts: list[dict] = []
+    for target in requested:
+        out_path = _repo_intake_dir(target) / f"{item.item_id}.json"
+        attempted_at = datetime.now(timezone.utc).isoformat()
+        payload = build_payload(item, target)
+        contract_path = _CONTRACT_DIR / f"{target.removesuffix('-pr')}.schema.json"
+        try:
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
+            validate(instance=payload, schema=contract)
+        except (OSError, json.JSONDecodeError, ValidationError) as exc:
+            attempts.append(
+                {
+                    "target": target,
+                    "status": "failed",
+                    "attempted_at": attempted_at,
+                    "error": f"contract validation failed: {exc}",
+                }
+            )
+            continue
+        idempotency_key = _idempotency_key(item.item_id, target, payload)
+        if dry_run:
+            attempts.append(
+                {
+                    "target": target,
+                    "status": "dry_run",
+                    "attempted_at": attempted_at,
+                    "output_path": str(out_path),
+                    "idempotency_key": idempotency_key,
+                }
+            )
+            continue
+        try:
+            token = os.environ.get("FEDERATION_DISPATCH_TOKEN") or os.environ.get(
+                "CENTINELAS_GITHUB_TOKEN"
+            )
+            if not token:
+                raise RuntimeError(
+                    "FEDERATION_DISPATCH_TOKEN or CENTINELAS_GITHUB_TOKEN is required"
+                )
+            status = _repository_dispatch(
+                target,
+                {
+                    "event_type": "centinelas-handoff",
+                    "client_payload": {
+                        "item_id": item.item_id,
+                        "target": target,
+                        "idempotency_key": idempotency_key,
+                        "signal": payload,
+                    },
+                },
+                token,
+            )
+            attempts.append(
+                {
+                    "target": target,
+                    "status": "pending_ack",
+                    "attempted_at": attempted_at,
+                    "dispatch_http_status": status,
+                    "idempotency_key": idempotency_key,
+                }
+            )
+        except Exception as exc:
+            log.exception("Manual handoff failed for %s → %s", item.item_id, target)
+            attempts.append(
+                {
+                    "target": target,
+                    "status": "failed",
+                    "attempted_at": attempted_at,
+                    "error": str(exc),
+                }
+            )
+
+    succeeded = sum(attempt["status"] in {"pending_ack", "dry_run"} for attempt in attempts)
+    return {
+        "item_id": item.item_id,
+        "status": "pending_ack" if succeeded == len(attempts) else ("partial" if succeeded else "failed"),
+        "dry_run": dry_run,
+        "attempts": attempts,
+    }

@@ -1,133 +1,143 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { appClient } from "@/api/appClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createHandoff, getHandoffs } from "@/api/pipelineClient";
 import { Button } from "@/components/ui/button";
-import HandoffStatusBadge from "@/components/lifecycle/HandoffStatusBadge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConfidenceBadge from "@/components/lifecycle/ConfidenceBadge";
-import { HANDOFF_TRIGGERS, isReadyForMoneySweep, mapLegacyLawToMatter, mapLegacyLawToSignal } from "@/lib/lifecycle";
+import DomainBadge from "@/components/pipeline/DomainBadge";
+import ListState from "@/components/ListState";
 
-async function safeList(entityName, sort = "-created_date", limit = 200) {
-  const entity = appClient.entities?.[entityName];
-  if (!entity?.list) return [];
-  try {
-    return await entity.list(sort, limit);
-  } catch (_error) {
-    return [];
-  }
+const TARGETS = [
+  { id: "spiderweb-pr", label: "Spiderweb" },
+  { id: "aguayluz-pr", label: "Agua y Luz" },
+  { id: "moneysweep-pr", label: "Moneysweep" },
+  { id: "skywatcher-pr", label: "Skywatcher" },
+];
+
+function latestAttempts(item) {
+  const receipts = item.handoffs || [];
+  return receipts.length ? receipts[receipts.length - 1].attempts || [] : [];
 }
 
 export default function Handoff() {
-  const [matters, setMatters] = useState([]);
-  const [signals, setSignals] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionState, setActionState] = useState({});
+  const [error, setError] = useState(null);
+  const [selected, setSelected] = useState({});
+  const [actions, setActions] = useState({});
 
-  useEffect(() => {
-    let active = true;
-    async function loadHandoff() {
-      const [matterRows, signalRows, legacyLaws] = await Promise.all([
-        safeList("Matter", "-first_seen_at", 200),
-        safeList("Signal", "-captured_at", 200),
-        safeList("Law", "-last_action_date", 100),
-      ]);
-      if (!active) return;
-      setMatters(matterRows.length > 0 ? matterRows : legacyLaws.map(mapLegacyLawToMatter));
-      setSignals(signalRows.length > 0 ? signalRows : legacyLaws.map(mapLegacyLawToSignal));
-      setLoading(false);
+  const load = async () => {
+    setLoading(true);
+    const rows = await getHandoffs();
+    if (!Array.isArray(rows)) {
+      setError("No se pudo cargar el API de handoff.");
+      setItems([]);
+    } else {
+      setError(null);
+      setItems(rows);
     }
-    loadHandoff();
-    return () => {
-      active = false;
-    };
-  }, []);
+    setLoading(false);
+  };
 
-  const candidates = useMemo(() => matters
-    .map((matter) => ({
-      matter,
-      signals: signals.filter((signal) => signal.matter_id === matter.matter_id),
-    }))
-    .filter(({ matter, signals: linkedSignals }) => isReadyForMoneySweep(matter, linkedSignals)), [matters, signals]);
+  useEffect(() => { load(); }, []);
 
-  const runHandoffAction = async (action, matter, linkedSignals) => {
-    const key = matter.matter_id || matter.id;
-    setActionState((current) => ({ ...current, [key]: `${action}_running` }));
+  const deliveredCount = useMemo(
+    () => items.filter((item) => latestAttempts(item).some((a) => a.status === "delivered")).length,
+    [items],
+  );
+
+  const toggle = (itemId, target) => {
+    setSelected((current) => {
+      const next = new Set(current[itemId] || []);
+      if (next.has(target)) next.delete(target); else next.add(target);
+      return { ...current, [itemId]: [...next] };
+    });
+  };
+
+  const send = async (item) => {
+    const targets = selected[item.item_id] || [];
+    if (!targets.length) return;
+    setActions((current) => ({ ...current, [item.item_id]: { status: "sending" } }));
     try {
-      const candidatePayload = {
-        matter_id: matter.matter_id,
-        candidate_id: matter.last_handoff_candidate_id || `manual-${matter.matter_id}`,
-        official_record: {
-          matter_id: matter.matter_id,
-          title: matter.title,
-          official_identifier: matter.official_identifier || "",
-          official_source_url: matter.official_source_url || "",
-          linked_signal_ids: linkedSignals.map((signal) => signal.signal_id || signal.id).filter(Boolean),
-        },
-      };
-
-      if (action === "evaluate") {
-        await appClient.functions.invoke("evaluateHandoffCandidate", { matter_id: matter.matter_id });
-      } else if (action === "accept") {
-        await appClient.functions.invoke("acceptHandoffCandidate", candidatePayload);
-      } else if (action === "reject") {
-        await appClient.functions.invoke("rejectHandoffCandidate", {
-          matter_id: matter.matter_id,
-          reason: "Reviewer rejected automatic handoff candidate from Centinelas UI.",
-        });
-      }
-
-      setActionState((current) => ({ ...current, [key]: `${action}_ok` }));
-    } catch (error) {
-      setActionState((current) => ({ ...current, [key]: `${action}_failed: ${error.message}` }));
+      const receipt = await createHandoff(item.item_id, targets);
+      setActions((current) => ({ ...current, [item.item_id]: receipt }));
+      await load();
+    } catch (err) {
+      setActions((current) => ({
+        ...current,
+        [item.item_id]: { status: "failed", error: err.message },
+      }));
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Handoff hacia MoneySweep</h1>
-        <p className="mt-2 text-muted-foreground">Asuntos donde Centinelas detectó señal de oficialización y debe crearse o vincularse un registro canónico posterior.</p>
+        <h1 className="text-3xl font-bold text-foreground">Handoff</h1>
+        <p className="mt-2 text-muted-foreground">
+          Entrega señales clasificadas a los repositorios consumidores y conserva un recibo por destino.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {items.length} clasificadas · {deliveredCount} con entrega confirmada
+        </p>
       </div>
-      <Card>
-        <CardHeader><CardTitle className="text-base">Disparadores aceptados</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-          {HANDOFF_TRIGGERS.map((trigger) => <span key={trigger} className="rounded-full border px-3 py-1">{trigger}</span>)}
-        </CardContent>
-      </Card>
-      {loading ? <p className="rounded-xl border p-6 text-muted-foreground">Evaluando candidatos…</p> : null}
-      {!loading && candidates.length === 0 ? <p className="rounded-xl border p-6 text-muted-foreground">No hay candidatos listos. Esto es correcto si aún no existe identificador oficial, contrato, ley, pago, permiso, auditoría o docket.</p> : null}
-      <div className="grid gap-4">
-        {candidates.map(({ matter, signals: linkedSignals }) => (
-          <Card key={matter.matter_id || matter.id}>
-            <CardHeader>
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <CardTitle className="text-lg">{matter.title}</CardTitle>
-                  <p className="mt-2 break-all text-sm text-muted-foreground">{matter.matter_id}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <ConfidenceBadge score={matter.confidence_score} />
-                  <HandoffStatusBadge status="ready_for_moneysweep" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <div className="grid gap-3 md:grid-cols-3">
-                <div><span className="font-medium text-foreground">Tipo:</span> {matter.matter_type}</div>
-                <div><span className="font-medium text-foreground">Señales:</span> {linkedSignals.length}</div>
-                <div><span className="font-medium text-foreground">Oficial:</span> {matter.official_identifier || matter.official_source_url || "requiere vinculación"}</div>
-              </div>
-              <div className="flex flex-wrap gap-2 border-t pt-4">
-                <Button type="button" variant="outline" size="sm" onClick={() => runHandoffAction("evaluate", matter, linkedSignals)}>Evaluar</Button>
-                <Button type="button" size="sm" onClick={() => runHandoffAction("accept", matter, linkedSignals)}>Aceptar / crear registro</Button>
-                <Button type="button" variant="destructive" size="sm" onClick={() => runHandoffAction("reject", matter, linkedSignals)}>Rechazar</Button>
-                {actionState[matter.matter_id || matter.id] && (
-                  <span className="self-center text-xs text-muted-foreground">{actionState[matter.matter_id || matter.id]}</span>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+      <ListState loading={loading} error={error} empty={!items.length}
+        loadingLabel="Cargando señales clasificadas…"
+        emptyMessage="No hay señales clasificadas. Ejecuta el pipeline primero.">
+        <div className="grid gap-4">
+          {items.map((item) => {
+            const attempts = latestAttempts(item);
+            const action = actions[item.item_id];
+            return (
+              <Card key={item.item_id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{item.title || "(sin título)"}</CardTitle>
+                  <div className="flex flex-wrap gap-2">
+                    {(item.labels || []).map((label) => <DomainBadge key={label} domain={label} />)}
+                    <ConfidenceBadge score={Math.round((item.confidence || 0) * 100)} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{item.source_name} · {item.item_id}</p>
+                  <fieldset>
+                    <legend className="mb-2 text-sm font-medium">Destinos</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {TARGETS.map((target) => (
+                        <label key={target.id} className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                          <input type="checkbox"
+                            checked={(selected[item.item_id] || []).includes(target.id)}
+                            onChange={() => toggle(item.item_id, target.id)} />
+                          {target.label}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  {attempts.length > 0 && (
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {attempts.map((attempt) => (
+                        <span key={`${attempt.target}-${attempt.attempted_at}`}
+                          className="rounded-full border px-3 py-1">
+                          {attempt.target.replace(/-pr$/, "")}: {attempt.status}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 border-t pt-4">
+                    <Button type="button"
+                      disabled={action?.status === "sending" || !(selected[item.item_id] || []).length}
+                      onClick={() => send(item)}>
+                      {action?.status === "sending" ? "Entregando…" : "Entregar"}
+                    </Button>
+                    {action?.error && <span role="alert" className="text-sm text-destructive">{action.error}</span>}
+                    {action?.status === "delivered" && <span className="text-sm text-muted-foreground">Entrega confirmada.</span>}
+                    {action?.status === "partial" && <span className="text-sm text-muted-foreground">Entrega parcial; reintenta los destinos fallidos.</span>}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </ListState>
     </div>
   );
 }

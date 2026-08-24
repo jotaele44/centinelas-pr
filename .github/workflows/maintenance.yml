@@ -8,25 +8,42 @@ on:
   schedule:
     - cron: "47 6 * * 1"   # Mondays 06:47 UTC
 
+# Least privilege: this workflow only reads the repo (and uploads artifacts,
+# which uses the runtime token, not GITHUB_TOKEN). Widen deliberately if a
+# step ever needs to write back.
+permissions:
+  contents: read
+
+# Serialise runs on the same ref without cancelling. This workflow can
+# publish, write data, or hand off to another repo, and killing it
+# mid-flight risks leaving that work half-done.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   maintenance:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: Install
-        run: python -m pip install -e .[dev]
+        run: |
+          # PRII_FETCH_HUB: ensure shared federation libs resolve
+          if [ ! -d ../thehub-pr ]; then git clone --depth 1 --branch "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" https://github.com/jotaele44/thehub-pr.git ../thehub-pr || git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr; fi
+          command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+          uv pip install --system -e .[dev]
       - name: Maintenance tests
         run: python -m pytest tests/test_maintenance.py -q
       - name: Audit run
         run: python3 scripts/run_maintenance.py --repo centinelas-pr --mode audit --json
       - name: Upload maintenance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: centinelas-maintenance-report
           path: reports/maintenance/latest.json

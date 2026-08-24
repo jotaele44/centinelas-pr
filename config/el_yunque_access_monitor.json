@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "source_name": "USDA Forest Service — El Yunque Alerts",
+  "source_listing_url": "https://www.fs.usda.gov/r08/elyunque/alerts",
+  "authority": "USDA Forest Service",
+  "forest": "el_yunque",
+  "evidence_tier": "T1",
+  "stale_after_minutes": 45,
+  "targets": ["aguayluz-pr"],
+  "asset_bindings": {
+    "la mina trail": {"scope_type": "trail", "scope_name": "La Mina Trail", "asset_key": "elyunque.trail.la_mina"},
+    "big tree trail": {"scope_type": "trail", "scope_name": "Big Tree Trail", "asset_key": "elyunque.trail.big_tree"},
+    "baño de oro trail": {"scope_type": "trail", "scope_name": "Baño de Oro Trail", "asset_key": "elyunque.trail.bano_de_oro"},
+    "bano de oro trail": {"scope_type": "trail", "scope_name": "Baño de Oro Trail", "asset_key": "elyunque.trail.bano_de_oro"},
+    "el portal rainforest center": {"scope_type": "facility", "scope_name": "El Portal Rainforest Center", "asset_key": "elyunque.facility.el_portal_rainforest_center"}
+  }
+}

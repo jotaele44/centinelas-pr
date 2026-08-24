@@ -8,13 +8,6 @@ import {
 } from "@/lib/lifecycle";
 
 const STORAGE_KEY = "centinelas_local_store_v1";
-const AUTH_KEY = "centinelas_local_auth_v1";
-const DEFAULT_USER = {
-  id: "local-admin",
-  email: "local@centinelas.test",
-  full_name: "Local Centinelas Admin",
-  role: "admin",
-};
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -137,43 +130,25 @@ function makeEntityClient(entityName) {
 const ENTITY_NAMES = [
   "AlertEvent",
   "AlertRule",
-  "Author",
   "Beat",
-  "Comment",
   "CoverageGap",
   "EditorialNote",
   "Entity",
   "EntityMention",
   "Evidence",
   "HandoffCandidate",
-  "Law",
   "Matter",
   "Municipality",
   "OfficialRecord",
   "Signal",
   "Source",
   "Story",
-  "Subscription",
   "User",
-  "Vote",
   "Watchlist",
 ];
 
 function buildEntities() {
   return Object.fromEntries(ENTITY_NAMES.map((entityName) => [entityName, makeEntityClient(entityName)]));
-}
-
-function readAuth() {
-  if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(AUTH_KEY);
-  return raw ? JSON.parse(raw) : null;
-}
-
-function writeAuth(user) {
-  if (typeof window !== "undefined") {
-    if (user) window.localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-    else window.localStorage.removeItem(AUTH_KEY);
-  }
 }
 
 const entities = buildEntities();
@@ -321,47 +296,6 @@ const functionHandlers = {
 
 export const appClient = {
   entities,
-  auth: {
-    async me() {
-      return readAuth() || DEFAULT_USER;
-    },
-    async loginViaEmailPassword(email) {
-      const user = { ...DEFAULT_USER, id: `local-${email}`, email, full_name: email };
-      writeAuth(user);
-      return { access_token: `local-token-${Date.now()}`, user };
-    },
-    async register({ email }) {
-      return { status: "otp_required", email };
-    },
-    async verifyOtp({ email }) {
-      const user = { ...DEFAULT_USER, id: `local-${email}`, email, full_name: email };
-      writeAuth(user);
-      return { access_token: `local-token-${Date.now()}`, user };
-    },
-    async resendOtp() {
-      return { status: "sent" };
-    },
-    async resetPasswordRequest() {
-      return { status: "sent" };
-    },
-    async resetPassword() {
-      return { status: "reset" };
-    },
-    loginWithProvider(_provider, redirectTo = "/") {
-      writeAuth(DEFAULT_USER);
-      window.location.href = redirectTo;
-    },
-    logout(redirectTo) {
-      writeAuth(null);
-      if (redirectTo) window.location.href = redirectTo;
-    },
-    setToken() {
-      writeAuth(DEFAULT_USER);
-    },
-    redirectToLogin() {
-      window.location.href = "/login";
-    },
-  },
   functions: {
     async invoke(name, payload = {}) {
       const handler = functionHandlers[name];

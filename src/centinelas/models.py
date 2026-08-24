@@ -46,6 +46,7 @@ class ClassifiedItem(RawItem):
     # without re-parsing. All degrade gracefully to empty — downstream
     # consumers re-derive municipality from title/body_text when absent.
     municipalities: list[str] = []
+    recipients: list[str] = []
     agencies: list[str] = []
     estimated_value: float | None = None
     signal_stage: str | None = None

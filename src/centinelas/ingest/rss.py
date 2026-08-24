@@ -5,11 +5,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 
 import feedparser
 import yaml
 
-from centinelas.models import RawItem
+from centinelas.models import EvidenceTier, RawItem
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +27,11 @@ def _parse_date(entry: dict) -> datetime:
         val = entry.get(field)
         if val:
             try:
-                return datetime(*val[:6], tzinfo=timezone.utc)
+                parts = tuple(val[:6])
+                return datetime(
+                    parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
+                    tzinfo=timezone.utc,
+                )
             except Exception:
                 pass
     return datetime.now(timezone.utc)
@@ -53,7 +58,7 @@ def _entry_to_raw_item(entry: dict, source_name: str, tier: str) -> RawItem | No
         captured_at=datetime.now(timezone.utc),
         # EvidenceTier is a typing.Literal alias — not callable; pydantic
         # validates the value against the Literal on the model.
-        evidence_tier=tier,
+        evidence_tier=cast(EvidenceTier, tier),
     )
 
 

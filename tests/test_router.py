@@ -101,6 +101,7 @@ def test_moneysweep_payload_carries_finance_enrichment():
         confidence=0.9,
         classifier_reasoning="test",
         municipalities=["Ponce"],
+        recipients=["Acme Construction Corp"],
         agencies=["Autoridad de Acueductos y Alcantarillados"],
         estimated_value=1500000.0,
         signal_stage="rfp_open",
@@ -109,6 +110,7 @@ def test_moneysweep_payload_carries_finance_enrichment():
     payloads = route(item)
     ms = payloads["moneysweep-pr"]
     assert ms["municipalities"] == ["Ponce"]
+    assert ms["recipients"] == ["Acme Construction Corp"]
     assert ms["agencies"] == ["Autoridad de Acueductos y Alcantarillados"]
     assert ms["estimated_value"] == 1500000.0
     assert ms["signal_stage"] == "rfp_open"
@@ -116,6 +118,7 @@ def test_moneysweep_payload_carries_finance_enrichment():
     # Only the MoneySweep anchor carries the enrichment; every other target —
     # including the Hub — stays on the base contract shape.
     assert "estimated_value" not in payloads[HUB_REPO]
+    assert "recipients" not in payloads[HUB_REPO]
     assert "estimated_value" not in payloads["spiderweb-pr"]
 
 
@@ -124,8 +127,38 @@ def test_finance_enrichment_defaults_empty_when_absent():
     payloads = route(item)
     ms = payloads["moneysweep-pr"]
     assert ms["municipalities"] == []
+    assert ms["recipients"] == []
     assert ms["agencies"] == []
     assert ms["estimated_value"] is None
+
+
+def test_ovnis_payload_carries_municipalities():
+    # An ANOMALOUS item with resolved municipalities must forward them to the
+    # OVNIS anchor so its intake can set a case location_name. The Hub and other
+    # targets stay on the base payload shape (no municipalities key).
+    item = ClassifiedItem(
+        item_id="uapenrich001",
+        source_url="https://example.com/uap",
+        source_name="Test",
+        title="Unidentified craft filmed over Cabo Rojo",
+        body_text="Multiple witnesses reported a silent disc off the coast",
+        published_at=datetime.now(timezone.utc),
+        captured_at=datetime.now(timezone.utc),
+        labels=[DomainLabel.ANOMALOUS],
+        confidence=0.9,
+        classifier_reasoning="test",
+        municipalities=["Cabo Rojo"],
+    )
+    payloads = route(item)
+    assert payloads["ovnis-pr"]["municipalities"] == ["Cabo Rojo"]
+    # The Hub (and any other target) stays on the base contract — no municipalities.
+    assert "municipalities" not in payloads[HUB_REPO]
+
+
+def test_ovnis_municipalities_defaults_empty_when_absent():
+    item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "uap001"))
+    payloads = route(item)
+    assert payloads["ovnis-pr"]["municipalities"] == []
 
 
 def test_no_duplicate_repos_in_targets():
