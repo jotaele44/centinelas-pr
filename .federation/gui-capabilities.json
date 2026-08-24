@@ -214,6 +214,7 @@
           "/water-disruption"
         ],
         "components": [
+          "frontend/src/api/pipelineClient.js",
           "frontend/src/components/Header.jsx",
           "frontend/src/pages/WaterDisruption.jsx"
         ],
@@ -227,7 +228,8 @@
           "tests/test_water_disruption_api.py"
         ],
         "contract": [
-          "tests/test_gui_parity.py"
+          "tests/test_gui_parity.py",
+          "tests/test_water_disruption_api.py"
         ],
         "e2e": [
           "frontend/tests/gui-parity.spec.mjs"

@@ -35,7 +35,7 @@
     "SAFETY_COMPLIANCE": "aguayluz-pr"
   },
   "hub_callable_commands": {
-    "setup": "[ -d ../thehub-pr ] || git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr; python -m pip install uv && uv pip install --system -e .[dev]",
+    "setup": "python -m pip install uv && uv pip install --system -e .[dev]",
     "validate_grid": "python3 scripts/validate_pr_grid.py --require-sha",
     "test_suite": "python -m pytest -q",
     "export_canonical": "python3 scripts/federation_export.py --ledger data/signals/live_signals.jsonl --mode production",
@@ -59,15 +59,19 @@
   },
   "federation_readiness_gate": {
     "ready_for_hub_discovery": true,
-    "ready_for_hub_live_execution": true,
+    "ready_for_hub_live_execution": false,
     "resolved_conditions": [
       "root federation.json manifest present and Hub-schema conformant",
       "canonical export adapter (scripts/federation_export.py) emits sources/entities/relationships/observations + manifest.json",
       "source registry and signal schema defined; CI manifest gate present",
       "universal intake engine (src/centinelas) merged: ingest/classify/route across six domains with hub_parent logging",
-      "real (non-synthetic) signal intake live: build_signal_ledger.py bridged 274 real RSS signals (2026-07-03); federation_export --mode production passed and thehub hub validate-package -> VALID; flipped per operator-approved follow-up sweep"
+      "real (non-synthetic) signal intake and canonical production export are implemented",
+      "production export rejects synthetic, empty, malformed, future-dated, and stale ledgers"
     ],
-    "blocking_conditions": []
+    "blocking_conditions": [
+      "committed live ledger is stale; refresh it through a successful acquisition run before Hub live execution",
+      "fresh production export and downstream Hub validation receipts are required"
+    ]
   },
   "notes": "Every item is also logged to hub_parent regardless of domain labels."
 }

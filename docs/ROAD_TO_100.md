@@ -1,6 +1,6 @@
 # Road to 100 — normalized federation score
 
-**Audit date:** 2026-08-04  
+**Audit date:** 2026-08-19
 **Scoring model:** code completeness 20%; main-branch availability 15%; CI enforcement 15%; data materialization 15%; operator verification 15%; GUI completeness 10%; federation readiness 10%.
 
 ## Current normalized score: 75.35 / 100
@@ -20,18 +20,20 @@ The former ~90% figure measured offline code completeness. It is historical and 
 ## State reconciliation
 
 - The classifier, confidence gate, routing contracts, dispatch path, water taxonomy and backend run surface are on `main`.
-- PR #78 is the current isolated-clone candidate.
-- PR #77 is a workspace-policy candidate whose authority should be reconciled with #78 and TheHub.
+- PR #78 merged on `main`; isolated-clone runtime and immutable shared-package sources are now authoritative.
+- PR #77 is superseded for runtime setup by the merged isolated-clone contract. Any remaining workspace-policy text must be reconciled independently with TheHub.
 - PR #79 is rescued branch history, not certified current implementation.
-- PR #80 records a proposed skill deletion and requires an explicit keep/remove decision.
+- PR #80 is a governance-only skill disposition and no longer blocks runtime delivery.
+- Production export is fail-closed for empty, malformed, future-dated, synthetic, or stale ledgers. Hub live execution remains blocked until acquisition refreshes the committed ledger and downstream validation succeeds.
+- The Water Disruption shadow console is wired through API discovery, navigation, failure/retry UI, unit coverage, and GUI-parity E2E coverage.
 - The central product gap remains Puerto Rico pre-official source acquisition and a durable Matter lifecycle through MoneySweep.
 
 ## Priority exit sequence
 
-1. Adjudicate isolated-clone and workspace-policy changes.
-2. Dispose of rescued and deletion-intent PRs without importing stale data by assumption.
-3. Implement a bounded first Puerto Rico source tranche with acquisition accounting.
-4. Add the shared Matter stages 0–6 and MoneySweep handoff reconciliation.
+1. Refresh the live ledger through a bounded, receipt-producing Puerto Rico acquisition run and validate the production export downstream.
+2. Dispose of rescued and governance-only PRs without importing stale data by assumption.
+3. Complete PREB, AAA, COR3, and legislative acquisition accounting and expose freshness/failure state to operators.
+4. Certify shared Matter stages 0–6 and MoneySweep reconciliation across repositories.
 5. Exercise the LLM tier with secret-safe production receipts while preserving deterministic fallback.
 
 ## Machine-readable authority
