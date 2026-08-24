@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Droplets, RefreshCw, Server } from "lucide-react";
 import { getWaterDisruptionConsole } from "@/api/pipelineClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
