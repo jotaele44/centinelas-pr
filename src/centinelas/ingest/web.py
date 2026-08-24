@@ -5,7 +5,7 @@ Two layers live here:
 * :func:`scrape_url` — fetch one page, return it as a single :class:`RawItem`.
 * :func:`poll_scrape_sources` — the *listing* layer: read the ``scrape:`` block of
   ``sources.yaml`` and emit **one RawItem per list entry** for sources that
-  publish no feed (OGPe, Junta de Planificación, EPA Region 2 NPDES).
+  publish no feed (OGPe, Junta de Planificación, EPA Region 2 NPDES, ASG).
 
 The listing layer exists because Puerto Rico's central permitting bodies publish
 their hearings, environmental determinations and permit tables as ordinary
@@ -20,13 +20,14 @@ import re
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urljoin
+from typing import cast
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 import httpx
 import yaml
 from bs4 import BeautifulSoup
 
-from centinelas.models import RawItem
+from centinelas.models import EvidenceTier, RawItem
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +57,18 @@ _CONTEXT_CLASS_RE = re.compile(r"subtitle|programa", re.I)
 # Date formats seen across these sources: "July 24, 2026", "12/13/2023",
 # "July 31, 2026 9:30 AM".
 _DATE_FORMATS = ("%B %d, %Y %I:%M %p", "%B %d, %Y", "%m/%d/%Y", "%Y-%m-%d")
+
+# Spanish-language dates, which strptime cannot read: "%B" resolves month names
+# through the C locale, so "24 de febrero de 2026" fails every pattern above.
+# ASG writes them long on bid detail pages ("24 de febrero de 2026") and
+# abbreviated on its publication cards ("23 May 2025", "03 Dic 2025"), so match
+# on the first three letters, which are unambiguous across both spellings —
+# including "setiembre", the variant of "septiembre" used in Puerto Rico.
+_SPANISH_MONTHS = {
+    "ene": 1, "feb": 2, "mar": 3, "abr": 4, "may": 5, "jun": 6,
+    "jul": 7, "ago": 8, "sep": 9, "set": 9, "oct": 10, "nov": 11, "dic": 12,
+}  # fmt: skip
+_SPANISH_DATE_RE = re.compile(r"\b(\d{1,2})\s+(?:de\s+)?([a-z]{3,10})\.?\s+(?:de\s+)?(\d{4})\b")
 
 # Stand-in date used *only* when hashing the identity of an entry whose own date
 # could not be parsed. See _entry_item_id.
@@ -87,7 +100,8 @@ def scrape_url(
     title = ""
     tag = soup.find("meta", property="og:title") or soup.find("title")
     if tag:
-        title = tag.get("content") or tag.get_text()
+        content = tag.get("content")
+        title = content if isinstance(content, str) else tag.get_text()
     title = title.strip()
 
     # Prefer article body; fall back to <p> tags
@@ -114,7 +128,7 @@ def scrape_url(
         # EvidenceTier is a typing.Literal alias — not callable; pydantic
         # validates the value against the Literal on the model. Calling it
         # raises "TypeError: Cannot instantiate typing.Literal" at runtime.
-        evidence_tier=tier,
+        evidence_tier=cast(EvidenceTier, tier),
     )
 
 
@@ -179,6 +193,31 @@ def _visible_text(node) -> str:
     return " ".join(p for p in parts if not all(_PUA_START <= c <= _PUA_END for c in p))
 
 
+def _parse_spanish_date(text: str) -> datetime | None:
+    """Date from Spanish-language text, or None.
+
+    Scans rather than anchors, because ASG interleaves the date with icon markup
+    and a time: the visible text of one cell is "24 de febrero de 2026    3:00 PM".
+    Only the date is taken — a signal is placed by day, and carrying the time
+    would make published_at, and therefore item_id, sensitive to a rescheduled
+    hour on an otherwise unchanged notice.
+    """
+    folded = unicodedata.normalize("NFKD", (text or "").lower())
+    ascii_only = "".join(c for c in folded if not unicodedata.combining(c))
+    match = _SPANISH_DATE_RE.search(" ".join(ascii_only.split()))
+    if not match:
+        return None
+
+    day, month_word, year = match.groups()
+    month = _SPANISH_MONTHS.get(month_word[:3])
+    if month is None:
+        return None
+    try:
+        return datetime(int(year), month, int(day), tzinfo=timezone.utc)
+    except ValueError:  # e.g. "31 de febrero"
+        return None
+
+
 def _parse_date(text: str) -> datetime | None:
     cleaned = " ".join((text or "").split())
     for fmt in _DATE_FORMATS:
@@ -186,7 +225,7 @@ def _parse_date(text: str) -> datetime | None:
             return datetime.strptime(cleaned, fmt).replace(tzinfo=timezone.utc)
         except ValueError:
             continue
-    return None
+    return _parse_spanish_date(cleaned)
 
 
 def _feed_entry_date(entry) -> datetime | None:
@@ -202,7 +241,11 @@ def _feed_entry_date(entry) -> datetime | None:
         value = entry.get(field)
         if value:
             try:
-                return datetime(*value[:6], tzinfo=timezone.utc)
+                parts = tuple(value[:6])
+                return datetime(
+                    parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
+                    tzinfo=timezone.utc,
+                )
             except (TypeError, ValueError):
                 pass
     return None
@@ -253,10 +296,14 @@ def _parse_webflow_items(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[
     # same for untabbed pages whose whole listing is one record type.
     if tabs:
         wanted = {t.strip() for t in tabs}
+        def tab_name(pane) -> str:
+            value = pane.get("data-w-tab")
+            return value.strip() if isinstance(value, str) else ""
+
         containers = [
-            (pane, (pane.get("data-w-tab") or "").strip())
+            (pane, tab_name(pane))
             for pane in soup.select(".w-tab-pane")
-            if (pane.get("data-w-tab") or "").strip() in wanted
+            if tab_name(pane) in wanted
         ]
     else:
         containers = [(soup, cfg.get("section", ""))]
@@ -272,7 +319,7 @@ def _parse_webflow_items(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[
 
             title = _visible_text(title_node) if title_node else ""
             links = [
-                urljoin(base_url, a["href"])
+                urljoin(base_url, str(a["href"]))
                 for a in item.find_all("a", href=True)
                 if not _is_hidden(a)
             ]
@@ -335,7 +382,11 @@ def _parse_html_table(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[dic
         if not any(values.values()):
             continue
 
-        title = " — ".join(v for c in title_columns if (v := values.get(c, "").strip()))
+        title = " — ".join(
+            value
+            for column in title_columns
+            if (value := str(values.get(column, "")).strip())
+        )
         if not title:
             continue
 
@@ -345,9 +396,123 @@ def _parse_html_table(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[dic
         entries.append({
             "title": title,
             "body": body[:_MAX_BODY_CHARS],
-            "published_at": _parse_date(values.get(date_column, "")) if date_column else None,
-            "url": urljoin(base_url, link["href"]) if link else "",
+            "published_at": _parse_date(str(values.get(date_column, ""))) if date_column else None,
+            "url": urljoin(base_url, str(link["href"])) if link else "",
         })
+    return entries
+
+
+def _select_text(item, selectors) -> list[str]:
+    """Visible text of each matching selector, in order, skipping empties."""
+    found = []
+    for selector in selectors or ():
+        for node in item.select(selector):
+            text = _visible_text(node)
+            if text:
+                found.append(text)
+    return found
+
+
+def _parse_asg_cards(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[dict]:
+    """Extract entries from ASG's card listings, driven by explicit selectors.
+
+    ASG (asg.pr.gov) renders every listing as hand-rolled Bootstrap cards — no
+    Webflow CMS bindings and no table — so neither existing parser applies, and
+    each of its pages names its own classes (``.subasta-card-number`` on bids,
+    ``.blog-card-title`` on news). Rather than one parser per ASG page, the
+    selectors come from config the way ``html_table`` takes ``title_columns``.
+
+    ``title_selectors`` are joined so a bid carries its agency and method
+    alongside its number: cards are titled with a bare code ("26J-14214-R1"),
+    which on its own gives the classifier nothing to match.
+    """
+    entries: list[dict] = []
+    section = cfg.get("section", "")
+
+    for item in soup.select(cfg.get("item_selector") or ".card-media-info"):
+        title = " — ".join(_select_text(item, cfg.get("title_selectors")))
+        if not title:
+            continue
+
+        date_node = item.select_one(cfg["date_selector"]) if cfg.get("date_selector") else None
+
+        body_parts = _select_text(item, cfg.get("body_selectors"))
+        if section:
+            body_parts.insert(0, section)
+
+        link = item.select_one(cfg.get("link_selector") or "a[href]")
+        # bs4 types an attribute as str | AttributeValueList (multi-valued attrs
+        # like class), so narrow before urljoin rather than assuming.
+        href = link.get("href") if link else None
+
+        entries.append({
+            "title": title,
+            "body": "; ".join(body_parts)[:_MAX_BODY_CHARS],
+            "published_at": _parse_date(_visible_text(date_node)) if date_node else None,
+            "url": urljoin(base_url, href) if isinstance(href, str) and href else "",
+        })
+    return entries
+
+
+def _page_url(base_url: str, page: int) -> str:
+    """``base_url`` with ``page`` set, preserving any query it already carries."""
+    parts = urlsplit(base_url)
+    query = dict(parse_qsl(parts.query))
+    query["page"] = str(page)
+    return urlunsplit(parts._replace(query=urlencode(query)))
+
+
+def _asg_detail_date(html: str, label: str) -> datetime | None:
+    """Date of the ``label`` milestone on an ASG bid detail page.
+
+    Bid cards carry no date at all, so the only date for a bid lives one click
+    down, in a ``.reunion-info`` block pairing a name ("Acto de Apertura",
+    "Reunión Pre Subasta") with its date. Matching on the name matters: taking
+    the first date on the page would pick up whichever meeting sorts first.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    wanted = label.casefold()
+
+    for block in soup.select(".reunion-info"):
+        name = block.select_one(".reunion-name")
+        when = block.select_one(".reunion-datetime")
+        if name and when and wanted in _visible_text(name).casefold():
+            return _parse_date(_visible_text(when))
+    return None
+
+
+def _collect_asg_entries(cfg: dict, base_url: str) -> list[dict]:
+    """Walk an ASG listing's pages, optionally resolving each entry's date.
+
+    ``max_pages`` bounds the crawl. It is a real bound, not a safety valve: the
+    bid index runs to 64 pages, and combined with ``detail_date_label`` (one
+    extra fetch per entry) an unbounded sweep would be ~1,700 requests. Sorting
+    the configured URL by ``-creado`` puts the newest bids on page 1, so a
+    routine poll sees everything new within its first page or two.
+    """
+    max_pages = max(1, int(cfg.get("max_pages", 1)))
+    detail_label = cfg.get("detail_date_label")
+
+    entries: list[dict] = []
+    for page in range(1, max_pages + 1):
+        page_url = _page_url(base_url, page) if page > 1 else base_url
+        html = _fetch_html(page_url)
+        if not html:
+            break
+
+        found = _parse_asg_cards(BeautifulSoup(html, "html.parser"), cfg, page_url)
+        if not found:
+            break
+        entries.extend(found)
+
+    if detail_label:
+        for entry in entries:
+            if entry["published_at"] or not entry["url"]:
+                continue
+            detail = _fetch_html(entry["url"])
+            if detail:
+                entry["published_at"] = _asg_detail_date(detail, detail_label)
+
     return entries
 
 
@@ -405,6 +570,11 @@ def scrape_listing(source: dict) -> list[RawItem]:
 
     if parser == "rss_detail":
         entries = _parse_rss_detail(source, url)
+    elif parser == "asg_cards":
+        # Like rss_detail, this parser drives its own fetching (pagination, and
+        # a second request per entry for its date), so it takes the config
+        # rather than a soup and is dispatched here instead of via _PARSERS.
+        entries = _collect_asg_entries(source, url)
     else:
         parse = _PARSERS.get(parser)
         if parse is None:

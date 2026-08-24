@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/centinelas/foia-disposition-v0.1.json",
+  "title": "Centinelas FOIA Disposition Contracts v0.1",
+  "$defs": {
+    "pageCitation": {
+      "type": "object",
+      "required": ["document_id", "page", "excerpt"],
+      "properties": {
+        "document_id": {"type": "string", "minLength": 1},
+        "page": {"type": "integer", "minimum": 1},
+        "excerpt": {"type": "string", "minLength": 1},
+        "bbox": {
+          "type": ["array", "null"],
+          "items": {"type": "number"},
+          "minItems": 4,
+          "maxItems": 4
+        }
+      },
+      "additionalProperties": false
+    },
+    "foiaRelease": {
+      "type": "object",
+      "required": ["release_id", "agency", "release_sha256", "page_count", "acquired_at"],
+      "properties": {
+        "release_id": {"type": "string", "minLength": 1},
+        "agency": {"type": "string", "minLength": 1},
+        "foia_case_number": {"type": ["string", "null"]},
+        "released_at": {"type": ["string", "null"], "format": "date-time"},
+        "acquired_at": {"type": "string", "format": "date-time"},
+        "source_url": {"type": ["string", "null"], "format": "uri"},
+        "release_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "page_count": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "foiaDocument": {
+      "type": "object",
+      "required": ["document_id", "release_id", "filename", "mime_type", "sha256", "page_count"],
+      "properties": {
+        "document_id": {"type": "string", "minLength": 1},
+        "release_id": {"type": "string", "minLength": 1},
+        "filename": {"type": "string", "minLength": 1},
+        "mime_type": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "text_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "page_count": {"type": "integer", "minimum": 1},
+        "ocr_confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "foiaFinding": {
+      "type": "object",
+      "required": ["finding_id", "release_id", "document_id", "finding_type", "title", "summary", "citations", "evidence_tier", "extraction_confidence"],
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "release_id": {"type": "string", "minLength": 1},
+        "document_id": {"type": "string", "minLength": 1},
+        "finding_type": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "citations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/pageCitation"}},
+        "entities": {"type": "array", "items": {"type": "string"}},
+        "places": {"type": "array", "items": {"type": "string"}},
+        "event_dates": {"type": "array", "items": {"type": "string"}},
+        "keywords": {"type": "array", "items": {"type": "string"}},
+        "evidence_tier": {"enum": ["T1", "T2", "T3", "T4"]},
+        "extraction_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "sensitive": {"type": "boolean", "default": false}
+      },
+      "additionalProperties": false
+    },
+    "routingDecision": {
+      "type": "object",
+      "required": ["finding_id", "destination", "disposition", "score", "reason_codes", "decided_at", "reversible"],
+      "properties": {
+        "finding_id": {"type": "string"},
+        "destination": {"enum": ["centinelas", "thehub_evidence", "thehub_intelligence", "ovnis", "skywatcher", "aguayluz", "moneysweep", "spiderweb", "archive_only"]},
+        "disposition": {"enum": ["export", "review", "reference_only", "hold_sensitive", "archive_only", "reject_duplicate", "reject_irrelevant", "export_failed"]},
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "reason_codes": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "decided_at": {"type": "string", "format": "date-time"},
+        "reversible": {"type": "boolean", "const": true}
+      },
+      "additionalProperties": false
+    },
+    "exportReceipt": {
+      "type": "object",
+      "required": ["export_id", "finding_id", "destination", "idempotency_key", "status"],
+      "properties": {
+        "export_id": {"type": "string"},
+        "finding_id": {"type": "string"},
+        "destination": {"$ref": "#/$defs/routingDecision/properties/destination"},
+        "idempotency_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "status": {"enum": ["pending", "acknowledged", "failed"]},
+        "downstream_record_id": {"type": ["string", "null"]},
+        "acknowledged_at": {"type": ["string", "null"], "format": "date-time"},
+        "error": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "reviewCase": {
+      "type": "object",
+      "required": ["review_case_id", "finding_id", "reason_codes", "proposed_decisions", "status", "created_at"],
+      "properties": {
+        "review_case_id": {"type": "string"},
+        "finding_id": {"type": "string"},
+        "reason_codes": {"type": "array", "items": {"type": "string"}},
+        "proposed_decisions": {"type": "array", "items": {"$ref": "#/$defs/routingDecision"}},
+        "status": {"enum": ["pending", "approved", "rejected", "superseded"]},
+        "created_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

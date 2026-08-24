@@ -1,6 +1,4 @@
 import { useLocation } from 'react-router-dom';
-import { appClient } from '@/api/appClient';
-import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/lib/LanguageContext';
 
 
@@ -8,18 +6,6 @@ export default function PageNotFound() {
     const location = useLocation();
     const pageName = location.pathname.substring(1);
     const { t } = useLanguage();
-
-    const { data: authData, isFetched } = useQuery({
-        queryKey: ['user'],
-        queryFn: async () => {
-            try {
-                const user = await appClient.auth.me();
-                return { user, isAuthenticated: true };
-            } catch (error) {
-                return { user: null, isAuthenticated: false };
-            }
-        }
-    });
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-background">
@@ -40,23 +26,6 @@ export default function PageNotFound() {
                             {t("La página")} <span className="font-medium text-foreground">"{pageName}"</span> {t("no se encontró en esta aplicación.")}
                         </p>
                     </div>
-
-                    {/* Admin Note */}
-                    {isFetched && authData.isAuthenticated && authData.user?.role === 'admin' && (
-                        <div className="mt-8 p-4 bg-muted rounded-lg border border-border">
-                            <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-500/15 flex items-center justify-center mt-0.5">
-                                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                                </div>
-                                <div className="text-left space-y-1">
-                                    <p className="text-sm font-medium text-foreground">{t("Nota de administrador")}</p>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                        {t("Esto puede significar que la IA aún no ha implementado esta página. Pídele que la implemente en el chat.")}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Action Button */}
                     <div className="pt-6">

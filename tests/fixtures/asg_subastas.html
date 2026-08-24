@@ -1,0 +1,79 @@
+<!-- Trimmed reproduction of the ASG bid index (asg.pr.gov/subastas). Class names
+     and nesting match the live page; the live listing renders 27 of these cards
+     per page across 64 pages, and three representative ones are kept here.
+     Note what the cards do NOT carry: any date. That is why the source config
+     names a `detail_date_label` and the parser fetches each bid's own page. -->
+<html><body>
+<div class="container">
+  <div class="row">
+
+    <div class="col-sm-6 col-md-4">
+      <div class="card-media-info">
+        <div class="card-bg-img">
+          <img id="appconcept" loading="lazy" alt="Arte ASG" role="presentation">
+          <h1 class="subasta-card-method">
+              Subasta Formal
+          </h1>
+          <h2 class="card-titulo subasta-card-agency">DEPARTAMENTO DE CORRECCION Y REHABILITACION (DCR)</h2>
+          <div class="subasta-card-copy">
+            <h1 class="subasta-card-number">26J-14214-R1</h1>
+            <p class="subasta-card-purpose">PARA LA ADQUISICIÓN, INSTALACIÓN Y REMOCIÓN DE ACONDICIONADORES DE AIRE DE 10 TONELADAS PARA EL DEPARTAMENTO DE CORRECCIÓN Y REHABILITACIÓN DEL GOBIERNO DE PUERTO RICO</p>
+          </div>
+        </div>
+        <a href="/subastas26J-14214-R1">
+          <button class="btn btn-success subasta-card-cta">Ver</button>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4">
+      <div class="card-media-info">
+        <div class="card-bg-img">
+          <img id="appconcept" loading="lazy" alt="Arte ASG" role="presentation">
+          <h1 class="subasta-card-method">
+              Request for Proposal
+          </h1>
+          <h2 class="card-titulo subasta-card-agency">AUTORIDAD DEL DISTRITO DEL CENTRO DE CONVENCIONES</h2>
+          <div class="subasta-card-copy">
+            <h1 class="subasta-card-number">26J-10309</h1>
+            <p class="subasta-card-purpose">PARA LA ADQUISICIÓN DE UN CONTRATO DE SERVICIOS DE MANTENIMIENTO Y LIMPIEZA EN DISTRITO DE CONVENCIONES Y BAHIA URBANA (MUELLE 6, 7 Y 8)</p>
+          </div>
+        </div>
+        <a href="/subastas26J-10309">
+          <button class="btn btn-success subasta-card-cta">Ver</button>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-4">
+      <div class="card-media-info">
+        <div class="card-bg-img">
+          <img id="appconcept" loading="lazy" alt="Arte ASG" role="presentation">
+          <h1 class="subasta-card-method">
+              Subasta Informal
+          </h1>
+          <h2 class="card-titulo subasta-card-agency">DEPARTAMENTO DE SALUD</h2>
+          <div class="subasta-card-copy">
+            <h1 class="subasta-card-number">24J-05373</h1>
+            <p class="subasta-card-purpose">ADQUISICIÓN DE EQUIPO DE LABORATORIO</p>
+          </div>
+        </div>
+        <a href="/subastas24J-05373">
+          <button class="btn btn-success subasta-card-cta">Ver</button>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="container">
+  <nav aria-label="Page navigation">
+    <ul class="pagination">
+      <li class="page-item"><a href="#" class="page-link">Página 1 de 64</a></li>
+      <li class="page-item"><a class="page-link" href="?page=2&order_by=-creado&date_scope=link">Próxima</a></li>
+      <li class="page-item"><a class="page-link" href="?page=64&order_by=-creado&date_scope=link">Última</a></li>
+    </ul>
+  </nav>
+</div>
+</body></html>
