@@ -1,0 +1,182 @@
+[
+  {
+    "file": "handoff_light_390x844.png",
+    "route": "/handoff",
+    "theme": "light",
+    "viewport": "390x844",
+    "htmlClass": "",
+    "dataTheme": "light",
+    "elements": [
+      "button (shadcn Button, Entregar)",
+      "badge (DomainBadge)",
+      "badge (ConfidenceBadge, federationTone)"
+    ]
+  },
+  {
+    "file": "pipeline_light_390x844.png",
+    "route": "/pipeline",
+    "theme": "light",
+    "viewport": "390x844",
+    "elements": [
+      "button (domain filter, raw <button>)",
+      "badge (DomainBadge / federationTone)"
+    ]
+  },
+  {
+    "file": "header_light_390x844.png",
+    "route": "/",
+    "theme": "light",
+    "viewport": "390x844",
+    "elements": [
+      "button (ThemeToggle, raw <button>)",
+      "button (LanguageToggle, raw <button>)"
+    ]
+  },
+  {
+    "file": "handoff_light_1280x800.png",
+    "route": "/handoff",
+    "theme": "light",
+    "viewport": "1280x800",
+    "htmlClass": "",
+    "dataTheme": "light",
+    "elements": [
+      "button (shadcn Button, Entregar)",
+      "badge (DomainBadge)",
+      "badge (ConfidenceBadge, federationTone)"
+    ]
+  },
+  {
+    "file": "pipeline_light_1280x800.png",
+    "route": "/pipeline",
+    "theme": "light",
+    "viewport": "1280x800",
+    "elements": [
+      "button (domain filter, raw <button>)",
+      "badge (DomainBadge / federationTone)"
+    ]
+  },
+  {
+    "file": "header_light_1280x800.png",
+    "route": "/",
+    "theme": "light",
+    "viewport": "1280x800",
+    "elements": [
+      "button (ThemeToggle, raw <button>)",
+      "button (LanguageToggle, raw <button>)"
+    ]
+  },
+  {
+    "file": "handoff_dark_390x844.png",
+    "route": "/handoff",
+    "theme": "dark",
+    "viewport": "390x844",
+    "htmlClass": "dark",
+    "dataTheme": "dark",
+    "elements": [
+      "button (shadcn Button, Entregar)",
+      "badge (DomainBadge)",
+      "badge (ConfidenceBadge, federationTone)"
+    ]
+  },
+  {
+    "file": "pipeline_dark_390x844.png",
+    "route": "/pipeline",
+    "theme": "dark",
+    "viewport": "390x844",
+    "elements": [
+      "button (domain filter, raw <button>)",
+      "badge (DomainBadge / federationTone)"
+    ]
+  },
+  {
+    "file": "header_dark_390x844.png",
+    "route": "/",
+    "theme": "dark",
+    "viewport": "390x844",
+    "elements": [
+      "button (ThemeToggle, raw <button>)",
+      "button (LanguageToggle, raw <button>)"
+    ]
+  },
+  {
+    "file": "handoff_dark_1280x800.png",
+    "route": "/handoff",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "htmlClass": "dark",
+    "dataTheme": "dark",
+    "elements": [
+      "button (shadcn Button, Entregar)",
+      "badge (DomainBadge)",
+      "badge (ConfidenceBadge, federationTone)"
+    ]
+  },
+  {
+    "file": "pipeline_dark_1280x800.png",
+    "route": "/pipeline",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "elements": [
+      "button (domain filter, raw <button>)",
+      "badge (DomainBadge / federationTone)"
+    ]
+  },
+  {
+    "file": "header_dark_1280x800.png",
+    "route": "/",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "elements": [
+      "button (ThemeToggle, raw <button>)",
+      "button (LanguageToggle, raw <button>)"
+    ]
+  },
+  {
+    "file": "monitor_light_390x844.png",
+    "route": "/monitor",
+    "theme": "light",
+    "viewport": "390x844",
+    "htmlClass": "",
+    "dataTheme": "light",
+    "elements": [
+      "metricCard (local MetricCard, not FederationStatCard)",
+      "card (shadcn Card)"
+    ]
+  },
+  {
+    "file": "monitor_light_1280x800.png",
+    "route": "/monitor",
+    "theme": "light",
+    "viewport": "1280x800",
+    "htmlClass": "",
+    "dataTheme": "light",
+    "elements": [
+      "metricCard (local MetricCard, not FederationStatCard)",
+      "card (shadcn Card)"
+    ]
+  },
+  {
+    "file": "monitor_dark_390x844.png",
+    "route": "/monitor",
+    "theme": "dark",
+    "viewport": "390x844",
+    "htmlClass": "dark",
+    "dataTheme": "dark",
+    "elements": [
+      "metricCard (local MetricCard, not FederationStatCard)",
+      "card (shadcn Card)"
+    ]
+  },
+  {
+    "file": "monitor_dark_1280x800.png",
+    "route": "/monitor",
+    "theme": "dark",
+    "viewport": "1280x800",
+    "htmlClass": "dark",
+    "dataTheme": "dark",
+    "elements": [
+      "metricCard (local MetricCard, not FederationStatCard)",
+      "card (shadcn Card)"
+    ]
+  }
+]
