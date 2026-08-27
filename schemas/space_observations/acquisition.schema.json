@@ -4,12 +4,13 @@
   "title": "Centinelas Space Observation Acquisition",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "acquisition_id", "lead_id", "lead_sha256", "source_id", "source_url", "phase", "network_acquisition_performed", "status", "external_storage_root", "created_at", "analytic_boundaries"],
+  "required": ["schema_version", "acquisition_id", "lead_id", "lead_sha256", "idempotency_key", "source_id", "source_url", "phase", "network_acquisition_performed", "status", "external_storage_root", "created_at", "analytic_boundaries", "synthetic"],
   "properties": {
     "schema_version": {"const": "1.0.0"},
     "acquisition_id": {"type": "string", "pattern": "^acq_[a-f0-9]{32}$"},
     "lead_id": {"type": "string", "pattern": "^CENT-SPACE-[0-9]{4}-[A-F0-9]{16}$"},
     "lead_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "idempotency_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "source_id": {"type": "string", "minLength": 1},
     "source_url": {"type": "string", "format": "uri"},
     "phase": {"const": "intake_only"},
@@ -26,6 +27,7 @@
         "negative_inference_prohibited": {"const": true},
         "correlation_owner": {"const": "thehub-pr"}
       }
-    }
+    },
+    "synthetic": {"type": "boolean"}
   }
 }

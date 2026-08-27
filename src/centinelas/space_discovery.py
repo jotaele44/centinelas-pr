@@ -58,6 +58,9 @@ ALLOWED_CAPTURE_TYPES = {
 ROUTE_STATUSES = frozenset(
     {"new", "queued", "accepted", "rejected", "acquired", "normalized", "correlated"}
 )
+REQUIRED_ROUTE_FIELDS = frozenset(
+    {"primary", "secondary", "correlation_target", "route_status", "routing_reason"}
+)
 REQUIRED_LEAD_FIELDS = frozenset(
     {
         "schema_version",
@@ -171,6 +174,9 @@ def validate_lead(lead: dict[str, Any]) -> None:
     missing = sorted(REQUIRED_LEAD_FIELDS - lead.keys())
     if missing:
         raise ValueError(f"missing required fields: {missing}")
+    unexpected = sorted(lead.keys() - REQUIRED_LEAD_FIELDS)
+    if unexpected:
+        raise ValueError(f"unexpected fields: {unexpected}")
     if lead["schema_version"] != "1.0.0":
         raise ValueError("unsupported schema version")
     if not re.fullmatch(r"CENT-SPACE-\d{4}-[A-F0-9]{16}", str(lead["lead_id"])):
@@ -229,6 +235,15 @@ def validate_lead(lead: dict[str, Any]) -> None:
     if not isinstance(confidence, int) or not 0 <= confidence <= 100:
         raise ValueError("confidence_score must be an integer from 0 to 100")
     route = lead.get("downstream_route") or {}
+    if not isinstance(route, dict):
+        raise ValueError("downstream route must be an object")
+    missing_route = sorted(REQUIRED_ROUTE_FIELDS - route.keys())
+    unexpected_route = sorted(route.keys() - REQUIRED_ROUTE_FIELDS)
+    if missing_route or unexpected_route:
+        raise ValueError(
+            "downstream route fields do not match the canonical contract: "
+            f"missing={missing_route} unexpected={unexpected_route}"
+        )
     if (
         route.get("primary") != "satellite-observations-pr"
         or route.get("correlation_target") != "thehub-pr"

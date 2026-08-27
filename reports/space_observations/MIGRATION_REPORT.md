@@ -29,8 +29,17 @@ Migrated the standalone Phase 0–1 intake implementation into Centinelas as the
 
 No network acquisition is implemented in Phase 0–1. No large binary, imagery, video, raster, telemetry, archive, or ephemeris corpus is committed to Git.
 
-## Local certification
+## Local validation
 
-The migrated standalone fixture suite passed locally: `8 passed`.
+On 2026-08-27, the rebased integration worktree passed:
 
-The repository integration test adds route migration, two clean replays, persistence after restart, complete accounting, federation export, case-reference restraint, DSP rejection, negative-inference rejection, synthetic rejection, and route-mismatch isolation.
+- focused discovery, routing, intake, export, schema-freeze, and GUI-contract tests: `34 passed, 1 skipped`;
+- full repository suite: `251 passed, 1 skipped`;
+- branch coverage: `82.81%` against the repository `72%` floor;
+- Ruff: pass;
+- cold mypy analysis: pass across 24 source files;
+- GUI parity: `290 current / 140 mapped / 150 legacy / 0 new`.
+
+The platform skip is the repository's existing symlink-dependent test. GitHub checks on the exact pushed head remain the authoritative hosted gate.
+
+The integration tests cover canonical-to-embedded route migration, idempotent routing, two clean replays, partial-write recovery, contradictory-ledger rejection, complete run accounting, emitted-byte package hashes, referential closure, deterministic whole-row source selection, duplicate/conflict adjudication, production synthetic rejection, case-reference restraint, DSP rejection, negative-inference rejection, route-mismatch isolation, schema freeze completeness, and stale-output removal.

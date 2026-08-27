@@ -13,17 +13,18 @@
     "observed_at": {"type": "string", "format": "date-time"},
     "attributes": {
       "type": "object", "additionalProperties": false,
-      "required": ["lead_id", "lead_sha256", "network_acquisition_performed", "analytic_boundaries"],
+      "required": ["lead_id", "lead_sha256", "idempotency_key", "network_acquisition_performed", "analytic_boundaries"],
       "properties": {
         "lead_id": {"type": "string"},
         "lead_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "idempotency_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "network_acquisition_performed": {"const": false},
         "analytic_boundaries": {"type": "object"}
       }
     },
     "confidence": {"const": 1.0},
     "lineage": {"type": "object"},
-    "synthetic": {"const": false},
+    "synthetic": {"type": "boolean"},
     "created_at": {"type": "string", "format": "date-time"},
     "extracted_at": {"type": "string", "format": "date-time"}
   }

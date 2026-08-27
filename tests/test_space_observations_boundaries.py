@@ -3,68 +3,48 @@ import copy
 import pytest
 
 from centinelas.space_observations import IntakeEngine
-from centinelas.space_observations.producer import JsonlLedger
 from centinelas.space_observations.retry import retry_failed
 from centinelas.space_observations.routing import route_to_embedded_producer
-
-
-def lead(lead_id="CENT-SPACE-2026-0123456789ABCDEF", dedup="3" * 64):
-    return {
-        "schema_version": "1.0.0",
-        "lead_id": lead_id,
-        "category": "SPACE_AND_REMOTE_SENSING",
-        "subcategory": "SATELLITE_DATASET_RELEASE",
-        "source_id": "CENT-SRC-SPACE-TEST",
-        "source_url": "https://example.test/item",
-        "canonical_url": "https://example.test/item",
-        "discovered_at": "2026-07-27T00:00:00Z",
-        "title": "Dataset release",
-        "discovery_provenance": {"content_sha256": "1" * 64},
-        "access_status": "public_direct",
-        "temporal_coverage": {},
-        "geographic_coverage": {},
-        "sensor": {"sensor_type": "unknown", "capability_known": False},
-        "potential_case_links": [],
-        "downstream_route": {
-            "primary": "satellite-observations-pr",
-            "correlation_target": "thehub-pr",
-            "route_status": "new",
-        },
-        "evidence_tier": "T1",
-        "confidence_score": 95,
-        "review_status": "qualified",
-        "content_fingerprint": "2" * 64,
-        "dedup_key": dedup,
-        "raw_binary_storage_prohibited": True,
-        "confirmation_claim_prohibited": True,
-        "analyst_assertion": None,
-        "negative_inference": False,
-    }
+from tests.space_observations_helpers import qualified_lead
 
 
 def test_route_bridge_is_immutable_and_rejects_unrelated_routes():
-    source = lead()
+    source = qualified_lead()
     before = copy.deepcopy(source)
     routed = route_to_embedded_producer(source)
     assert source == before
     assert routed is not source
     assert routed["downstream_route"]["primary"] == "centinelas-space-observations"
 
-    unrelated = lead()
+    unrelated = qualified_lead()
     unrelated["downstream_route"]["primary"] = "moneysweep-pr"
     with pytest.raises(ValueError, match="unrelated primary route"):
         route_to_embedded_producer(unrelated)
 
 
+def test_route_bridge_is_idempotent_and_revalidates_embedded_routes():
+    routed = route_to_embedded_producer(qualified_lead())
+    replay = route_to_embedded_producer(routed)
+    assert replay == routed
+    assert replay is not routed
+    assert replay["downstream_route"] is not routed["downstream_route"]
+
+    unqualified = qualified_lead(identity="unqualified")
+    unqualified["review_status"] = "new"
+    with pytest.raises(ValueError, match="only accepts qualified"):
+        route_to_embedded_producer(unqualified)
+
+    tampered = route_to_embedded_producer(qualified_lead(identity="tampered"))
+    tampered["downstream_route"]["unreviewed_extension"] = True
+    with pytest.raises(ValueError, match="embedded route fields"):
+        route_to_embedded_producer(tampered)
+
+
 def test_failed_target_only_retry_selects_retryable_rows(tmp_path):
-    retryable = route_to_embedded_producer(lead())
-    unrelated = route_to_embedded_producer(
-        lead("CENT-SPACE-2026-FEDCBA9876543210", "4" * 64)
-    )
+    retryable = route_to_embedded_producer(qualified_lead(identity="retryable"))
+    unrelated = route_to_embedded_producer(qualified_lead(identity="unrelated"))
     engine = IntakeEngine(tmp_path, production=True)
-    JsonlLedger(
-        tmp_path / "data" / "space_observations" / "ledgers" / "failures.jsonl"
-    ).record(
+    engine.failures.record(
         {
             "run_id": "failed-run",
             "lead_id": retryable["lead_id"],
@@ -73,9 +53,7 @@ def test_failed_target_only_retry_selects_retryable_rows(tmp_path):
             "retryable": True,
         }
     )
-    JsonlLedger(
-        tmp_path / "data" / "space_observations" / "ledgers" / "failures.jsonl"
-    ).record(
+    engine.failures.record(
         {
             "run_id": "failed-run",
             "lead_id": unrelated["lead_id"],

@@ -22,3 +22,10 @@ The route bridge upgrades qualified leads from the former `satellite-observation
 - case authority: `ovnis-pr`.
 
 The module remains intentionally extractable if storage volume or operational isolation later requires a standalone repository.
+
+## Persistence and export invariants
+
+- The canonical discovery lead is validated before route ownership changes, and the embedded representation is revalidated through an equivalent canonical view at intake.
+- Acquisition rows persist `schema_version`, `idempotency_key`, and `synthetic`; production intake and export reject synthetic records.
+- A durable acquisition without its dedup acceptance row is recoverable on replay. A dedup binding without acquisition metadata, duplicate acquisition rows, or conflicting identity bindings fails closed.
+- Export manifests hash emitted JSONL bytes, declare stream and schema identity, remove stale unlisted streams, and preserve source/entity/observation referential closure.
