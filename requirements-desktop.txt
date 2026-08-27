@@ -3,11 +3,5 @@ pywebview>=6.2.1
 # Shared federation runtime pinned to an immutable TheHub commit so generated
 # repositories install independently without requiring a sibling checkout.
 prii-desktop @ git+https://github.com/jotaele44/thehub-pr.git@f2b81769924689b4d959554928810b1d7b7ef3d6#subdirectory=packages/prii_desktop
-# pyproject.toml's `dependencies` lists these bare (resolved only via
-# [tool.uv.sources], a uv-only mechanism). desktop/setup.py installs with
-# plain stdlib pip, which cannot read [tool.uv.sources] and would otherwise
-# try to fetch these names from PyPI and fail. Installing them here first
-# (this file installs before the `-e .[server]` editable step) satisfies
-# pip's resolver before it ever sees the bare names.
 prii-maintenance @ git+https://github.com/jotaele44/thehub-pr.git@f2b81769924689b4d959554928810b1d7b7ef3d6#subdirectory=packages/prii_maintenance
 prii-export-utils @ git+https://github.com/jotaele44/thehub-pr.git@f2b81769924689b4d959554928810b1d7b7ef3d6#subdirectory=packages/prii_export_utils
