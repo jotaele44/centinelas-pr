@@ -237,6 +237,29 @@
       }
     },
     {
+      "id": "federation-export-helpers",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Deterministic ID, normalization, and hashing helpers support federation export scripts; they are implementation primitives rather than standalone operator workflows.",
+      "analysis": {
+        "files": [
+          "scripts/prii_export_utils.py"
+        ],
+        "symbols": [
+          "scripts/prii_export_utils.py:fid",
+          "scripts/prii_export_utils.py:norm",
+          "scripts/prii_export_utils.py:sha256"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_federation_export.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
       "id": "water-disruption-shadow-certification",
       "classification": "internal",
       "status": "active",
