@@ -6,12 +6,13 @@
   "additionalProperties": false,
   "required": [
     "schema_version", "lead_id", "category", "subcategory", "signal_type", "source_id",
-    "source_url", "canonical_url", "title", "summary", "published_at", "dataset_version",
+    "raw_source_url", "source_url", "canonical_url", "title", "summary", "published_at", "dataset_version",
     "catalog_identifier", "discovered_at", "last_verified_at", "discovery_provenance",
     "access_status", "temporal_coverage", "geographic_coverage", "sensor",
     "potential_case_links", "downstream_route", "evidence_tier", "confidence_score",
     "review_status", "content_fingerprint", "dedup_key", "raw_binary_storage_prohibited",
-    "confirmation_claim_prohibited", "analyst_assertion", "negative_inference", "notes"
+    "confirmation_claim_prohibited", "analyst_assertion", "negative_inference", "synthetic",
+    "notes"
   ],
   "properties": {
     "schema_version": {"const": "1.0.0"},
@@ -20,6 +21,7 @@
     "subcategory": {"enum": ["SATELLITE_DATASET_RELEASE", "MISSION_ARCHIVE_RELEASE", "DECLASSIFIED_SPACE_RECORD", "ORBITAL_EPHEMERIS_UPDATE", "WEATHER_SATELLITE_ARCHIVE", "INFRARED_SENSOR_RECORD", "SHUTTLE_VIDEO_OR_TELEMETRY", "SPACE_SURVEILLANCE_RECORD", "FOIA_READING_ROOM_RELEASE", "SCIENTIFIC_REPROCESSING"]},
     "signal_type": {"const": "space_data_discovery"},
     "source_id": {"type": "string", "minLength": 1},
+    "raw_source_url": {"type": "string", "minLength": 1},
     "source_url": {"type": "string", "format": "uri"},
     "canonical_url": {"type": "string", "format": "uri"},
     "title": {"type": "string", "minLength": 1},
@@ -75,6 +77,7 @@
     "confirmation_claim_prohibited": {"const": true},
     "analyst_assertion": {"type": ["string", "null"]},
     "negative_inference": {"const": false},
+    "synthetic": {"type": "boolean"},
     "notes": {"type": ["string", "null"]}
   }
 }

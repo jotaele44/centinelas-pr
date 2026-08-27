@@ -282,6 +282,50 @@
       }
     },
     {
+      "id": "space-data-discovery-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Bounded source parsing, lead identity, provenance validation, and Hub package projection are producer-side controls. They emit qualified discovery records for downstream routing and are not a standalone operator workflow.",
+      "analysis": {
+        "files": [
+          "src/centinelas/space_discovery.py",
+          "scripts/federation_export_space.py"
+        ],
+        "symbols": [
+          "src/centinelas/space_discovery.py:APICatalogAdapter",
+          "src/centinelas/space_discovery.py:BaseAdapter",
+          "src/centinelas/space_discovery.py:DedupStore",
+          "src/centinelas/space_discovery.py:FailureLedger",
+          "src/centinelas/space_discovery.py:HTMLChangeAdapter",
+          "src/centinelas/space_discovery.py:ManualReceiptAdapter",
+          "src/centinelas/space_discovery.py:RSSAtomAdapter",
+          "src/centinelas/space_discovery.py:RoutingReceiptStore",
+          "src/centinelas/space_discovery.py:RunLedger",
+          "src/centinelas/space_discovery.py:SitemapAdapter",
+          "src/centinelas/space_discovery.py:SourceHealthStore",
+          "src/centinelas/space_discovery.py:build_lead",
+          "src/centinelas/space_discovery.py:canonical_url",
+          "src/centinelas/space_discovery.py:enrich_federation_attributes",
+          "src/centinelas/space_discovery.py:idempotency_key",
+          "src/centinelas/space_discovery.py:route_receipt",
+          "src/centinelas/space_discovery.py:sha256_bytes",
+          "src/centinelas/space_discovery.py:utc_now",
+          "src/centinelas/space_discovery.py:validate_lead",
+          "scripts/federation_export_space.py:build_streams",
+          "scripts/federation_export_space.py:main",
+          "scripts/federation_export_space.py:write_space_package"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_space_discovery.py",
+          "tests/test_space_federation_export.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
       "id": "service-health",
       "classification": "internal",
       "status": "active",
