@@ -176,6 +176,16 @@ def test_schema_required_fields_match_runtime_gate():
         with pytest.raises(ValueError, match="missing required fields"):
             validate_lead(malformed)
 
+    unexpected = sample_lead()
+    unexpected["unreviewed_extension"] = "not part of the frozen contract"
+    with pytest.raises(ValueError, match="unexpected fields"):
+        validate_lead(unexpected)
+
+    malformed_route = sample_lead()
+    malformed_route["downstream_route"]["unreviewed_extension"] = True
+    with pytest.raises(ValueError, match="downstream route fields"):
+        validate_lead(malformed_route)
+
 
 def test_xml_parsers_reject_unsafe_or_oversized_payloads():
     dtd = b'<!DOCTYPE rss [<!ENTITY x "expanded">]><rss><channel/></rss>'

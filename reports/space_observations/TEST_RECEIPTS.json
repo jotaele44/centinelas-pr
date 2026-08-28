@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "suite": "centinelas-space-observations-phase0-1-integration",
+  "validated_at_utc": "2026-08-27T23:51:58Z",
+  "base_commit": "cb3538380da4d9f2cc5cd930a3d04f5cfff8d20c",
+  "local_state": "PASS",
+  "results": {
+    "focused_contract_tests": "34 passed, 1 skipped",
+    "full_repository_tests": "251 passed, 1 skipped, 1 warning",
+    "coverage": "82.81 percent",
+    "coverage_floor": "72 percent",
+    "ruff": "PASS",
+    "mypy": "PASS - 24 source files",
+    "gui_parity": "PASS - current=290 mapped=140 legacy=150 new=0"
+  },
+  "verified": [
+    "full canonical lead validation before and after route migration",
+    "qualified lead acceptance and route mismatch isolation",
+    "two clean replays and persistent deduplication after restart",
+    "recoverable acquisition-only partial write",
+    "fail-closed missing acquisition and contradictory persistent indexes",
+    "complete run accounting",
+    "acquisition schema version and synthetic provenance persistence",
+    "production synthetic rejection at intake and export",
+    "Hub-conformant manifest and emitted-byte SHA-256",
+    "source, entity, and observation referential closure",
+    "deterministic whole-row source manifestation selection",
+    "duplicate and conflicting identity adjudication",
+    "complete schema freeze inventory",
+    "DSP unsupported claim and negative inference rejection",
+    "ovnis-pr case authority and thehub-pr correlation boundary",
+    "no network acquisition"
+  ],
+  "open_hosted_gates": [
+    "push repaired branch at exact head",
+    "resolve all nine review threads",
+    "pass GitHub checks on the exact pushed head",
+    "merge with exact-head protection"
+  ]
+}

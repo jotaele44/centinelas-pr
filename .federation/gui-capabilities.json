@@ -326,6 +326,36 @@
       }
     },
     {
+      "id": "space-observation-intake-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "The embedded logical producer validates routed discovery leads, persists restart-safe intake ledgers, and emits Hub packages. It is an internal federation boundary with no direct operator workflow or standalone GUI surface.",
+      "analysis": {
+        "files": [
+          "src/centinelas/space_observations/__init__.py",
+          "src/centinelas/space_observations/producer.py",
+          "src/centinelas/space_observations/retry.py",
+          "src/centinelas/space_observations/routing.py"
+        ],
+        "symbols": [
+          "src/centinelas/space_observations/producer.py:IntakeEngine",
+          "src/centinelas/space_observations/producer.py:IntakeResult",
+          "src/centinelas/space_observations/producer.py:export_federation",
+          "src/centinelas/space_observations/retry.py:retry_failed",
+          "src/centinelas/space_observations/routing.py:route_to_embedded_producer"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_gui_parity.py",
+          "tests/test_space_observations_boundaries.py",
+          "tests/test_space_observations_embedded.py",
+          "tests/test_space_observations_schema_freeze.py"
+        ]
+      }
+    },
+    {
       "id": "service-health",
       "classification": "internal",
       "status": "active",

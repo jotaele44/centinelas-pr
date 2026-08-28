@@ -16,16 +16,16 @@ Implements discovery-only monitoring primitives for public space and remote-sens
 
 ## Responsibility boundaries
 
-- `satellite-observations-pr`: acquisition, binary validation, normalization, sensor observations.
+- `centinelas-space-observations`: isolated logical producer embedded in `centinelas-pr`; owns acquisition registration and observation export. Network and binary acquisition remain outside Phase 0-1.
 - `ovnis-pr`: canonical case authority.
 - `thehub-pr`: cross-producer correlation.
 - No authentication bypass, paywall bypass, or protected-source acquisition behavior is implemented.
 
 ## Validation
 
-The isolated implementation fixture suite passed locally: `5 passed`.
+Discovery PR #41 was repaired, validated, and merged into `main` at merge commit `cb3538380da4d9f2cc5cd930a3d04f5cfff8d20c`. The stacked embedded-producer work was then rebased onto that exact main and validated from an isolated environment using the immutable TheHub package revisions in `pyproject.toml`.
 
-Repository CI remains authoritative because the execution environment could not clone GitHub or install the repository's sibling `thehub-pr` dependencies. The draft PR must remain unmerged until CI and review confirm integration compatibility.
+The 2026-08-27 local integration gate passed `251` tests with `1` platform skip, `82.81%` coverage, Ruff, cold mypy, and GUI parity with zero new unmapped capabilities. Hosted checks on the exact pushed embedded-producer head remain authoritative for that PR.
 
 ## Requested output status
 
@@ -33,6 +33,6 @@ Repository CI remains authoritative because the execution environment could not 
 |---|---|
 | IMPLEMENTATION_REPORT.md | complete |
 | SOURCE_COVERAGE_LEDGER.csv | represented by 20-row registry delta |
-| FAILURE_LEDGER.csv | no local fixture failures; repository CI pending |
-| TEST_RECEIPTS.json | local result: 5 passed; CI pending |
-| UPDATED_FEDERATION_EXPORT_FIXTURE | covered by exporter tests and lead fixtures |
+| FAILURE_LEDGER.csv | no unresolved local test failures; hosted exact-head gate pending |
+| TEST_RECEIPTS.json | current scoped local receipt under `reports/space_observations/` |
+| UPDATED_FEDERATION_EXPORT_FIXTURE | canonical manifest, emitted-byte hashes, and referential closure verified by tests |
