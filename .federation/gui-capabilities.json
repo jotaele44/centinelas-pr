@@ -356,6 +356,28 @@
       }
     },
     {
+      "id": "drought-impact-reference-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Reference-only drought impact records enforce cross-repository hydrology ownership and preserve AguaYLuz links as provisional candidate bindings until the producer contract is certified. This is an internal federation boundary rather than a standalone operator workflow.",
+      "analysis": {
+        "files": [
+          "research/drought/impact_adapter.py"
+        ],
+        "symbols": [
+          "research/drought/impact_adapter.py:build_impact_event",
+          "research/drought/impact_adapter.py:reject_embedded_hydrology"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_drought_impact_adapter_v0_1.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
       "id": "service-health",
       "classification": "internal",
       "status": "active",

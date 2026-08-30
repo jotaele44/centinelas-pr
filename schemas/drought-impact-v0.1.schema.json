@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.example/schemas/centinelas/drought-impact/v0.1",
+  "$defs": {
+    "uncertaintyValue": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "boolean"},
+        {"type": "number"},
+        {"type": "string"},
+        {"type": "array", "items": {"$ref": "#/$defs/uncertaintyValue"}},
+        {"$ref": "#/$defs/uncertaintyObject"}
+      ]
+    },
+    "uncertaintyObject": {
+      "type": "object",
+      "propertyNames": {
+        "not": {
+          "enum": [
+            "streamflow_value", "groundwater_level", "reservoir_level",
+            "soil_moisture_value", "drought_geometry", "forecast_probability"
+          ]
+        }
+      },
+      "additionalProperties": {"$ref": "#/$defs/uncertaintyValue"}
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "event_id", "event_type", "impact_type", "observed_at",
+    "source_claim_id", "evidence_tier", "municipality_geoids",
+    "linked_aguayluz_record_ids", "linked_asset_ids", "watershed_ids",
+    "irrigation_district_ids", "uncertainty", "canonical_hydrology_embedded",
+    "aguayluz_link_contract", "content_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "centinelas.drought-impact/v0.1"},
+    "event_id": {"type": "string", "pattern": "^CEN_DROUGHT_[0-9a-f]{20}$"},
+    "event_type": {"const": "drought_impact"},
+    "impact_type": {
+      "enum": [
+        "wildfire_activity", "agricultural_water_shortage", "crop_stress",
+        "infrastructure_fire_damage", "stream_dry_report", "water_hauling",
+        "forage_shortage", "municipal_rationing"
+      ]
+    },
+    "observed_at": {"type": ["string", "null"], "format": "date-time"},
+    "source_claim_id": {"type": "string", "minLength": 1},
+    "evidence_tier": {"enum": ["T1", "T2", "T3", "T4"]},
+    "municipality_geoids": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^72[0-9]{3}$"},
+      "uniqueItems": true
+    },
+    "linked_aguayluz_record_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^AYL_DROUGHT_(CLASSIFICATION_OBSERVATION|HYDROLOGIC_INDICATOR|IMPACT_EVENT|WATER_RESTRICTION|OUTLOOK|SOURCE_DOCUMENT)_[0-9a-f]{20}$"
+      },
+      "uniqueItems": true
+    },
+    "linked_asset_ids": {
+      "type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true
+    },
+    "watershed_ids": {
+      "type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true
+    },
+    "irrigation_district_ids": {
+      "type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true
+    },
+    "uncertainty": {"$ref": "#/$defs/uncertaintyObject"},
+    "canonical_hydrology_embedded": {"const": false},
+    "aguayluz_link_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "producer_repo", "producer_pr", "producer_head",
+        "certification_state", "identity_state"
+      ],
+      "properties": {
+        "schema_version": {"const": "aguayluz.drought-record/v0.1"},
+        "producer_repo": {"const": "aguayluz-pr"},
+        "producer_pr": {"const": 148},
+        "producer_head": {"const": "f8fda661accf672bef1b40464601d7372dd00140"},
+        "certification_state": {"const": "PROVISIONAL"},
+        "identity_state": {"const": "CANDIDATE_NOT_IDENTITY"}
+      }
+    },
+    "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
