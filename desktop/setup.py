@@ -27,6 +27,10 @@ from desktop.config import DIST_DIR, FRONTEND_DIR, REPO_ROOT, REQUIREMENT_FILES 
 VENV_DIR = REPO_ROOT / ".venv"
 MARKER = Path(__file__).resolve().parent / ".setup-complete"
 MIN_PYTHON = (3, 10)
+# Optional version pins for reproducible installs. Applied only if present, so
+# a checkout without it still installs fine -- just without the extra
+# reproducibility guarantee.
+CONSTRAINTS_DESKTOP = REPO_ROOT / "constraints-desktop.txt"
 
 
 def venv_python() -> Path:
@@ -52,13 +56,14 @@ def setup_python() -> None:
         venv.EnvBuilder(with_pip=True, clear=False).create(VENV_DIR)
     pip = [str(venv_python()), "-m", "pip", "install", "--upgrade", "pip", "--quiet"]
     run(pip)
-    install = [str(venv_python()), "-m", "pip", "install", "--quiet"]
+    constraints = ["-c", str(CONSTRAINTS_DESKTOP)] if CONSTRAINTS_DESKTOP.is_file() else []
+    install = [str(venv_python()), "-m", "pip", "install", "--quiet", *constraints]
     for req in REQUIREMENT_FILES:
         install += ["-r", str(req)]
     run(install)
     extra = list(getattr(config, "EXTRA_PIP_SPECS", []))
     if extra:
-        run([str(venv_python()), "-m", "pip", "install", "--quiet", *extra])
+        run([str(venv_python()), "-m", "pip", "install", "--quiet", *constraints, *extra])
 
 
 def setup_frontend() -> None:
