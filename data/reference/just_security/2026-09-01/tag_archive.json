@@ -1,0 +1,37 @@
+{
+  "schema_version": "just_security_tag_archive_snapshot.v0.1",
+  "recorded_at_utc": "2026-09-01T21:11:39Z",
+  "manifestation": "PUERTO_RICO_TAG_ARCHIVE",
+  "url": "https://www.justsecurity.org/tag/puerto-rico/",
+  "declared_count": 4,
+  "parsed_count": 4,
+  "certification": "PASS",
+  "raw_bytes_frozen": false,
+  "articles": [
+    {
+      "position": 1,
+      "canonical_url": "https://www.justsecurity.org/131120/podcast-us-territories/",
+      "published_date": "2026-02-10",
+      "source_manifestation": "Puerto Rico tag"
+    },
+    {
+      "position": 2,
+      "canonical_url": "https://www.justsecurity.org/130478/greenland-denmark-shortcomings-us-territory/",
+      "published_date": "2026-02-03",
+      "source_manifestation": "Puerto Rico tag"
+    },
+    {
+      "position": 3,
+      "canonical_url": "https://www.justsecurity.org/108031/more-territory-problems-greenland/",
+      "published_date": "2025-02-19",
+      "source_manifestation": "Puerto Rico tag"
+    },
+    {
+      "position": 4,
+      "canonical_url": "https://www.justsecurity.org/45575/posse-comitatus-immediately-applicable-militarys-humanitarian-assistance-mission-puerto-rico/",
+      "published_date": "2017-10-03",
+      "source_manifestation": "Puerto Rico tag"
+    }
+  ],
+  "arithmetic_closure": "declared_count 4 = parsed_count 4 = classified_rows 4"
+}
