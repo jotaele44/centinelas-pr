@@ -15,48 +15,34 @@ from centinelas.models import EvidenceTier, RawItem
 log = logging.getLogger(__name__)
 
 _SOURCES_PATH = Path(__file__).parent / "sources.yaml"
+_SOURCE_OVERLAYS = (Path(__file__).parent / "just_security_sources.yaml",)
 
-# Just Security is a global law/policy publication. The main feed is filtered so
-# it cannot silently flood the Puerto Rico denominator. The publisher's Puerto
-# Rico tag feed is also ingested as an independent high-precision manifestation;
-# neither manifestation is treated as a complete publisher-wide PR universe.
-_JUST_SECURITY_SOURCE = {
-    "name": "Just Security",
-    "url": "https://www.justsecurity.org/feed/",
-    "tier": "T4",
-    "source_id": "CENT-SRC-RSS-JUST-SECURITY",
-    "match_any": [
-        "Puerto Rico",
-        "Puerto Rican",
-        "Commonwealth of Puerto Rico",
-        "PROMESA",
-        "Financial Oversight and Management Board",
-        "Roosevelt Roads",
-        "Fort Buchanan",
-        "Vieques",
-        "José Aponte de la Torre",
-        "Jose Aponte de la Torre",
-        "Ramey Air Force Base",
-    ],
-}
-_JUST_SECURITY_TAG_SOURCE = {
-    "name": "Just Security - Puerto Rico tag",
-    "url": "https://www.justsecurity.org/tag/puerto-rico/feed/",
-    "tier": "T4",
-    "source_id": "CENT-SRC-RSS-JUST-SECURITY-PUERTO-RICO-TAG",
-}
+
+def _load_source_file(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8") as handle:
+        payload = yaml.safe_load(handle) or {}
+    feeds = payload.get("feeds", [])
+    return [dict(feed) for feed in feeds if isinstance(feed, dict)]
 
 
 def _load_sources() -> list[dict]:
-    with open(_SOURCES_PATH) as f:
-        sources = yaml.safe_load(f).get("feeds", [])
-    # Keep code-side registration idempotent. A future migration may move these
-    # records into sources.yaml without creating duplicate feeds.
-    names = {source.get("name") for source in sources}
-    for source in (_JUST_SECURITY_SOURCE, _JUST_SECURITY_TAG_SOURCE):
-        if source["name"] not in names:
-            sources.append(dict(source))
-            names.add(source["name"])
+    """Load the base source registry plus packaged source overlays idempotently."""
+    sources = _load_source_file(_SOURCES_PATH)
+    known_ids = {source.get("source_id") for source in sources if source.get("source_id")}
+    known_urls = {source.get("url") for source in sources if source.get("url")}
+    for overlay in _SOURCE_OVERLAYS:
+        for source in _load_source_file(overlay):
+            source_id = source.get("source_id")
+            url = source.get("url")
+            if (source_id and source_id in known_ids) or (url and url in known_urls):
+                continue
+            sources.append(source)
+            if source_id:
+                known_ids.add(source_id)
+            if url:
+                known_urls.add(url)
     return sources
 
 
@@ -140,7 +126,7 @@ def _entry_to_raw_item(entry: dict, source_name: str, tier: str) -> RawItem | No
 
 
 def poll_all() -> list[RawItem]:
-    """Poll all feeds defined in sources.yaml plus bounded code-registered sources."""
+    """Poll all configured feeds and return deduplicated RawItems."""
     sources = _load_sources()
     seen_ids: set[str] = set()
     items: list[RawItem] = []
