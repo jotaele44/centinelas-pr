@@ -54,14 +54,6 @@ def _configured_source(source_id: str) -> dict:
     )
 
 
-# Compatibility views for monitor helpers. Their values are derived from the
-# packaged YAML overlay; the configuration file remains authoritative.
-_JUST_SECURITY_SOURCE = _configured_source("CENT-SRC-RSS-JUST-SECURITY")
-_JUST_SECURITY_TAG_SOURCE = _configured_source(
-    "CENT-SRC-RSS-JUST-SECURITY-PUERTO-RICO-TAG"
-)
-
-
 def _entry_filter_text(entry: dict) -> str:
     content = entry.get("content") or []
     content_text = " ".join(
