@@ -18,7 +18,7 @@ SOURCE_ID = str(SOURCE["source_id"])
 SOURCE_NAME = str(SOURCE["name"])
 TIER = str(SOURCE["tier"])
 MAIN_FEED = str(SOURCE["url"])
-TAG_FEED = "https://www.justsecurity.org/tag/puerto-rico/feed/"
+TAG_FEED = str(rss._JUST_SECURITY_TAG_SOURCE["url"])
 TAG_URL = "https://www.justsecurity.org/tag/puerto-rico/"
 SEARCH_URL = "https://www.justsecurity.org/?s=puerto%20rico"
 LIVING_URLS = (
@@ -41,8 +41,9 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def canonical_url(url: str) -> str:
-    parts = urlsplit(url.strip())
+def canonical_url(url: str, *, base_url: str | None = None) -> str:
+    value = urljoin(base_url, url) if base_url else url
+    parts = urlsplit(value.strip())
     if parts.scheme not in {"http", "https"} or not parts.netloc:
         raise ValueError(f"unsupported URL: {url!r}")
     path = parts.path or "/"
@@ -112,12 +113,12 @@ def fetch_url(client: httpx.Client, url: str) -> tuple[bytes | None, dict]:
     }
 
 
-def listing_article_urls(body: bytes) -> list[str]:
+def listing_article_urls(body: bytes, *, base_url: str | None = None) -> list[str]:
     urls: list[str] = []
     soup = BeautifulSoup(body, "html.parser")
     for anchor in soup.select("h1 a[href],h2 a[href],h3 a[href],article a[href]"):
         try:
-            url = canonical_url(str(anchor.get("href", "")))
+            url = canonical_url(str(anchor.get("href", "")), base_url=base_url)
         except ValueError:
             continue
         if ARTICLE_RE.fullmatch(url) and url not in urls:
@@ -167,7 +168,7 @@ def snapshot_listing(
             break
         if declared is None:
             declared = listing_declared_count(body)
-        for item_url in listing_article_urls(body):
+        for item_url in listing_article_urls(body, base_url=current):
             if item_url not in urls:
                 urls.append(item_url)
         current = listing_next_page(body, current)
@@ -195,6 +196,18 @@ def snapshot_listing(
         "receipts": receipts,
         "residue": residue,
     }
+
+
+def acquire_article_receipts(client: httpx.Client, urls: list[str]) -> list[dict]:
+    receipts: list[dict] = []
+    for url in sorted(set(urls)):
+        body, receipt = fetch_url(client, url)
+        if body is not None and receipt.get("http_status") == 200:
+            receipt["normalized_content_sha256"] = content_fingerprint(body)
+        else:
+            receipt["normalized_content_sha256"] = None
+        receipts.append(receipt)
+    return receipts
 
 
 def set_differences(previous: list[str], current: list[str]) -> dict[str, list[str]]:
@@ -230,8 +243,16 @@ def poll_relevant_feeds(
     fetch_detail: bool = True,
 ) -> tuple[list[dict], dict]:
     retained: dict[str, dict] = {}
-    counts = {"seen": 0, "relevant": 0, "excluded": 0, "duplicate": 0, "detail_failures": 0}
+    counts = {
+        "seen": 0,
+        "relevant": 0,
+        "excluded": 0,
+        "duplicate": 0,
+        "unresolved": 0,
+        "detail_failures": 0,
+    }
     receipts: list[dict] = []
+    source_states: dict[str, str] = {}
     sources = (
         ("MAIN_FEED", MAIN_FEED, False),
         ("PR_TAG_FEED", TAG_FEED, True),
@@ -239,15 +260,20 @@ def poll_relevant_feeds(
     for manifestation, feed_url, tag_authoritative in sources:
         body, receipt = fetch_url(client, feed_url)
         receipts.append(receipt)
+        source_states[manifestation] = receipt["state"]
         if body is None or receipt.get("http_status") != 200:
             continue
-        for raw_entry in feedparser.parse(body).entries:
+        parsed = feedparser.parse(body)
+        if getattr(parsed, "bozo", False) and not parsed.entries:
+            source_states[manifestation] = "FAIL"
+            continue
+        for raw_entry in parsed.entries:
             entry = dict(raw_entry)
             counts["seen"] += 1
             try:
                 url = canonical_url(str(entry.get("link", "")))
             except ValueError:
-                counts["excluded"] += 1
+                counts["unresolved"] += 1
                 continue
             if url in retained:
                 current = retained[url]["manifestations"]
@@ -257,6 +283,7 @@ def poll_relevant_feeds(
             matched = is_pr_relevant(_feed_text(entry))
             detail_hash = None
             detail_text = ""
+            detail_failed = False
             if fetch_detail and (tag_authoritative or not matched):
                 page, page_receipt = fetch_url(client, url)
                 receipts.append(page_receipt)
@@ -266,11 +293,15 @@ def poll_relevant_feeds(
                     if not tag_authoritative and not matched:
                         matched = is_pr_relevant(detail_text)
                 else:
+                    detail_failed = True
                     counts["detail_failures"] += 1
             if not tag_authoritative and not matched:
-                counts["excluded"] += 1
+                if fetch_detail and detail_failed:
+                    counts["unresolved"] += 1
+                else:
+                    counts["excluded"] += 1
                 continue
-            if fetch_detail and detail_hash is None:
+            if fetch_detail and detail_hash is None and not detail_failed:
                 page, page_receipt = fetch_url(client, url)
                 receipts.append(page_receipt)
                 if page is not None and page_receipt.get("http_status") == 200:
@@ -288,8 +319,21 @@ def poll_relevant_feeds(
                 "linked_document_tier_inheritance": False,
             }
             counts["relevant"] += 1
-    assert counts["seen"] == counts["relevant"] + counts["excluded"] + counts["duplicate"]
-    return list(retained.values()), {"counts": counts, "receipts": receipts}
+    partition = counts["relevant"] + counts["excluded"] + counts["duplicate"] + counts["unresolved"]
+    assert counts["seen"] == partition
+    values = list(source_states.values())
+    if values and all(state == "PASS" for state in values):
+        certification = "PASS"
+    elif values and all(state != "PASS" for state in values):
+        certification = "BLOCKED"
+    else:
+        certification = "PROVISIONAL"
+    return list(retained.values()), {
+        "counts": counts,
+        "receipts": receipts,
+        "source_states": source_states,
+        "certification": certification,
+    }
 
 
 def reconcile_listing(state: dict, snapshot: dict, run_id: str) -> list[dict]:
