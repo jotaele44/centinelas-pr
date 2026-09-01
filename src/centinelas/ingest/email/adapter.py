@@ -46,9 +46,14 @@ class EmailSourceProfile(BaseModel):
 
 
 class GmailClientProtocol(Protocol):
-    def search_message_ids(self, query: str, limit: int) -> list[str]: ...
-    def get_message(self, message_id: str) -> dict: ...
-    def history(self, start_history_id: str) -> Iterable[dict]: ...
+    def search_message_ids(self, query: str, limit: int) -> list[str]:
+        raise NotImplementedError
+
+    def get_message(self, message_id: str) -> dict:
+        raise NotImplementedError
+
+    def history(self, start_history_id: str) -> Iterable[dict]:
+        raise NotImplementedError
 
 
 class OfflineFakeGmailClient:

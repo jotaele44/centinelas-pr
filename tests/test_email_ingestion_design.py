@@ -71,7 +71,10 @@ def test_alert_requires_operator_acceptance() -> None:
         provider_message_id="gmail-1",
     )
     results = parse_google_alert_results(record)
-    assert results
+    assert len(results) == 1
+    assert results[0].displayed_title == "Notice"
+    assert results[0].displayed_url == "https://example.gov/notice?utm_source=alerts"
+    assert "tracker.invalid" not in results[0].displayed_url
     with pytest.raises(ValueError, match="operator acceptance"):
         accepted_result_to_raw_item(results[0], record)
     accepted = results[0].model_copy(update={"review_status": "accepted_as_lead"})

@@ -74,16 +74,31 @@ def normalize_rfc822(raw: bytes, *, account_alias: str, source_profile_id: str, 
 
 
 def parse_google_alert_results(record: EmailMessageRecord) -> list[AlertResultRecord]:
-    """Template-tolerant offline parser: each absolute URL line becomes a review lead."""
+    """Extract review leads from HTML anchors and plain-text absolute URLs."""
     text = html.unescape(record.sanitized_text)
-    urls = re.findall(r"https?://[^\s<>\"]+", text)
-    results: list[AlertResultRecord] = []
-    for position, observed in enumerate(dict.fromkeys(urls)):
-        url = canonicalize_url(observed.rstrip(".,);"))
-        if not url:
-            continue
+    candidates: list[tuple[str, str]] = []
+    if record.text_html:
+        soup = BeautifulSoup(record.text_html, "html.parser")
+        for node in soup(["script", "style", "img", "iframe", "object", "embed"]):
+            node.decompose()
+        for anchor in soup.find_all("a", href=True):
+            href = html.unescape(str(anchor["href"])).strip()
+            if urlparse(href).scheme.lower() in {"http", "https"}:
+                candidates.append((href, anchor.get_text(" ", strip=True) or record.subject))
+
+    for observed in re.findall(r"https?://[^\s<>\"]+", text):
         preceding = text[: text.find(observed)].splitlines()
         title = next((line.strip() for line in reversed(preceding) if line.strip()), record.subject)
+        candidates.append((observed, title))
+
+    results: list[AlertResultRecord] = []
+    seen_urls: set[str] = set()
+    for observed, title in candidates:
+        url = canonicalize_url(observed.rstrip(".,);"))
+        if not url or url in seen_urls:
+            continue
+        seen_urls.add(url)
+        position = len(results)
         results.append(AlertResultRecord(
             alert_result_id=sha256_text(f"{record.email_record_id}|{position}|{url}")[:24],
             email_record_id=record.email_record_id,
