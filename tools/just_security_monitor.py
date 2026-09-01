@@ -15,6 +15,7 @@ from just_security_monitor_core import (
     SEARCH_URL,
     SOURCE_ID,
     TAG_URL,
+    acquire_article_receipts,
     content_fingerprint,
     fetch_url,
     now_utc,
@@ -122,6 +123,13 @@ def _living_events(
     return events, receipts
 
 
+def _listing_result_urls(*snapshots: dict) -> list[str]:
+    urls: set[str] = set()
+    for snapshot in snapshots:
+        urls.update(snapshot.get("result_urls", []))
+    return sorted(urls)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -162,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
         events.extend(reconcile_listing(state, tag, run_id))
         events.extend(reconcile_listing(state, search, run_id))
 
-        expanded = []
+        expanded: list[dict] = []
         if args.expanded_audit:
             for term in EXPANDED_TERMS:
                 url = "https://www.justsecurity.org/?s=" + quote_plus(term)
@@ -170,12 +178,24 @@ def main(argv: list[str] | None = None) -> int:
                 expanded.append(result)
                 events.extend(reconcile_listing(state, result, run_id))
 
+        listing_urls = _listing_result_urls(tag, search, *expanded)
+        article_receipts = acquire_article_receipts(client, listing_urls)
+        article_failures = sum(1 for receipt in article_receipts if receipt["state"] != "PASS")
+
         living_events, living_receipts = _living_events(client, state, run_id)
         events.extend(living_events)
 
+    feed_closed = (
+        feed_run["certification"] == "PASS" and feed_run["counts"].get("unresolved", 0) == 0
+    )
     certification = (
         "PASS"
-        if tag["certification"] == "PASS" and search["certification"] == "PASS"
+        if (
+            tag["certification"] == "PASS"
+            and search["certification"] == "PASS"
+            and feed_closed
+            and article_failures == 0
+        )
         else "PROVISIONAL"
     )
     snapshot = {
@@ -186,6 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         "tag_archive": tag,
         "literal_search": search,
         "expanded_searches": expanded,
+        "listing_article_receipts": article_receipts,
         "feed": feed_run,
         "living_page_receipts": living_receipts,
         "certification": certification,
@@ -212,6 +233,8 @@ def main(argv: list[str] | None = None) -> int:
                 "event_count": len(events),
                 "tag_certification": tag["certification"],
                 "search_certification": search["certification"],
+                "feed_certification": feed_run["certification"],
+                "listing_article_failures": article_failures,
                 **feed_run["counts"],
             }
         ],
@@ -224,6 +247,8 @@ def main(argv: list[str] | None = None) -> int:
                 "events": len(events),
                 "tag": tag["certification"],
                 "search": search["certification"],
+                "feed": feed_run["certification"],
+                "listing_article_failures": article_failures,
                 **feed_run["counts"],
             },
             sort_keys=True,
