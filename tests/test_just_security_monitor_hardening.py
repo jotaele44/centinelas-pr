@@ -63,7 +63,7 @@ def test_failed_detail_fetch_is_unresolved_not_false_exclusion():
     assert run["counts"]["detail_failures"] == 1
 
 
-def test_listing_article_acquisition_hashes_every_unique_url():
+def test_listing_article_acquisition_hashes_metadata_and_preserves_order():
     urls = [
         "https://www.justsecurity.org/301/a/",
         "https://www.justsecurity.org/302/b/",
@@ -71,24 +71,39 @@ def test_listing_article_acquisition_hashes_every_unique_url():
     ]
 
     def handler(request: httpx.Request) -> httpx.Response:
+        slug = request.url.path.strip("/").split("/")[-1]
         return httpx.Response(
             200,
             request=request,
-            text=f"<article>{request.url.path}</article>",
+            text=(
+                "<html><head>"
+                f"<meta property='og:title' content='Title {slug}'>"
+                f"<meta name='author' content='Author {slug}'>"
+                "<meta property='article:published_time' content='2026-09-01T12:00:00Z'>"
+                "<meta property='article:modified_time' content='2026-09-01T13:00:00Z'>"
+                "</head>"
+                f"<body><article>{request.url.path}</article></body></html>"
+            ),
         )
 
     with _client(handler) as client:
         receipts = acquire_article_receipts(client, urls)
     assert len(receipts) == 2
+    assert [receipt["url"] for receipt in receipts] == urls[:2]
+    assert [receipt["result_position"] for receipt in receipts] == [1, 2]
     assert all(receipt["state"] == "PASS" for receipt in receipts)
     assert all(len(receipt["content_sha256"]) == 64 for receipt in receipts)
     assert all(len(receipt["normalized_content_sha256"]) == 64 for receipt in receipts)
+    assert receipts[0]["title_raw"] == "Title a"
+    assert receipts[0]["author_raw"] == "Author a"
+    assert receipts[0]["published_at_raw"] == "2026-09-01T12:00:00Z"
+    assert receipts[0]["modified_at_raw"] == "2026-09-01T13:00:00Z"
 
 
-def test_relative_listing_article_links_resolve_against_manifestation_url():
+def test_relative_listing_article_links_resolve_and_preserve_position():
     body = b"""
     <html><body><div>1 Article</div>
-      <article><h2><a href="/401/relative-article/">Relative</a></h2></article>
+      <article><h2><a href="/401/relative-article/">Relative Title</a></h2></article>
     </body></html>
     """
 
@@ -99,3 +114,25 @@ def test_relative_listing_article_links_resolve_against_manifestation_url():
         snapshot = snapshot_listing(client, "RELATIVE", "https://www.justsecurity.org/tag/test/")
     assert snapshot["certification"] == "PASS"
     assert snapshot["result_urls"] == ["https://www.justsecurity.org/401/relative-article/"]
+    assert snapshot["result_records"] == [
+        {
+            "canonical_url": "https://www.justsecurity.org/401/relative-article/",
+            "title_raw": "Relative Title",
+            "result_position": 1,
+            "listing_page": "https://www.justsecurity.org/tag/test/",
+        }
+    ]
+
+
+def test_zero_results_without_declared_denominator_fails_closed():
+    body = b"<html><body><main>Search results</main></body></html>"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, request=request, content=body)
+
+    with _client(handler) as client:
+        snapshot = snapshot_listing(client, "EMPTY", "https://www.justsecurity.org/?s=opaque")
+    assert snapshot["certification"] == "PROVISIONAL"
+    assert snapshot["parsed_count"] == 0
+    assert snapshot["declared_count"] is None
+    assert snapshot["residue"] == "zero_results_without_declared_denominator"
