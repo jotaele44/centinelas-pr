@@ -1,0 +1,402 @@
+{
+  "schema_version": "prii.gui-capability/v1",
+  "repository": "jotaele44/centinelas-pr",
+  "policy": {
+    "mode": "ratchet",
+    "baseline": ".federation/gui-parity-baseline.json",
+    "require_discoverable_gui": true,
+    "require_e2e": true,
+    "terminal_free_user_path": true
+  },
+  "discovery": {
+    "backend_roots": [
+      "server/backend"
+    ],
+    "production_roots": [
+      "src/centinelas",
+      "desktop",
+      "maintenance"
+    ],
+    "analysis_roots": [
+      "scripts"
+    ],
+    "frontend_roots": [
+      "frontend/src"
+    ],
+    "frontend_capability_roots": [
+      "frontend/src/pages"
+    ],
+    "frontend_api_roots": [
+      "frontend/src/api"
+    ],
+    "route_files": [
+      "frontend/src/App.jsx"
+    ],
+    "navigation_files": [
+      "frontend/src/components/Header.jsx"
+    ],
+    "implicit_routes": [
+      {
+        "path": "/water-disruption/console",
+        "file": "server/backend/water_disruption_api.py"
+      }
+    ],
+    "exclude": [
+      "**/tests/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/components/ui/**",
+      "scripts/check_gui_parity.py"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "legislative-monitor",
+      "classification": "client_only",
+      "status": "active",
+      "requires_terminal": false,
+      "frontend": {
+        "routes": [
+          "/",
+          "/monitor",
+          "/signals",
+          "/matters",
+          "/matters/:id",
+          "/sources",
+          "/tabla",
+          "/entidades",
+          "/entidad/:slug"
+        ],
+        "e2e_routes": [
+          "/",
+          "/monitor",
+          "/signals",
+          "/matters",
+          "/sources",
+          "/entidades"
+        ],
+        "components": [
+          "frontend/src/api/appClient.js",
+          "frontend/src/pages/Home.jsx",
+          "frontend/src/pages/Monitor.jsx",
+          "frontend/src/pages/Signals.jsx",
+          "frontend/src/pages/SignalsTable.jsx",
+          "frontend/src/pages/Matters.jsx",
+          "frontend/src/pages/MatterDetail.jsx",
+          "frontend/src/pages/Sources.jsx",
+          "frontend/src/pages/Entities.jsx",
+          "frontend/src/pages/EntityDetail.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/components/Header.jsx",
+          "frontend/src/pages/Signals.jsx",
+          "frontend/src/pages/Matters.jsx",
+          "frontend/src/pages/Entities.jsx"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_gui_parity.py",
+          "frontend/src/lib/lifecycle.test.js"
+        ],
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "universal-intake-pipeline",
+      "classification": "operator",
+      "status": "active",
+      "requires_terminal": false,
+      "backend": {
+        "files": [
+          "server/backend/main.py"
+        ],
+        "endpoints": [
+          "GET /items",
+          "GET /items/{item_id}",
+          "GET /queue",
+          "GET /sources",
+          "GET /status",
+          "GET /handoffs",
+          "POST /handoffs/{item_id}",
+          "POST /run"
+        ]
+      },
+      "frontend": {
+        "routes": [
+          "/pipeline",
+          "/pipeline/:itemId",
+          "/handoff"
+        ],
+        "e2e_routes": [
+          "/pipeline",
+          "/handoff"
+        ],
+        "components": [
+          "frontend/src/api/pipelineClient.js",
+          "frontend/src/pages/Pipeline.jsx",
+          "frontend/src/pages/PipelineItemDetail.jsx",
+          "frontend/src/pages/Handoff.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/components/Header.jsx",
+          "frontend/src/pages/Pipeline.jsx"
+        ]
+      },
+      "tests": {
+        "backend": [
+          "tests/test_run_endpoint.py",
+          "tests/test_handoff_endpoint.py"
+        ],
+        "contract": [
+          "tests/test_gui_parity.py"
+        ],
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "water-disruption-shadow-producer",
+      "classification": "operator",
+      "status": "active",
+      "requires_terminal": false,
+      "backend": {
+        "files": [
+          "server/backend/water_disruption_api.py",
+          "src/centinelas/generated/water_disruption_client.py",
+          "src/centinelas/water_disruption.py"
+        ],
+        "endpoints": [
+          "GET /console",
+          "GET /sources",
+          "GET /runs",
+          "GET /evidence/{evidence_id}",
+          "GET /candidates",
+          "GET /outbox",
+          "POST /capture",
+          "POST /candidates/{candidate_id}/dispatch",
+          "POST /outbox/{outbox_id}/deliver",
+          "POST /candidates/{candidate_id}/retract"
+        ],
+        "symbols": [
+          "server/backend/water_disruption_api.py:CaptureRequest",
+          "server/backend/water_disruption_api.py:RetractRequest",
+          "server/backend/water_disruption_api.py:DeliverRequest",
+          "server/backend/water_disruption_api.py:console",
+          "server/backend/water_disruption_api.py:sources",
+          "server/backend/water_disruption_api.py:runs",
+          "server/backend/water_disruption_api.py:evidence",
+          "server/backend/water_disruption_api.py:candidates",
+          "server/backend/water_disruption_api.py:outbox",
+          "server/backend/water_disruption_api.py:capture",
+          "server/backend/water_disruption_api.py:dispatch",
+          "server/backend/water_disruption_api.py:deliver",
+          "server/backend/water_disruption_api.py:retract",
+          "src/centinelas/generated/water_disruption_client.py:WaterDisruptionClient",
+          "src/centinelas/water_disruption.py:AppendOnlyJsonl",
+          "src/centinelas/water_disruption.py:SourceRecord",
+          "src/centinelas/water_disruption.py:WaterDisruptionProducer",
+          "src/centinelas/water_disruption.py:canonical_json",
+          "src/centinelas/water_disruption.py:sha256",
+          "src/centinelas/water_disruption.py:six_hour_bucket",
+          "src/centinelas/water_disruption.py:stable_id"
+        ]
+      },
+      "frontend": {
+        "routes": [
+          "/water-disruption",
+          "/water-disruption/console"
+        ],
+        "e2e_routes": [
+          "/water-disruption"
+        ],
+        "components": [
+          "frontend/src/api/pipelineClient.js",
+          "frontend/src/components/Header.jsx",
+          "frontend/src/pages/WaterDisruption.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/components/Header.jsx"
+        ]
+      },
+      "tests": {
+        "backend": [
+          "tests/test_water_disruption.py",
+          "tests/test_water_disruption_api.py"
+        ],
+        "contract": [
+          "tests/test_gui_parity.py",
+          "tests/test_water_disruption_api.py"
+        ],
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "federation-export-helpers",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Deterministic ID, normalization, and hashing helpers support federation export scripts; they are implementation primitives rather than standalone operator workflows.",
+      "analysis": {
+        "files": [
+          "scripts/prii_export_utils.py"
+        ],
+        "symbols": [
+          "scripts/prii_export_utils.py:fid",
+          "scripts/prii_export_utils.py:norm",
+          "scripts/prii_export_utils.py:sha256"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_federation_export.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
+      "id": "water-disruption-shadow-certification",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Fail-closed certification is a CI and release-integrity control; operators use the discoverable shadow console rather than invoking the script directly.",
+      "analysis": {
+        "files": [
+          "scripts/certify_water_disruption_shadow.py"
+        ],
+        "symbols": [
+          "scripts/certify_water_disruption_shadow.py:main",
+          "scripts/certify_water_disruption_shadow.py:require"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_water_disruption.py",
+          "tests/test_water_disruption_api.py"
+        ]
+      }
+    },
+    {
+      "id": "space-data-discovery-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Bounded source parsing, lead identity, provenance validation, and Hub package projection are producer-side controls. They emit qualified discovery records for downstream routing and are not a standalone operator workflow.",
+      "analysis": {
+        "files": [
+          "src/centinelas/space_discovery.py",
+          "scripts/federation_export_space.py"
+        ],
+        "symbols": [
+          "src/centinelas/space_discovery.py:APICatalogAdapter",
+          "src/centinelas/space_discovery.py:BaseAdapter",
+          "src/centinelas/space_discovery.py:DedupStore",
+          "src/centinelas/space_discovery.py:FailureLedger",
+          "src/centinelas/space_discovery.py:HTMLChangeAdapter",
+          "src/centinelas/space_discovery.py:ManualReceiptAdapter",
+          "src/centinelas/space_discovery.py:RSSAtomAdapter",
+          "src/centinelas/space_discovery.py:RoutingReceiptStore",
+          "src/centinelas/space_discovery.py:RunLedger",
+          "src/centinelas/space_discovery.py:SitemapAdapter",
+          "src/centinelas/space_discovery.py:SourceHealthStore",
+          "src/centinelas/space_discovery.py:build_lead",
+          "src/centinelas/space_discovery.py:canonical_url",
+          "src/centinelas/space_discovery.py:enrich_federation_attributes",
+          "src/centinelas/space_discovery.py:idempotency_key",
+          "src/centinelas/space_discovery.py:route_receipt",
+          "src/centinelas/space_discovery.py:sha256_bytes",
+          "src/centinelas/space_discovery.py:utc_now",
+          "src/centinelas/space_discovery.py:validate_lead",
+          "scripts/federation_export_space.py:build_streams",
+          "scripts/federation_export_space.py:main",
+          "scripts/federation_export_space.py:write_space_package"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_space_discovery.py",
+          "tests/test_space_federation_export.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
+      "id": "space-observation-intake-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "The embedded logical producer validates routed discovery leads, persists restart-safe intake ledgers, and emits Hub packages. It is an internal federation boundary with no direct operator workflow or standalone GUI surface.",
+      "analysis": {
+        "files": [
+          "src/centinelas/space_observations/__init__.py",
+          "src/centinelas/space_observations/producer.py",
+          "src/centinelas/space_observations/retry.py",
+          "src/centinelas/space_observations/routing.py"
+        ],
+        "symbols": [
+          "src/centinelas/space_observations/producer.py:IntakeEngine",
+          "src/centinelas/space_observations/producer.py:IntakeResult",
+          "src/centinelas/space_observations/producer.py:export_federation",
+          "src/centinelas/space_observations/retry.py:retry_failed",
+          "src/centinelas/space_observations/routing.py:route_to_embedded_producer"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_gui_parity.py",
+          "tests/test_space_observations_boundaries.py",
+          "tests/test_space_observations_embedded.py",
+          "tests/test_space_observations_schema_freeze.py"
+        ]
+      }
+    },
+    {
+      "id": "drought-impact-reference-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Reference-only drought impact records enforce cross-repository hydrology ownership and preserve AguaYLuz links as provisional candidate bindings until the producer contract is certified. This is an internal federation boundary rather than a standalone operator workflow.",
+      "analysis": {
+        "files": [
+          "research/drought/impact_adapter.py"
+        ],
+        "symbols": [
+          "research/drought/impact_adapter.py:build_impact_event",
+          "research/drought/impact_adapter.py:reject_embedded_hydrology"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_drought_impact_adapter_v0_1.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
+      "id": "service-health",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Health probing supports launch and CI readiness; it is not an end-user workflow.",
+      "backend": {
+        "files": [
+          "server/backend/main.py"
+        ],
+        "endpoints": [
+          "GET /health"
+        ]
+      },
+      "tests": {
+        "backend": [
+          "tests/test_server_smoke.py"
+        ]
+      }
+    }
+  ],
+  "exceptions": []
+}

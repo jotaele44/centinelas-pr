@@ -7,7 +7,6 @@ import App from '@/App.jsx'
 import { resolveInitialTheme, applyTheme } from '@/lib/ThemeContext'
 import '@/index.css'
 import '@pr-federation/react/styles.css'
-import '@/styles/federation.css'
 
 // Repo accent for the shared federation.css.
 document.documentElement.dataset.repo = 'centinelas-pr'

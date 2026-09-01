@@ -4,11 +4,18 @@ on:
     types: [centinelas-handoff-ack]
 permissions:
   contents: write
+# Serialise runs on the same ref without cancelling. This workflow can
+# publish, write data, or hand off to another repo, and killing it
+# mid-flight risks leaving that work half-done.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   receipt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - env:
           CENTINELAS_ACK: ${{ toJSON(github.event.client_payload) }}
         run: python3 scripts/record_handoff_ack.py

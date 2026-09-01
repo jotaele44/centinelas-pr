@@ -16,11 +16,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 
 import httpx
 import yaml
 
-from centinelas.models import RawItem
+from centinelas.models import EvidenceTier, RawItem
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def _load_config() -> dict:
         return yaml.safe_load(f).get("federal_register", {}) or {}
 
 
-def _get_json(params: list[tuple[str, str]]) -> dict:
+def _get_json(params: list[tuple[str, str | int | float | bool | None]]) -> dict:
     """Fetch the API response as a dict. Isolated as a seam for testing.
 
     ``httpx.Client`` honours ``HTTPS_PROXY``/``trust_env`` by default, so this
@@ -74,7 +75,7 @@ def _result_to_raw_item(result: dict, tier: str) -> RawItem | None:
         body_text=body,
         published_at=published_at,
         captured_at=datetime.now(timezone.utc),
-        evidence_tier=tier,
+        evidence_tier=cast(EvidenceTier, tier),
     )
 
 
@@ -90,7 +91,7 @@ def poll_federal_register() -> list[RawItem]:
         return []
 
     tier = cfg.get("tier", "T1")
-    params: list[tuple[str, str]] = [
+    params: list[tuple[str, str | int | float | bool | None]] = [
         ("conditions[term]", cfg.get("term", "Puerto Rico")),
         ("order", cfg.get("order", "newest")),
         ("per_page", str(cfg.get("per_page", 50))),

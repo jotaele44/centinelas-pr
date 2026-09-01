@@ -7,22 +7,28 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.12"
-
+          cache: pip
+      - name: Assert isolated checkout
+        run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
       - name: Install ruff
         run: |
-          # PRII_FETCH_HUB: ensure shared federation libs resolve
-          if [ ! -d ../thehub-pr ]; then git clone --depth 1 --branch "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" https://github.com/jotaele44/thehub-pr.git ../thehub-pr || git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr; fi
           command -v uv >/dev/null 2>&1 || python -m pip install -q uv
           uv pip install --system -e ".[dev]"
-
       - name: Ruff check
         run: ruff check .
 
@@ -33,34 +39,29 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: ${{ matrix.python-version }}
-
+          cache: pip
+      - name: Assert isolated checkout
+        run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
       - name: Install validation dependencies
         run: |
-          # PRII_FETCH_HUB: ensure shared federation libs resolve
-          if [ ! -d ../thehub-pr ]; then git clone --depth 1 --branch "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" https://github.com/jotaele44/thehub-pr.git ../thehub-pr || git clone --depth 1 https://github.com/jotaele44/thehub-pr.git ../thehub-pr; fi
           command -v uv >/dev/null 2>&1 || python -m pip install -q uv
           uv pip install --system -e ".[dev]" httpx -r server/backend/requirements.txt
-
+      - name: El Yunque clean-install smoke
+        run: python tools/el_yunque_access_monitor.py --help
       - name: Federation manifest gate
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-
           manifest = json.loads(Path("federation.json").read_text())
           required = {
-              "schema_version",
-              "program_id",
-              "repository_full_name",
-              "federation_role",
-              "hub_parent",
-              "hub_callable_commands",
-              "canonical_outputs",
-              "federation_readiness_gate",
+              "schema_version", "program_id", "repository_full_name",
+              "federation_role", "hub_parent", "hub_callable_commands",
+              "canonical_outputs", "federation_readiness_gate",
           }
           missing = sorted(required - set(manifest))
           assert not missing, f"federation.json missing required keys: {missing}"
@@ -75,19 +76,68 @@ jobs:
           assert isinstance(gate.get("blocking_conditions"), list)
           print("federation manifest gate passed")
           PY
-
       - name: Validate PR spatial grid
         run: python3 scripts/validate_pr_grid.py --require-sha
-
       - name: Export canonical package
         run: python3 scripts/federation_export.py --mode test --out /tmp/centinelas_federation
-
       - name: Tests
         run: |
           set +e
-          pytest -q
+          pytest -q --cov --cov-report=term-missing:skip-covered
           status=$?
           set -e
           if [ "$status" -ne 0 ] && [ "$status" -ne 5 ]; then
             exit "$status"
           fi
+      - name: Reassert isolated checkout
+        run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
+
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Assert isolated checkout
+        run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+      - name: Lock file is canonical
+        run: |
+          uv lock
+          git diff --exit-code -- uv.lock
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Assert isolated checkout
+        run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
+      - name: Install
+        run: |
+          command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+          uv pip install --system -e ".[dev]"
+      - name: Mypy
+        run: python -m mypy
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm run test
+      - name: Build
+        run: npm run build

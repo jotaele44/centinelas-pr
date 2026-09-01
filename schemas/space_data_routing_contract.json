@@ -1,0 +1,11 @@
+{
+  "contract_id": "prii-space-data-routing",
+  "version": "1.0.0",
+  "roles": {
+    "centinelas-pr": {"owns": ["source_registry", "source_health", "discovery_provenance", "space_data_lead", "deduplication", "coverage_gap", "route_state"], "must_not": ["store_large_raw_rasters_or_video_as_canonical_corpus", "assert_incident_confirmation", "perform_final_sensor_geometry_correlation", "duplicate_ovnis_case_authority"]},
+    "satellite-observations-pr": {"owns": ["binary_acquisition", "checksums", "format_validation", "metadata_normalization", "coverage_footprints", "sensor_capability_records", "ephemeris_provenance", "observation_exports"]},
+    "ovnis-pr": {"owns": ["canonical_case", "event_time_and_uncertainty", "location_and_uncertainty", "witness_and_source_lineage", "case_review_status"]},
+    "thehub-pr": {"owns": ["cross_producer_identity_resolution", "temporal_spatial_intersection", "line_of_sight_and_coverage_comparison", "sensor_response_plausibility", "contradiction_analysis", "correlation_result"]}
+  },
+  "invariants": ["Discovery is not confirmation.", "Unknown sensor capability remains unknown.", "No negative inference from absent data without documented coverage and sensitivity.", "All records preserve source and transformation provenance.", "Every monitored source has an accounted operational state.", "Duplicates use reversible supersession links rather than silent deletion."]
+}

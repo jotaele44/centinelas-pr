@@ -1,0 +1,59 @@
+name: El Yunque official access monitor
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Stage transitions without sending repository_dispatch"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: el-yunque-access-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install monitor dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Smoke-test monitor from clean checkout
+        run: python tools/el_yunque_access_monitor.py --help
+      - name: Poll official USDA Forest Service alerts
+        env:
+          FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            python tools/el_yunque_access_monitor.py --dry-run
+          else
+            python tools/el_yunque_access_monitor.py
+          fi
+      - name: Persist state, transitions, health, and outbox
+        if: ${{ always() }}
+        run: |
+          git config user.name "centinelas-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/monitoring/el_yunque .centinelas/outbound/el_yunque_access 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "data: refresh El Yunque access status [skip ci]"
+          git push || echo "nothing to push"
+      - name: Upload monitor receipts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: el-yunque-access-monitor
+          path: |
+            data/monitoring/el_yunque
+            .centinelas/outbound/el_yunque_access
+          if-no-files-found: ignore
