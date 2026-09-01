@@ -124,10 +124,16 @@ def _living_events(
 
 
 def _listing_result_urls(*snapshots: dict) -> list[str]:
-    urls: set[str] = set()
+    """Union listing URLs in first-seen order; ordering is provenance, not identity."""
+    urls: list[str] = []
+    seen: set[str] = set()
     for snapshot in snapshots:
-        urls.update(snapshot.get("result_urls", []))
-    return sorted(urls)
+        for url in snapshot.get("result_urls", []):
+            if url in seen:
+                continue
+            seen.add(url)
+            urls.append(url)
+    return urls
 
 
 def main(argv: list[str] | None = None) -> int:
