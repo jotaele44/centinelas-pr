@@ -31,6 +31,7 @@ ARTICLE_RE = re.compile(r"^https://www\.justsecurity\.org/\d+/[^?#]+/?$")
 COUNT_RE = re.compile(r"(?P<n>[\d,]+)\s+Articles?", re.I)
 RANGE_RE = re.compile(r"\b\d[\d,]*-\d[\d,]*\s+of\s+(?P<n>[\d,]+)\s+items\b", re.I)
 MAX_BYTES = 5_000_000
+_BLOCKED_HTTP = {401, 403, 429, 451}
 
 
 def now_utc() -> str:
@@ -83,7 +84,7 @@ def fetch_url(client: httpx.Client, url: str) -> tuple[bytes | None, dict]:
         return None, {
             "url": url,
             "retrieved_at": retrieved_at,
-            "state": "BLOCKED",
+            "state": "UNRESOLVED",
             "http_status": None,
             "byte_count": 0,
             "content_sha256": None,
@@ -100,7 +101,12 @@ def fetch_url(client: httpx.Client, url: str) -> tuple[bytes | None, dict]:
             "content_sha256": None,
             "error": "payload_too_large",
         }
-    state = "PASS" if response.status_code == 200 else "BLOCKED"
+    if response.status_code == 200:
+        state = "PASS"
+    elif response.status_code in _BLOCKED_HTTP:
+        state = "BLOCKED"
+    else:
+        state = "UNRESOLVED"
     return body, {
         "url": url,
         "retrieved_at": retrieved_at,
@@ -200,8 +206,11 @@ def snapshot_listing(
         residue = f"pagination_loop:{current}"
     elif current and len(visited) >= max_pages:
         residue = f"max_pages:{max_pages}"
-    if receipts and receipts[0]["state"] != "PASS":
+    first_state = receipts[0]["state"] if receipts else "UNRESOLVED"
+    if first_state == "BLOCKED":
         certification = "BLOCKED"
+    elif first_state != "PASS":
+        certification = "PROVISIONAL"
     elif residue:
         certification = "PROVISIONAL"
     elif declared is not None and declared != len(urls):
@@ -422,7 +431,7 @@ def poll_relevant_feeds(
     values = list(source_states.values())
     if values and all(state == "PASS" for state in values):
         certification = "PASS"
-    elif values and all(state != "PASS" for state in values):
+    elif values and all(state == "BLOCKED" for state in values):
         certification = "BLOCKED"
     else:
         certification = "PROVISIONAL"
