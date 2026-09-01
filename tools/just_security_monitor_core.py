@@ -113,17 +113,30 @@ def fetch_url(client: httpx.Client, url: str) -> tuple[bytes | None, dict]:
     }
 
 
-def listing_article_urls(body: bytes, *, base_url: str | None = None) -> list[str]:
-    urls: list[str] = []
+def listing_article_records(body: bytes, *, base_url: str | None = None) -> list[dict]:
+    """Return unique listing records in source order without promoting title to identity."""
+    records: list[dict] = []
+    seen: set[str] = set()
     soup = BeautifulSoup(body, "html.parser")
     for anchor in soup.select("h1 a[href],h2 a[href],h3 a[href],article a[href]"):
         try:
             url = canonical_url(str(anchor.get("href", "")), base_url=base_url)
         except ValueError:
             continue
-        if ARTICLE_RE.fullmatch(url) and url not in urls:
-            urls.append(url)
-    return urls
+        if not ARTICLE_RE.fullmatch(url) or url in seen:
+            continue
+        seen.add(url)
+        records.append(
+            {
+                "canonical_url": url,
+                "title_raw": " ".join(anchor.stripped_strings).strip() or None,
+            }
+        )
+    return records
+
+
+def listing_article_urls(body: bytes, *, base_url: str | None = None) -> list[str]:
+    return [record["canonical_url"] for record in listing_article_records(body, base_url=base_url)]
 
 
 def listing_declared_count(body: bytes) -> int | None:
@@ -155,7 +168,8 @@ def snapshot_listing(
 ) -> dict:
     current = url
     visited: set[str] = set()
-    urls: list[str] = []
+    records: list[dict] = []
+    seen_urls: set[str] = set()
     receipts: list[dict] = []
     declared: int | None = None
     residue: str | None = None
@@ -168,10 +182,20 @@ def snapshot_listing(
             break
         if declared is None:
             declared = listing_declared_count(body)
-        for item_url in listing_article_urls(body, base_url=current):
-            if item_url not in urls:
-                urls.append(item_url)
+        for record in listing_article_records(body, base_url=current):
+            item_url = record["canonical_url"]
+            if item_url in seen_urls:
+                continue
+            seen_urls.add(item_url)
+            records.append(
+                {
+                    **record,
+                    "result_position": len(records) + 1,
+                    "listing_page": current,
+                }
+            )
         current = listing_next_page(body, current)
+    urls = [record["canonical_url"] for record in records]
     if current in visited:
         residue = f"pagination_loop:{current}"
     elif current and len(visited) >= max_pages:
@@ -183,6 +207,9 @@ def snapshot_listing(
     elif declared is not None and declared != len(urls):
         certification = "PROVISIONAL"
         residue = f"declared={declared};parsed={len(urls)}"
+    elif declared is None and not urls:
+        certification = "PROVISIONAL"
+        residue = "zero_results_without_declared_denominator"
     else:
         certification = "PASS"
     return {
@@ -191,6 +218,7 @@ def snapshot_listing(
         "certification": certification,
         "declared_count": declared,
         "parsed_count": len(urls),
+        "result_records": records,
         "result_urls": urls,
         "pages_checked": len(visited),
         "receipts": receipts,
@@ -198,14 +226,79 @@ def snapshot_listing(
     }
 
 
+def _meta_content(soup: BeautifulSoup, *selectors: str) -> str | None:
+    for selector in selectors:
+        node = soup.select_one(selector)
+        if node is None:
+            continue
+        value = node.get("content") or node.get("datetime")
+        if value:
+            return str(value).strip() or None
+        text = " ".join(node.stripped_strings).strip()
+        if text:
+            return text
+    return None
+
+
+def extract_article_metadata(body: bytes) -> dict:
+    """Extract raw descriptive fields without using them as identity proof."""
+    soup = BeautifulSoup(body, "html.parser")
+    title = _meta_content(
+        soup,
+        "meta[property='og:title']",
+        "meta[name='twitter:title']",
+        "h1",
+        "title",
+    )
+    author = _meta_content(
+        soup,
+        "meta[name='author']",
+        "meta[property='article:author']",
+        "[rel='author']",
+        "[itemprop='author']",
+    )
+    published = _meta_content(
+        soup,
+        "meta[property='article:published_time']",
+        "meta[name='article:published_time']",
+        "time[datetime]",
+    )
+    modified = _meta_content(
+        soup,
+        "meta[property='article:modified_time']",
+        "meta[name='article:modified_time']",
+    )
+    return {
+        "title_raw": title,
+        "author_raw": author,
+        "published_at_raw": published,
+        "modified_at_raw": modified,
+    }
+
+
 def acquire_article_receipts(client: httpx.Client, urls: list[str]) -> list[dict]:
+    """Fetch every unique URL once, retaining source order and descriptive metadata."""
     receipts: list[dict] = []
-    for url in sorted(set(urls)):
+    seen: set[str] = set()
+    for url in urls:
+        if url in seen:
+            continue
+        seen.add(url)
         body, receipt = fetch_url(client, url)
+        receipt["result_position"] = len(receipts) + 1
         if body is not None and receipt.get("http_status") == 200:
             receipt["normalized_content_sha256"] = content_fingerprint(body)
+            receipt.update(extract_article_metadata(body))
         else:
             receipt["normalized_content_sha256"] = None
+            receipt.update(
+                {
+                    "title_raw": None,
+                    "author_raw": None,
+                    "published_at_raw": None,
+                    "modified_at_raw": None,
+                }
+            )
         receipts.append(receipt)
     return receipts
 
@@ -319,7 +412,12 @@ def poll_relevant_feeds(
                 "linked_document_tier_inheritance": False,
             }
             counts["relevant"] += 1
-    partition = counts["relevant"] + counts["excluded"] + counts["duplicate"] + counts["unresolved"]
+    partition = (
+        counts["relevant"]
+        + counts["excluded"]
+        + counts["duplicate"]
+        + counts["unresolved"]
+    )
     assert counts["seen"] == partition
     values = list(source_states.values())
     if values and all(state == "PASS" for state in values):
@@ -340,7 +438,10 @@ def reconcile_listing(state: dict, snapshot: dict, run_id: str) -> list[dict]:
     previous = state.setdefault("listings", {}).get(snapshot["manifestation"], {})
     differences = set_differences(previous.get("result_urls", []), snapshot["result_urls"])
     events = []
-    if snapshot["certification"] in {"PASS", "PROVISIONAL"} and differences["SYMMETRIC_DIFFERENCE"]:
+    if (
+        snapshot["certification"] in {"PASS", "PROVISIONAL"}
+        and differences["SYMMETRIC_DIFFERENCE"]
+    ):
         events.append(
             {
                 "event_type": "LISTING_COVERAGE_CHANGE",
