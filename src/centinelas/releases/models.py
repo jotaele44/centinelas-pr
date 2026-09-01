@@ -174,7 +174,8 @@ class DeltaManifest(BaseModel):
 class ReleaseAdapter(Protocol):
     adapter_id: str
 
-    def enumerate(self) -> Iterable[dict[str, Any]]: ...
+    def enumerate(self) -> Iterable[dict[str, Any]]:
+        raise NotImplementedError
 
 
 class SyntheticReleaseAdapter:

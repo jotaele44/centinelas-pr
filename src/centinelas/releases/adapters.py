@@ -15,7 +15,8 @@ class HttpTransport(Protocol):
         self,
         url: str,
         headers: dict[str, str],
-    ) -> tuple[int, dict[str, str], bytes]: ...
+    ) -> tuple[int, dict[str, str], bytes]:
+        raise NotImplementedError
 
 
 @dataclass(frozen=True)

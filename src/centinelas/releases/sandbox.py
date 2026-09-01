@@ -76,7 +76,8 @@ class ProcessRunner(Protocol):
         *,
         input_bytes: bytes,
         limits: SandboxLimits,
-    ) -> ProcessResult: ...
+    ) -> ProcessResult:
+        raise NotImplementedError
 
 
 VersionProbe = Callable[[str], str]
