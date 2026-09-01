@@ -44,13 +44,14 @@ USER_AGENT = "Centinelas-PR/0.1 (+https://github.com/jotaele44/centinelas-pr)"
 
 def _load_state(path: Path) -> dict:
     if not path.exists():
-        return {
-            "schema_version": "just_security_monitor_state.v0.1",
-            "items": {},
-            "listings": {},
-            "living": {},
-        }
-    return json.loads(path.read_text(encoding="utf-8"))
+        state = {}
+    else:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    state.setdefault("schema_version", "just_security_monitor_state.v0.1")
+    state.setdefault("items", {})
+    state.setdefault("listings", {})
+    state.setdefault("living", {})
+    return state
 
 
 def _append_jsonl(path: Path, rows: list[dict]) -> None:
@@ -62,9 +63,10 @@ def _append_jsonl(path: Path, rows: list[dict]) -> None:
 
 def _item_events(state: dict, items: list[dict], run_id: str) -> list[dict]:
     events = []
+    item_state = state.setdefault("items", {})
     for item in items:
         url = item["canonical_url"]
-        previous = state["items"].get(url)
+        previous = item_state.get(url)
         if previous is None:
             events.append(
                 {
@@ -87,7 +89,7 @@ def _item_events(state: dict, items: list[dict], run_id: str) -> list[dict]:
                     "auto_promote_to_verified": False,
                 }
             )
-        state["items"][url] = item
+        item_state[url] = item
     return events
 
 
@@ -98,13 +100,14 @@ def _living_events(
 ) -> tuple[list[dict], list[dict]]:
     events: list[dict] = []
     receipts: list[dict] = []
+    living_state = state.setdefault("living", {})
     for url in LIVING_URLS:
         body, receipt = fetch_url(client, url)
         receipts.append(receipt)
         if body is None or receipt.get("http_status") != 200:
             continue
         current_hash = content_fingerprint(body)
-        previous = state["living"].get(url, {})
+        previous = living_state.get(url, {})
         if previous.get("content_sha256") not in (None, current_hash):
             events.append(
                 {
@@ -116,7 +119,7 @@ def _living_events(
                     "auto_promote_to_verified": False,
                 }
             )
-        state["living"][url] = {
+        living_state[url] = {
             "content_sha256": current_hash,
             "last_checked_at": receipt["retrieved_at"],
         }
@@ -190,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
 
         living_events, living_receipts = _living_events(client, state, run_id)
         events.extend(living_events)
+        living_failures = sum(1 for receipt in living_receipts if receipt["state"] != "PASS")
 
     feed_closed = (
         feed_run["certification"] == "PASS"
@@ -203,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
             and search["certification"] == "PASS"
             and feed_closed
             and article_failures == 0
+            and living_failures == 0
         )
         else "PROVISIONAL"
     )
@@ -217,6 +222,8 @@ def main(argv: list[str] | None = None) -> int:
         "listing_article_receipts": article_receipts,
         "feed": feed_run,
         "living_page_receipts": living_receipts,
+        "listing_article_failures": article_failures,
+        "living_page_failures": living_failures,
         "certification": certification,
         "claim_boundary": (
             "No search/tag manifestation is asserted to equal the complete "
@@ -243,6 +250,7 @@ def main(argv: list[str] | None = None) -> int:
                 "search_certification": search["certification"],
                 "feed_certification": feed_run["certification"],
                 "listing_article_failures": article_failures,
+                "living_page_failures": living_failures,
                 **feed_run["counts"],
             }
         ],
@@ -257,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
                 "search": search["certification"],
                 "feed": feed_run["certification"],
                 "listing_article_failures": article_failures,
+                "living_page_failures": living_failures,
                 **feed_run["counts"],
             },
             sort_keys=True,
