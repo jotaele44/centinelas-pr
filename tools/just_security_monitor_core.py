@@ -13,12 +13,13 @@ from bs4 import BeautifulSoup
 
 from centinelas.ingest import rss
 
-SOURCE = rss._JUST_SECURITY_SOURCE
+SOURCE = rss._configured_source("CENT-SRC-RSS-JUST-SECURITY")
+TAG_SOURCE = rss._configured_source("CENT-SRC-RSS-JUST-SECURITY-PUERTO-RICO-TAG")
 SOURCE_ID = str(SOURCE["source_id"])
 SOURCE_NAME = str(SOURCE["name"])
 TIER = str(SOURCE["tier"])
 MAIN_FEED = str(SOURCE["url"])
-TAG_FEED = str(rss._JUST_SECURITY_TAG_SOURCE["url"])
+TAG_FEED = str(TAG_SOURCE["url"])
 TAG_URL = "https://www.justsecurity.org/tag/puerto-rico/"
 SEARCH_URL = "https://www.justsecurity.org/?s=puerto%20rico"
 LIVING_URLS = (
