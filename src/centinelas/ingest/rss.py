@@ -16,10 +16,70 @@ log = logging.getLogger(__name__)
 
 _SOURCES_PATH = Path(__file__).parent / "sources.yaml"
 
+# Just Security is a global law/policy publication.  It is deliberately filtered
+# at intake so the global feed cannot silently flood the Puerto Rico signal
+# denominator.  The broader historical/search reconciliation lives in
+# tools/just_security_monitor.py; this source configuration is only the
+# prospective signal-intake gate.
+_JUST_SECURITY_SOURCE = {
+    "name": "Just Security",
+    "url": "https://www.justsecurity.org/feed/",
+    "tier": "T4",
+    "source_id": "CENT-SRC-RSS-JUST-SECURITY",
+    "match_any": [
+        "Puerto Rico",
+        "Puerto Rican",
+        "Commonwealth of Puerto Rico",
+        "PROMESA",
+        "Financial Oversight and Management Board",
+        "Roosevelt Roads",
+        "Fort Buchanan",
+        "Vieques",
+        "José Aponte de la Torre",
+        "Jose Aponte de la Torre",
+        "Ramey Air Force Base",
+    ],
+}
+
 
 def _load_sources() -> list[dict]:
     with open(_SOURCES_PATH) as f:
-        return yaml.safe_load(f).get("feeds", [])
+        sources = yaml.safe_load(f).get("feeds", [])
+    # Keep this code-side registration idempotent.  A future migration may move
+    # it into sources.yaml without creating a duplicate feed.
+    if not any(source.get("name") == _JUST_SECURITY_SOURCE["name"] for source in sources):
+        sources.append(dict(_JUST_SECURITY_SOURCE))
+    return sources
+
+
+def _entry_filter_text(entry: dict) -> str:
+    content = entry.get("content") or []
+    content_text = " ".join(
+        str(block.get("value", "")) for block in content if isinstance(block, dict)
+    )
+    tags = " ".join(
+        str(tag.get("term", "")) for tag in entry.get("tags") or [] if isinstance(tag, dict)
+    )
+    return " ".join(
+        [
+            str(entry.get("title", "")),
+            str(entry.get("summary", "")),
+            content_text,
+            tags,
+        ]
+    ).casefold()
+
+
+def _source_accepts_entry(entry: dict, source: dict) -> bool:
+    terms = [
+        str(term).strip().casefold()
+        for term in source.get("match_any") or []
+        if str(term).strip()
+    ]
+    if not terms:
+        return True
+    text = _entry_filter_text(entry)
+    return any(term in text for term in terms)
 
 
 def _parse_date(entry: dict) -> datetime:
@@ -63,7 +123,7 @@ def _entry_to_raw_item(entry: dict, source_name: str, tier: str) -> RawItem | No
 
 
 def poll_all() -> list[RawItem]:
-    """Poll all feeds defined in sources.yaml. Returns deduplicated RawItems."""
+    """Poll all feeds defined in sources.yaml plus bounded code-registered sources."""
     sources = _load_sources()
     seen_ids: set[str] = set()
     items: list[RawItem] = []
@@ -72,15 +132,27 @@ def poll_all() -> list[RawItem]:
         url = source.get("url", "")
         name = source.get("name", url)
         tier = source.get("tier", "T2")
+        accepted = 0
+        rejected = 0
 
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries:
+                if not _source_accepts_entry(entry, source):
+                    rejected += 1
+                    continue
                 item = _entry_to_raw_item(entry, name, tier)
                 if item and item.item_id not in seen_ids:
                     seen_ids.add(item.item_id)
                     items.append(item)
-            log.info("Polled %s: %d entries", name, len(feed.entries))
+                    accepted += 1
+            log.info(
+                "Polled %s: %d entries, %d accepted, %d filtered",
+                name,
+                len(feed.entries),
+                accepted,
+                rejected,
+            )
         except Exception as exc:
             log.warning("Feed poll failed for %s: %s", name, exc)
 
