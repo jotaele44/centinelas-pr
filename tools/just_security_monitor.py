@@ -186,7 +186,9 @@ def main(argv: list[str] | None = None) -> int:
         events.extend(living_events)
 
     feed_closed = (
-        feed_run["certification"] == "PASS" and feed_run["counts"].get("unresolved", 0) == 0
+        feed_run["certification"] == "PASS"
+        and feed_run["counts"].get("unresolved", 0) == 0
+        and feed_run["counts"].get("detail_failures", 0) == 0
     )
     certification = (
         "PASS"
