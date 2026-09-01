@@ -378,6 +378,49 @@
       }
     },
     {
+      "id": "disabled-email-ingestion-core",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "The Gmail adapter is a disabled-by-default design and offline dry-run contract. It cannot promote records without explicit operator acceptance and exposes no live account or standalone GUI workflow.",
+      "candidate_ids": [
+        "analysis_module:scripts/email_ingestion_dry_run.py",
+        "analysis_symbol:scripts/email_ingestion_dry_run.py:main",
+        "cli_surface:scripts/email_ingestion_dry_run.py",
+        "python_module:server/backend/email_review_contract.py",
+        "python_module:src/centinelas/ingest/email/__init__.py",
+        "python_module:src/centinelas/ingest/email/adapter.py",
+        "python_module:src/centinelas/ingest/email/models.py",
+        "python_module:src/centinelas/ingest/email/processing.py",
+        "python_symbol:server/backend/email_review_contract.py:EmailReviewDecision",
+        "python_symbol:server/backend/email_review_contract.py:EmailReviewQueueItem",
+        "python_symbol:server/backend/email_review_contract.py:activation_status",
+        "python_symbol:src/centinelas/ingest/email/adapter.py:EmailSourceProfile",
+        "python_symbol:src/centinelas/ingest/email/adapter.py:GmailClientProtocol",
+        "python_symbol:src/centinelas/ingest/email/adapter.py:JsonlIdentityLedger",
+        "python_symbol:src/centinelas/ingest/email/adapter.py:OfflineFakeGmailClient",
+        "python_symbol:src/centinelas/ingest/email/adapter.py:load_checkpoint",
+        "python_symbol:src/centinelas/ingest/email/models.py:AlertResultRecord",
+        "python_symbol:src/centinelas/ingest/email/models.py:EmailAttachmentRecord",
+        "python_symbol:src/centinelas/ingest/email/models.py:EmailMessageRecord",
+        "python_symbol:src/centinelas/ingest/email/models.py:GmailSyncCheckpoint",
+        "python_symbol:src/centinelas/ingest/email/models.py:GmailSyncReceipt",
+        "python_symbol:src/centinelas/ingest/email/models.py:RawItemLineage",
+        "python_symbol:src/centinelas/ingest/email/processing.py:accepted_result_to_raw_item",
+        "python_symbol:src/centinelas/ingest/email/processing.py:canonicalize_url",
+        "python_symbol:src/centinelas/ingest/email/processing.py:normalize_rfc822",
+        "python_symbol:src/centinelas/ingest/email/processing.py:parse_google_alert_results",
+        "python_symbol:src/centinelas/ingest/email/processing.py:sanitize_html",
+        "python_symbol:src/centinelas/ingest/email/processing.py:sha256_text"
+      ],
+      "tests": {
+        "contract": [
+          "tests/test_email_ingestion_design.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
       "id": "post-freeze-federal-release-core",
       "classification": "internal",
       "status": "active",
