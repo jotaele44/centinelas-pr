@@ -26,6 +26,17 @@ Centinelas is a sibling system to MoneySweep PR:
 
 Centinelas should not duplicate MoneySweep. It should create the upstream context that MoneySweep later verifies through official records.
 
+## Desktop app
+
+Double-click launchers at the repo root start the local desktop app (first run
+installs dependencies, later runs work offline):
+
+- `PRII-CENTINELAS.command` (macOS) / `PRII-CENTINELAS.app`
+- `PRII-CENTINELAS.bat` (Windows)
+- `PRII-CENTINELAS.sh` (Linux)
+
+See [`desktop/README.md`](desktop/README.md) for details.
+
 ## Setup / Development
 
 Requires **Python 3.10+** (CI tests 3.10–3.12).
@@ -37,9 +48,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # Runtime + dev tooling (matches CI). The shared prii-maintenance/prii-export-utils
-# packages resolve from a sibling thehub-pr checkout via [tool.uv.sources], so clone
-# it alongside this repo and install with uv:
-[ -d ../thehub-pr ] || git clone https://github.com/jotaele44/thehub-pr.git ../thehub-pr
+# packages are pinned to an immutable thehub-pr git commit via [tool.uv.sources]
+# (rev = a fixed SHA, not a local path), so uv fetches them straight from GitHub
+# at that commit -- no sibling thehub-pr checkout is required:
 pip install uv && uv pip install -e ".[dev]" -r server/backend/requirements.txt
 ```
 

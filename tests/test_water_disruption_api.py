@@ -11,6 +11,7 @@ def test_shadow_water_routes_are_mounted_and_discoverable():
     assert client.get('/water-disruption/sources').status_code == 200
     console = client.get('/water-disruption/console')
     assert console.status_code == 200
+    assert console.headers['content-type'].startswith('text/html')
     assert 'Shadow mode' in console.text
 
 

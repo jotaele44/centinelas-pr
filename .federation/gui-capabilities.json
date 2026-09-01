@@ -214,6 +214,7 @@
           "/water-disruption"
         ],
         "components": [
+          "frontend/src/api/pipelineClient.js",
           "frontend/src/components/Header.jsx",
           "frontend/src/pages/WaterDisruption.jsx"
         ],
@@ -227,10 +228,34 @@
           "tests/test_water_disruption_api.py"
         ],
         "contract": [
-          "tests/test_gui_parity.py"
+          "tests/test_gui_parity.py",
+          "tests/test_water_disruption_api.py"
         ],
         "e2e": [
           "frontend/tests/gui-parity.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "federation-export-helpers",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Deterministic ID, normalization, and hashing helpers support federation export scripts; they are implementation primitives rather than standalone operator workflows.",
+      "analysis": {
+        "files": [
+          "scripts/prii_export_utils.py"
+        ],
+        "symbols": [
+          "scripts/prii_export_utils.py:fid",
+          "scripts/prii_export_utils.py:norm",
+          "scripts/prii_export_utils.py:sha256"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_federation_export.py",
+          "tests/test_gui_parity.py"
         ]
       }
     },
@@ -253,6 +278,102 @@
         "contract": [
           "tests/test_water_disruption.py",
           "tests/test_water_disruption_api.py"
+        ]
+      }
+    },
+    {
+      "id": "space-data-discovery-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Bounded source parsing, lead identity, provenance validation, and Hub package projection are producer-side controls. They emit qualified discovery records for downstream routing and are not a standalone operator workflow.",
+      "analysis": {
+        "files": [
+          "src/centinelas/space_discovery.py",
+          "scripts/federation_export_space.py"
+        ],
+        "symbols": [
+          "src/centinelas/space_discovery.py:APICatalogAdapter",
+          "src/centinelas/space_discovery.py:BaseAdapter",
+          "src/centinelas/space_discovery.py:DedupStore",
+          "src/centinelas/space_discovery.py:FailureLedger",
+          "src/centinelas/space_discovery.py:HTMLChangeAdapter",
+          "src/centinelas/space_discovery.py:ManualReceiptAdapter",
+          "src/centinelas/space_discovery.py:RSSAtomAdapter",
+          "src/centinelas/space_discovery.py:RoutingReceiptStore",
+          "src/centinelas/space_discovery.py:RunLedger",
+          "src/centinelas/space_discovery.py:SitemapAdapter",
+          "src/centinelas/space_discovery.py:SourceHealthStore",
+          "src/centinelas/space_discovery.py:build_lead",
+          "src/centinelas/space_discovery.py:canonical_url",
+          "src/centinelas/space_discovery.py:enrich_federation_attributes",
+          "src/centinelas/space_discovery.py:idempotency_key",
+          "src/centinelas/space_discovery.py:route_receipt",
+          "src/centinelas/space_discovery.py:sha256_bytes",
+          "src/centinelas/space_discovery.py:utc_now",
+          "src/centinelas/space_discovery.py:validate_lead",
+          "scripts/federation_export_space.py:build_streams",
+          "scripts/federation_export_space.py:main",
+          "scripts/federation_export_space.py:write_space_package"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_space_discovery.py",
+          "tests/test_space_federation_export.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
+    },
+    {
+      "id": "space-observation-intake-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "The embedded logical producer validates routed discovery leads, persists restart-safe intake ledgers, and emits Hub packages. It is an internal federation boundary with no direct operator workflow or standalone GUI surface.",
+      "analysis": {
+        "files": [
+          "src/centinelas/space_observations/__init__.py",
+          "src/centinelas/space_observations/producer.py",
+          "src/centinelas/space_observations/retry.py",
+          "src/centinelas/space_observations/routing.py"
+        ],
+        "symbols": [
+          "src/centinelas/space_observations/producer.py:IntakeEngine",
+          "src/centinelas/space_observations/producer.py:IntakeResult",
+          "src/centinelas/space_observations/producer.py:export_federation",
+          "src/centinelas/space_observations/retry.py:retry_failed",
+          "src/centinelas/space_observations/routing.py:route_to_embedded_producer"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_gui_parity.py",
+          "tests/test_space_observations_boundaries.py",
+          "tests/test_space_observations_embedded.py",
+          "tests/test_space_observations_schema_freeze.py"
+        ]
+      }
+    },
+    {
+      "id": "drought-impact-reference-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Reference-only drought impact records enforce cross-repository hydrology ownership and preserve AguaYLuz links as provisional candidate bindings until the producer contract is certified. This is an internal federation boundary rather than a standalone operator workflow.",
+      "analysis": {
+        "files": [
+          "research/drought/impact_adapter.py"
+        ],
+        "symbols": [
+          "research/drought/impact_adapter.py:build_impact_event",
+          "research/drought/impact_adapter.py:reject_embedded_hydrology"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_drought_impact_adapter_v0_1.py",
+          "tests/test_gui_parity.py"
         ]
       }
     },

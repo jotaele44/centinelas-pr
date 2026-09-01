@@ -1,0 +1,23 @@
+{
+  "contract_id": "centinelas-discovery-to-centinelas-space-observations-routing-ack",
+  "version": "1.0.0",
+  "input": {
+    "producer": "centinelas-pr",
+    "accepted_review_status": ["qualified", "routed"],
+    "required_route": {"primary": "centinelas-space-observations", "correlation_target": "thehub-pr"}
+  },
+  "ack": {
+    "required_fields": ["ack_id", "lead_id", "lead_sha256", "receiver", "received_at", "disposition", "reason_code", "acquisition_id", "idempotency_key", "receipt_sha256"],
+    "dispositions": ["accepted", "duplicate", "rejected", "deferred", "completed", "failed"],
+    "reason_codes": ["ACCEPTED_FOR_ACQUISITION", "ALREADY_REGISTERED", "INVALID_SCHEMA", "ROUTE_MISMATCH", "UNQUALIFIED_LEAD", "SOURCE_UNAVAILABLE", "OUT_OF_SCOPE", "INTAKE_INTERNAL_ERROR"],
+    "failed_target_only": true,
+    "ledger_root": "data/space_observations/ledgers"
+  },
+  "invariants": [
+    "Every received lead receives one disposition per attempt.",
+    "Replays return the original acquisition identifier.",
+    "No acknowledgement contains a UAP conclusion.",
+    "Centinelas owns the lead and centinelas-space-observations owns the acquisition.",
+    "ovnis-pr remains case authority and thehub-pr remains correlation authority."
+  ]
+}

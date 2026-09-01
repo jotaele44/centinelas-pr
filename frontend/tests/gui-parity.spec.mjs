@@ -71,3 +71,25 @@ for (const route of routes) {
     expect(runtimeFailures, runtimeFailures.join("\n")).toEqual([]);
   });
 }
+
+test("water disruption console is reachable through the app route", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const navigationLink = page.locator('a[href="/water-disruption"]').first();
+  await expect(navigationLink).toHaveAccessibleName(
+    /Interrupciones de agua|Water disruptions/,
+  );
+  await navigationLink.click();
+
+  await expect(page).toHaveURL(/\/water-disruption\/?$/);
+  await expect(
+    page.getByRole("heading", { name: "Water Disruption Shadow Queue" }),
+  ).toBeVisible();
+
+  const consoleFrame = page.frameLocator(
+    'iframe[title="Water disruption shadow console"]',
+  );
+  await expect(
+    consoleFrame.getByRole("heading", { name: "Water Disruption Shadow Queue" }),
+  ).toBeVisible();
+  await expect(consoleFrame.getByText("Shadow mode")).toBeVisible();
+});

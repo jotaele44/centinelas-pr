@@ -1,0 +1,35 @@
+{
+  "created_at": "2026-08-27T12:00:00Z",
+  "export_contract_version": "1.0.0",
+  "extracted_at": "2026-08-27T12:00:00Z",
+  "federation": {
+    "hub_parent": "thehub-pr",
+    "producer_repo": "centinelas-pr"
+  },
+  "files": [
+    {
+      "filename": "sources.jsonl",
+      "record_count": 1,
+      "schema_id": "federation_source.schema.json",
+      "sha256": "375c7fe96d01be1f5840afe1d2eac93d6a84b5bfe6a2bead3fad7fb8b0e474c2",
+      "stream": "sources"
+    },
+    {
+      "filename": "entities.jsonl",
+      "record_count": 1,
+      "schema_id": "federation_entity.schema.json",
+      "sha256": "4dedf1fb1989d8d63d234d32b4605ac87b40e723597ee42887a0362b2ed58965",
+      "stream": "entities"
+    },
+    {
+      "filename": "observations.jsonl",
+      "record_count": 1,
+      "schema_id": "federation_observation.schema.json",
+      "sha256": "2bc48baca339a8368e67c36ac13c9f459f8eb7349d1674bcd66c15d7b7543064",
+      "stream": "observations"
+    }
+  ],
+  "mode": "production",
+  "package_id": "pkg_223246d4ccccad9626ae56f6fccc4d82",
+  "producer": "centinelas-space-observations"
+}

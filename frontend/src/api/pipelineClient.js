@@ -44,6 +44,19 @@ export const getQueue = () => getJSON("/queue", []);
 export const getSources = () => getJSON("/sources", []);
 export const getStatus = () => getJSON("/status", {});
 export const getHandoffs = () => getJSON("/handoffs", []);
+export const getWaterDisruptionConsole = async () => {
+  const url = `${API_BASE}/water-disruption/console`;
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const contentType = response.headers.get("content-type") || "";
+    return {
+      available: response.ok && contentType.toLowerCase().includes("text/html"),
+      url,
+    };
+  } catch (_error) {
+    return { available: false, url };
+  }
+};
 export const createHandoff = (itemId, targets, options = {}) =>
   postJSON(`/handoffs/${encodeURIComponent(itemId)}`, {
     targets,

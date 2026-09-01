@@ -14,14 +14,21 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Prepare isolated canary branch
         env:
           CANARY_BRANCH: ${{ inputs.canary_branch }}
         run: |
-          case "$CANARY_BRANCH" in canary/*) ;; *) echo unsafe >&2; exit 1;; esac
+          case "$CANARY_BRANCH" in
+            canary/*) ;;
+            *) echo "unsafe canary_branch" >&2; exit 1;;
+          esac
+          if ! printf '%s' "$CANARY_BRANCH" | grep -Eq '^canary/[A-Za-z0-9._-]+$'; then
+            echo "unsafe canary_branch" >&2
+            exit 1
+          fi
           if git ls-remote --exit-code --heads origin "$CANARY_BRANCH" >/dev/null 2>&1; then
             git fetch origin "$CANARY_BRANCH"
             git switch -C "$CANARY_BRANCH" "origin/$CANARY_BRANCH"
@@ -63,9 +70,11 @@ jobs:
           (root/'dispatch-ledger.json').write_text(json.dumps({'canary_branch':os.environ['CANARY_BRANCH'],'entries':ledger},indent=2,sort_keys=True)+'\n')
           PY
       - name: Commit dispatch ledger to canary branch
+        env:
+          CANARY_BRANCH: ${{ inputs.canary_branch }}
         run: |
           git config user.name foia-canary-bot
           git config user.email actions@users.noreply.github.com
           git add artifacts/foia_canary_dispatch
           git diff --cached --quiet || git commit -m "test: record FOIA canary dispatch [skip ci]"
-          git push origin HEAD:${{ inputs.canary_branch }}
+          git push origin "HEAD:$CANARY_BRANCH"

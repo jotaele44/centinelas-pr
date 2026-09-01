@@ -1,0 +1,68 @@
+{
+  "repo": "centinelas-pr",
+  "generatedAt": "2026-08-24",
+  "federationPackage": {
+    "spec": "https://github.com/jotaele44/thehub-pr/releases/download/federation-design-v0.3.0/pr-federation-react-0.3.0.tgz",
+    "resolvedVersion": "0.3.0",
+    "shipsTestHarnessContract": false,
+    "versionSkewNote": "Pinned to a github-release tarball for v0.3.0, which is pre-v0.4 and does not ship a test-harness.contract.json export (package.json 'exports' map only lists '.', './styles.css', './tokens.json', './package.json'). v0.3.0's src/index.jsx also exports a materially smaller surface than the full symbol list this audit was briefed to grep for: FederationThemeProvider, useFederationTheme, FederationButton, FederationPanel, FEDERATION_STATUS_ROLES, federationStatusRole, federationTone, FederationStatusBadge, FederationEmptyState, FederationStatCard. Everything else in the briefed list (FederationIconButton, FederationSemanticBadge, FederationEvidenceTierBadge, FederationConfidenceBadge, FederationProvenanceBadge, FederationFreshnessBadge, FederationSourceBadge, FederationLoadingState, FederationErrorState, FederationFilteredEmptyState, FederationOfflineState, FederationDegradedState, FederationPartialDataState, FederationStaleDataState, FederationAsyncState) does not exist in the installed v0.3.0 package and is not importable by this repo without a version bump.",
+    "importedSymbols": {
+      "FederationEmptyState": 1,
+      "federationTone": 4
+    },
+    "stylesImport": "@pr-federation/react/styles.css imported once, globally, in frontend/src/main.jsx",
+    "unusedButAvailableSymbols": ["FederationButton", "FederationPanel", "FederationStatusBadge", "FederationStatCard", "FederationThemeProvider", "useFederationTheme"]
+  },
+  "shadcn": {
+    "componentsJsonPresent": true,
+    "style": "new-york",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "iconLibrary": "lucide",
+    "localUiPrimitives": [
+      "badge.jsx",
+      "button.jsx",
+      "card.jsx",
+      "input.jsx",
+      "label.jsx",
+      "skeleton.jsx",
+      "toast.jsx",
+      "toaster.jsx",
+      "use-toast.jsx"
+    ],
+    "notablyAbsentPrimitives": ["dialog", "toggle", "switch", "tabs", "select", "dropdown-menu"]
+  },
+  "controlSourceMap": {
+    "button": "Mixed. shadcn Button (@/components/ui/button) is used in exactly one place (Handoff.jsx, the 'Entregar' action). Every other clickable control in the app (theme toggle, language toggle, mobile-nav toggle, pipeline domain filters) is a raw <button> styled with hand-written Tailwind classes. FederationButton (available in v0.3.0) is imported nowhere.",
+    "dialog": "Not implemented anywhere in this repo. No shadcn dialog primitive exists under frontend/src/components/ui/, and no other modal/overlay pattern was found by a repo-wide grep for dialog|Dialog|modal|Modal. Screenshot evidence for a dialog control could not be captured for this reason — noted as a scope limitation, not a bug.",
+    "statusBadge": "Split across two independent lineages. (1) DomainBadge and EvidenceTierBadge wrap the shadcn Badge primitive (@/components/ui/badge, variant=\"outline\") with repo-specific Tailwind color classes. (2) ConfidenceBadge and HandoffStatusBadge bypass shadcn Badge entirely: they call federationTone() from @pr-federation/react directly and render a raw <span> with the returned .fd-status class + data-status attribute — i.e. they consume the federation design system's CSS layer without going through its FederationStatusBadge component wrapper (which exists in v0.3.0 but is unused).",
+    "emptyState": "FederationEmptyState from @pr-federation/react, consumed through one shared local wrapper (frontend/src/components/ListState.jsx) that also owns the loading (Skeleton) and error (role=\"alert\") states around it. This is the only Federation *component* (as opposed to the federationTone utility) actually rendered anywhere in the app.",
+    "toggle": "No dedicated toggle/switch primitive (shadcn or Federation) is used. ThemeToggle and LanguageToggle in frontend/src/components/Header.jsx are hand-built raw <button> elements with aria-label + title reflecting the current state; there is no ARIA toggle role (aria-pressed) on either."
+  },
+  "themeSupport": {
+    "light": true,
+    "dark": true,
+    "toggleFound": true,
+    "toggleImplementation": "Raw <button> in Header.jsx (not a shadcn/Federation Toggle component), calling useTheme().toggleTheme(). Sets both the Tailwind .dark class and data-theme attribute on <html> (frontend/src/lib/ThemeContext.jsx), which is what the federation.css .fd-status tokens key off via [data-theme=\"dark\"]. Preference is persisted to localStorage under the key centinelas_theme and falls back to prefers-color-scheme on first load.",
+    "note": "The header's language toggle defaults to the browser's Accept-Language/navigator.language, so English-locale automation (like the shared a11y-runner's default browser context) sees English button labels (\"Switch to dark mode\") rather than the Spanish labels (\"Cambiar a modo oscuro\") visible in a Spanish-locale browser — both resolve to the same control."
+  },
+  "screenshots": [
+    "docs/a11y-evidence/header_light_390x844.png",
+    "docs/a11y-evidence/header_light_1280x800.png",
+    "docs/a11y-evidence/header_dark_390x844.png",
+    "docs/a11y-evidence/header_dark_1280x800.png",
+    "docs/a11y-evidence/handoff_light_390x844.png",
+    "docs/a11y-evidence/handoff_light_1280x800.png",
+    "docs/a11y-evidence/handoff_dark_390x844.png",
+    "docs/a11y-evidence/handoff_dark_1280x800.png",
+    "docs/a11y-evidence/pipeline_light_390x844.png",
+    "docs/a11y-evidence/pipeline_light_1280x800.png",
+    "docs/a11y-evidence/pipeline_dark_390x844.png",
+    "docs/a11y-evidence/pipeline_dark_1280x800.png",
+    "docs/a11y-evidence/monitor_light_390x844.png",
+    "docs/a11y-evidence/monitor_light_1280x800.png",
+    "docs/a11y-evidence/monitor_dark_390x844.png",
+    "docs/a11y-evidence/monitor_dark_1280x800.png"
+  ],
+  "screenshotCoverageNote": "button (Handoff 'Entregar'), badge (DomainBadge/EvidenceTierBadge on shadcn Badge; ConfidenceBadge/HandoffStatusBadge on raw federationTone() spans) and toggle (header ThemeToggle/LanguageToggle) are all covered, in both light and dark, at both viewports, across the header/handoff/pipeline/monitor routes. dialog has no coverage because no dialog control exists anywhere in this app (see controlSourceMap.dialog)."
+}

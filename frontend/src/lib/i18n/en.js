@@ -9,6 +9,7 @@ export const EN = {
   "Asuntos": "Matters",
   "Fuentes": "Sources",
   "Pipeline": "Pipeline",
+  "Interrupciones de agua": "Water disruptions",
   "Handoff": "Handoff",
   "Señal temprana → MoneySweep": "Early signal → MoneySweep",
   "Navegación principal": "Main navigation",

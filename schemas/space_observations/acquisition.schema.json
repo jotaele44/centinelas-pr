@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prii.local/schemas/centinelas/space_observations/acquisition.schema.json",
+  "title": "Centinelas Space Observation Acquisition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "acquisition_id", "lead_id", "lead_sha256", "idempotency_key", "source_id", "source_url", "phase", "network_acquisition_performed", "status", "external_storage_root", "created_at", "analytic_boundaries", "synthetic"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "acquisition_id": {"type": "string", "pattern": "^acq_[a-f0-9]{32}$"},
+    "lead_id": {"type": "string", "pattern": "^CENT-SPACE-[0-9]{4}-[A-F0-9]{16}$"},
+    "lead_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "idempotency_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_id": {"type": "string", "minLength": 1},
+    "source_url": {"type": "string", "format": "uri"},
+    "phase": {"const": "intake_only"},
+    "network_acquisition_performed": {"const": false},
+    "status": {"const": "registered"},
+    "external_storage_root": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "analytic_boundaries": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uap_confirmation_prohibited", "classified_capability_inference_prohibited", "negative_inference_prohibited", "correlation_owner"],
+      "properties": {
+        "uap_confirmation_prohibited": {"const": true},
+        "classified_capability_inference_prohibited": {"const": true},
+        "negative_inference_prohibited": {"const": true},
+        "correlation_owner": {"const": "thehub-pr"}
+      }
+    },
+    "synthetic": {"type": "boolean"}
+  }
+}
