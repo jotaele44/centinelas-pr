@@ -1,0 +1,37 @@
+{
+  "approval_id": "federal-records-limited-metadata-pilot-20260728",
+  "workflow_run_id": 30380787390,
+  "workflow_head": "15502ee4e9b00282a7f0f5e814dd58b141e91dcb",
+  "artifact_sha256": "641082d53aeadb0c541b414fabf09fa382a8ac3b0bc689e2e5b7631be77e997d",
+  "mode": "metadata_only",
+  "sources": {
+    "nara_ndc": {
+      "records_per_run": [11, 11],
+      "requests_used": 2,
+      "request_budget": 4,
+      "inventory_digest": "19cdd24825cc7c2af23bc9fb57d43a73a92261310e474d396133ce6b8de041f3",
+      "parser_digest": "4b88962ca9bd43a03a7c6a8488a72c1565e5a69adcd7f521bc92b39bda1713a5",
+      "deterministic": true
+    },
+    "dia_reading_room": {
+      "records_per_run": [26, 26],
+      "requests_used": 2,
+      "request_budget": 4,
+      "inventory_digest": "813cce47a9efae755fffb3d27b2a97d88972190db3bf07e5ff70a3346dee1c4b",
+      "parser_digest": "5d62ab38ac0d5487b673f7519df090cba3015ab2b420150041c0c5d1357234cf",
+      "deterministic": true
+    },
+    "air_force_blue_book": {
+      "records_per_run": [3, 3],
+      "requests_used": 2,
+      "request_budget": 4,
+      "inventory_digest": "bcd4563725bbeaae4088f6dd84009bbbca683332b0db0802d5e0d04f50d947fb",
+      "parser_digest": "f84b4d686a4717dfa64746c61409ac8b9a6096b5e5d3df60e226f0297c5f60d4",
+      "deterministic": true
+    }
+  },
+  "documents_downloaded": 0,
+  "baseline_mutated": false,
+  "linked_binary_fetch": false,
+  "automatic_attribution": false
+}

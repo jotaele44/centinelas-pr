@@ -1,0 +1,16 @@
+name: Federal records limited metadata pilot — retired
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  retired:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: One-shot pilot is closed
+        run: |
+          echo "The approved 2026-07-28 limited metadata pilot has completed."
+          echo "Create a new expiring approval record and reviewed workflow for any future pilot."

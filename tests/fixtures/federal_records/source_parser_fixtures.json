@@ -1,0 +1,10 @@
+{
+  "air_force_blue_book": "<a href=\"/files/research/blue-book/puerto-rico.pdf\">Project Blue Book Puerto Rico</a>",
+  "cia_reading_room": "<a href=\"/readingroom/document/cia-rdp-001\">Puerto Rico memorandum</a>",
+  "dia_reading_room": "<a class=\"download\" href=\"/FOIA/Documents/pr-report.pdf\">DIA report</a>",
+  "doe_aec": "<a href=\"/sites/default/files/puerto-rico-nuclear-center.pdf\">AEC report</a>",
+  "nara_catalog": "{\"records\":[{\"naId\":\"595618\",\"title\":\"Puerto Rico command history\",\"date\":\"1952\",\"recordGroupNumber\":\"341\"}],\"next\":null}",
+  "nara_ndc": "<a class=\"release\" data-id=\"rg341\" href=\"/declassification/ndc/releases/rg341.pdf\">RG 341 release</a>",
+  "nhhc": "<a href=\"/research/archives/collections/roosevelt-roads.html\">Roosevelt Roads collection</a>",
+  "nsa_releases": "<a class=\"release\" href=\"/Portals/75/documents/news-features/declassified-documents/pr.pdf\">NSA release</a>"
+}
