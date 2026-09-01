@@ -1,0 +1,27 @@
+{
+  "approval_id": "federal-records-limited-metadata-pilot-20260728",
+  "approved_by": "jotaele44",
+  "pilot_executed": true,
+  "all_sources_deterministic": true,
+  "documents_downloaded": 0,
+  "baseline_mutated": false,
+  "linked_binary_fetch": false,
+  "automatic_attribution": false,
+  "sources": {
+    "nara_ndc": {
+      "deterministic": true,
+      "inventory_digest": "19cdd24825cc7c2af23bc9fb57d43a73a92261310e474d396133ce6b8de041f3",
+      "parser_digest": "4b88962ca9bd43a03a7c6a8488a72c1565e5a69adcd7f521bc92b39bda1713a5"
+    },
+    "dia_reading_room": {
+      "deterministic": true,
+      "inventory_digest": "813cce47a9efae755fffb3d27b2a97d88972190db3bf07e5ff70a3346dee1c4b",
+      "parser_digest": "5d62ab38ac0d5487b673f7519df090cba3015ab2b420150041c0c5d1357234cf"
+    },
+    "air_force_blue_book": {
+      "deterministic": true,
+      "inventory_digest": "bcd4563725bbeaae4088f6dd84009bbbca683332b0db0802d5e0d04f50d947fb",
+      "parser_digest": "f84b4d686a4717dfa64746c61409ac8b9a6096b5e5d3df60e226f0297c5f60d4"
+    }
+  }
+}

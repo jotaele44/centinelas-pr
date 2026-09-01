@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "mode": "metadata_only",
+  "pilot_enabled": false,
+  "linked_binary_fetch": false,
+  "baseline_mutation_allowed": false,
+  "emergency_kill_switch": {
+    "available": true,
+    "engaged": true,
+    "reason": "Reengaged after completion of approved one-shot metadata pilot"
+  },
+  "sources": {
+    "nara_ndc": {
+      "enabled": false,
+      "approval_status": "pilot_completed",
+      "approved_by": "jotaele44",
+      "approved_at": "2026-07-28T16:56:54Z",
+      "approval_expires_at": "2026-07-28T18:56:54Z",
+      "robots_allowed": true,
+      "policy_review_status": "reviewed",
+      "metadata_only": true,
+      "linked_binary_fetch": false,
+      "max_pages_per_run": 1,
+      "max_records_per_run": 100,
+      "daily_request_budget": 4
+    },
+    "dia_reading_room": {
+      "enabled": false,
+      "approval_status": "pilot_completed",
+      "approved_by": "jotaele44",
+      "approved_at": "2026-07-28T16:56:54Z",
+      "approval_expires_at": "2026-07-28T18:56:54Z",
+      "robots_allowed": true,
+      "policy_review_status": "reviewed",
+      "metadata_only": true,
+      "linked_binary_fetch": false,
+      "max_pages_per_run": 1,
+      "max_records_per_run": 100,
+      "daily_request_budget": 4
+    },
+    "air_force_blue_book": {
+      "enabled": false,
+      "approval_status": "pilot_completed",
+      "approved_by": "jotaele44",
+      "approved_at": "2026-07-28T16:56:54Z",
+      "approval_expires_at": "2026-07-28T18:56:54Z",
+      "robots_allowed": true,
+      "policy_review_status": "reviewed",
+      "metadata_only": true,
+      "linked_binary_fetch": false,
+      "max_pages_per_run": 1,
+      "max_records_per_run": 100,
+      "daily_request_budget": 4
+    },
+    "nara_catalog": {
+      "enabled": false,
+      "approval_status": "prohibited_by_robots",
+      "robots_allowed": false
+    },
+    "cia_reading_room": {
+      "enabled": false,
+      "approval_status": "prohibited_by_robots",
+      "robots_allowed": false
+    },
+    "nsa_releases": {
+      "enabled": false,
+      "approval_status": "remediation_pending"
+    },
+    "nhhc": {
+      "enabled": false,
+      "approval_status": "tls_diagnosis_pending"
+    },
+    "doe_aec": {
+      "enabled": false,
+      "approval_status": "endpoint_reverification_pending"
+    }
+  }
+}

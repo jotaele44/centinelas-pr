@@ -1,0 +1,32 @@
+{
+  "approval_id": "federal-records-limited-metadata-pilot-20260728",
+  "approved_by": "jotaele44",
+  "approved_at": "2026-07-28T16:56:54Z",
+  "approval_expires_at": "2026-07-28T18:56:54Z",
+  "approval_status": "approved",
+  "scope": {
+    "mode": "metadata_only",
+    "sources": [
+      "nara_ndc",
+      "dia_reading_room",
+      "air_force_blue_book"
+    ],
+    "max_pages_per_run": 1,
+    "max_records_per_run": 100,
+    "daily_request_budget_per_source": 4,
+    "two_clean_runs": true
+  },
+  "affirmations": {
+    "robots_reviewed_and_allowed": true,
+    "policy_material_reviewed": true,
+    "linked_binary_fetch_authorized": false,
+    "document_downloads_authorized": false,
+    "baseline_mutation_authorized": false,
+    "automatic_attribution_authorized": false,
+    "merge_authorized": false
+  },
+  "kill_switch": {
+    "may_be_disengaged_for_this_pilot_only": true,
+    "must_be_reengaged_after_completion": true
+  }
+}
