@@ -1,6 +1,7 @@
 """Additional fail-closed regression gates for Just Security monitoring."""
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -9,11 +10,13 @@ import httpx
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
+import just_security_monitor as monitor  # noqa: E402
 from centinelas.ingest import rss  # noqa: E402
 from just_security_monitor_core import (  # noqa: E402
     MAIN_FEED,
     TAG_FEED,
     acquire_article_receipts,
+    fetch_url,
     poll_relevant_feeds,
     snapshot_listing,
 )
@@ -61,6 +64,51 @@ def test_failed_detail_fetch_is_unresolved_not_false_exclusion():
     assert run["counts"]["unresolved"] == 1
     assert run["counts"]["excluded"] == 0
     assert run["counts"]["detail_failures"] == 1
+    assert any(
+        receipt["state"] == "UNRESOLVED" and receipt["http_status"] == 503
+        for receipt in run["receipts"]
+    )
+
+
+def test_transport_failure_is_unresolved_not_blocked():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("network unavailable", request=request)
+
+    with _client(handler) as client:
+        body, receipt = fetch_url(client, "https://www.justsecurity.org/feed/")
+    assert body is None
+    assert receipt["state"] == "UNRESOLVED"
+    assert receipt["http_status"] is None
+
+
+def test_503_listing_is_provisional_not_blocked():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, request=request, text="temporary outage")
+
+    with _client(handler) as client:
+        snapshot = snapshot_listing(client, "OUTAGE", "https://www.justsecurity.org/tag/test/")
+    assert snapshot["certification"] == "PROVISIONAL"
+    assert snapshot["receipts"][0]["state"] == "UNRESOLVED"
+
+
+def test_403_listing_remains_blocked():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(403, request=request, text="access denied")
+
+    with _client(handler) as client:
+        snapshot = snapshot_listing(client, "DENIED", "https://www.justsecurity.org/tag/test/")
+    assert snapshot["certification"] == "BLOCKED"
+    assert snapshot["receipts"][0]["state"] == "BLOCKED"
+
+
+def test_partial_state_is_schema_upgraded_without_discarding_existing_data(tmp_path):
+    path = tmp_path / "state.json"
+    path.write_text(json.dumps({"items": {"existing": {"value": 1}}}), encoding="utf-8")
+    state = monitor._load_state(path)
+    assert state["items"] == {"existing": {"value": 1}}
+    assert state["listings"] == {}
+    assert state["living"] == {}
+    assert state["schema_version"] == "just_security_monitor_state.v0.1"
 
 
 def test_listing_article_acquisition_hashes_metadata_and_preserves_order():
