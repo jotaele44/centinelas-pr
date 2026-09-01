@@ -16,11 +16,10 @@ log = logging.getLogger(__name__)
 
 _SOURCES_PATH = Path(__file__).parent / "sources.yaml"
 
-# Just Security is a global law/policy publication.  It is deliberately filtered
-# at intake so the global feed cannot silently flood the Puerto Rico signal
-# denominator.  The broader historical/search reconciliation lives in
-# tools/just_security_monitor.py; this source configuration is only the
-# prospective signal-intake gate.
+# Just Security is a global law/policy publication. The main feed is filtered so
+# it cannot silently flood the Puerto Rico denominator. The publisher's Puerto
+# Rico tag feed is also ingested as an independent high-precision manifestation;
+# neither manifestation is treated as a complete publisher-wide PR universe.
 _JUST_SECURITY_SOURCE = {
     "name": "Just Security",
     "url": "https://www.justsecurity.org/feed/",
@@ -40,15 +39,24 @@ _JUST_SECURITY_SOURCE = {
         "Ramey Air Force Base",
     ],
 }
+_JUST_SECURITY_TAG_SOURCE = {
+    "name": "Just Security - Puerto Rico tag",
+    "url": "https://www.justsecurity.org/tag/puerto-rico/feed/",
+    "tier": "T4",
+    "source_id": "CENT-SRC-RSS-JUST-SECURITY-PUERTO-RICO-TAG",
+}
 
 
 def _load_sources() -> list[dict]:
     with open(_SOURCES_PATH) as f:
         sources = yaml.safe_load(f).get("feeds", [])
-    # Keep this code-side registration idempotent.  A future migration may move
-    # it into sources.yaml without creating a duplicate feed.
-    if not any(source.get("name") == _JUST_SECURITY_SOURCE["name"] for source in sources):
-        sources.append(dict(_JUST_SECURITY_SOURCE))
+    # Keep code-side registration idempotent. A future migration may move these
+    # records into sources.yaml without creating duplicate feeds.
+    names = {source.get("name") for source in sources}
+    for source in (_JUST_SECURITY_SOURCE, _JUST_SECURITY_TAG_SOURCE):
+        if source["name"] not in names:
+            sources.append(dict(source))
+            names.add(source["name"])
     return sources
 
 
@@ -89,7 +97,12 @@ def _parse_date(entry: dict) -> datetime:
             try:
                 parts = tuple(val[:6])
                 return datetime(
-                    parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
+                    parts[0],
+                    parts[1],
+                    parts[2],
+                    parts[3],
+                    parts[4],
+                    parts[5],
                     tzinfo=timezone.utc,
                 )
             except Exception:
@@ -103,7 +116,11 @@ def _entry_to_raw_item(entry: dict, source_name: str, tier: str) -> RawItem | No
         return None
 
     title = entry.get("title", "").strip()
-    body = entry.get("summary", "") or entry.get("content", [{}])[0].get("value", "")
+    content = entry.get("content") or []
+    content_body = ""
+    if content and isinstance(content[0], dict):
+        content_body = str(content[0].get("value", ""))
+    body = entry.get("summary", "") or content_body
 
     published_at = _parse_date(entry)
     item_id = RawItem.make_id(url, published_at)
