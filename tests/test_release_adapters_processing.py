@@ -4,9 +4,9 @@ import json
 import pytest
 
 from centinelas.releases.adapters import (
+    SOURCE_REGISTRY,
     AdapterPolicyError,
     RateLimiter,
-    SOURCE_REGISTRY,
     build_adapter,
 )
 from centinelas.releases.processing import (

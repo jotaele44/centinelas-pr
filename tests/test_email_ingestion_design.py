@@ -12,7 +12,6 @@ from centinelas.ingest.email import (
     parse_google_alert_results,
 )
 
-
 RAW = b"""From: Google Alerts <googlealerts-noreply@google.com>\r
 To: operator@example.test\r
 Bcc: hidden@example.test\r

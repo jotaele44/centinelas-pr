@@ -10,8 +10,9 @@ import hashlib
 import json
 import math
 import re
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, Literal, Mapping, get_args
+from typing import Any, Literal, get_args
 
 ImpactType = Literal[
     "wildfire_activity",

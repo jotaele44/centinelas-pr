@@ -27,9 +27,11 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
-from prii_export_utils import fid as _fid, norm as _norm, sha256 as _sha256
+from prii_export_utils import fid as _fid
+from prii_export_utils import norm as _norm
+from prii_export_utils import sha256 as _sha256
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PRODUCER = "centinelas-pr"
@@ -47,7 +49,7 @@ STREAM_SCHEMA = {
 }
 
 
-def _lineage(phase: str) -> Dict[str, Any]:
+def _lineage(phase: str) -> dict[str, Any]:
     return {
         "producer_script": PRODUCER_SCRIPT,
         "producer_phase": phase,
@@ -56,7 +58,7 @@ def _lineage(phase: str) -> Dict[str, Any]:
     }
 
 
-def _load_source_registry(path: Path) -> Dict[str, Dict[str, str]]:
+def _load_source_registry(path: Path) -> dict[str, dict[str, str]]:
     import csv
 
     if not path.exists():
@@ -81,17 +83,17 @@ def _parse_utc_timestamp(value: Any) -> datetime | None:
 
 
 def _production_input_errors(
-    signals: List[Dict[str, Any]],
+    signals: list[dict[str, Any]],
     *,
     now: datetime,
     max_age_hours: float,
-) -> List[str]:
+) -> list[str]:
     if not signals:
         return ["production export rejects an empty live signal ledger"]
     if max_age_hours <= 0:
         return ["--max-age-hours must be greater than zero in production mode"]
 
-    captures: List[datetime] = []
+    captures: list[datetime] = []
     for index, signal in enumerate(signals, start=1):
         captured = _parse_utc_timestamp(signal.get("captured_at"))
         if captured is None:
@@ -111,14 +113,14 @@ def _production_input_errors(
 
 
 def build_streams(
-    signals: List[Dict[str, Any]],
-    registry: Dict[str, Dict[str, str]],
+    signals: list[dict[str, Any]],
+    registry: dict[str, dict[str, str]],
     now: str,
-) -> Dict[str, List[Dict[str, Any]]]:
-    sources: Dict[str, Dict[str, Any]] = {}
-    entities: Dict[str, Dict[str, Any]] = {}
-    relationships: Dict[str, Dict[str, Any]] = {}
-    observations: Dict[str, Dict[str, Any]] = {}
+) -> dict[str, list[dict[str, Any]]]:
+    sources: dict[str, dict[str, Any]] = {}
+    entities: dict[str, dict[str, Any]] = {}
+    relationships: dict[str, dict[str, Any]] = {}
+    observations: dict[str, dict[str, Any]] = {}
 
     for sig in signals:
         synthetic = bool(sig.get("is_synthetic"))
@@ -252,7 +254,7 @@ def _relationship(rel_id, source_id, src_ent, tgt_ent, rtype, confidence, synthe
     }
 
 
-def write_package(streams: Dict[str, List[Dict[str, Any]]], out_dir: Path, mode: str, now: str) -> Path:
+def write_package(streams: dict[str, list[dict[str, Any]]], out_dir: Path, mode: str, now: str) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     files = []
     for stream in ("sources", "entities", "relationships", "observations"):
