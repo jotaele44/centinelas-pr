@@ -87,7 +87,7 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: "22"
 
@@ -131,7 +131,7 @@ jobs:
 
       - name: Upload native setup visual evidence
         if: runner.os == 'Linux' && always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: centinelas-pr-native-setup-visuals
           path: desktop-ui-artifacts/*.png
@@ -176,7 +176,7 @@ jobs:
           hdiutil create -volname "PRII-CENTINELAS" -srcfolder "$staging" -ov -format UDZO "PRII-CENTINELAS-macOS.dmg"
           rm -rf "$staging"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: PRII-CENTINELAS-${{ runner.os }}
           path: |

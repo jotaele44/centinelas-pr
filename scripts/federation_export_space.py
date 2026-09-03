@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import federation_export as canonical_export  # noqa: E402
+
 from centinelas.space_discovery import (  # noqa: E402
     enrich_federation_attributes,
     sha256_bytes,

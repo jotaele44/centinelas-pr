@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import logging
 import os
 import urllib.error
@@ -141,13 +141,7 @@ def dispatch(item: ClassifiedItem, dry_run: bool = False) -> DispatchRecord:
             log.error("Dispatch failed for %s → %s: %s", item.item_id, repo, exc)
             errors.append(f"{repo}: {exc}")
 
-    status: str
-    if errors and not dispatched_to:
-        status = "failed"
-    elif errors:
-        status = "failed"
-    else:
-        status = "ok"
+    status = "failed" if errors and not dispatched_to or errors else "ok"
 
     record = DispatchRecord(
         item_id=item.item_id,
