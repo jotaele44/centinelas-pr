@@ -7,7 +7,7 @@ for workplace fatalities.
 
 from datetime import datetime, timezone
 
-from centinelas.classify.labels import DomainLabel, LABEL_TO_REPO
+from centinelas.classify.labels import LABEL_TO_REPO, DomainLabel
 from centinelas.classify.rules import is_critical_signal, keyword_classify
 from centinelas.models import ClassifiedItem
 from centinelas.route.router import resolve_targets

@@ -3,9 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from html.parser import HTMLParser
-from typing import Any, Callable
+from typing import Any
 from urllib.parse import urljoin
 
 

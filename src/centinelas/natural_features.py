@@ -15,7 +15,7 @@ import re
 import unicodedata
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Packaged alongside the module (like ingest/sources.yaml) so it resolves after a
 # normal pip install, not only from an editable/source checkout.
@@ -34,8 +34,8 @@ def _fold(value: Any) -> str:
 @lru_cache(maxsize=4)
 def _load_index(path_str: str):
     data = json.loads(Path(path_str).read_text(encoding="utf-8"))
-    key_to_ids: Dict[str, set] = {}
-    records: Dict[str, Dict[str, Any]] = {}
+    key_to_ids: dict[str, set] = {}
+    records: dict[str, dict[str, Any]] = {}
     for rec in data.get("features", []) or []:
         cid = rec["canonical_id"]
         records[cid] = rec
@@ -46,8 +46,8 @@ def _load_index(path_str: str):
 
 
 def resolve_natural_feature(
-    raw_text: str, resolver_path: Optional[Path] = None
-) -> Dict[str, Any]:
+    raw_text: str, resolver_path: Path | None = None
+) -> dict[str, Any]:
     """Map a raw place string to a canonical natural feature.
 
     Returns a dict with ``resolution_status`` in

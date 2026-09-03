@@ -5,9 +5,10 @@ import argparse
 import json
 from pathlib import Path
 
+from run_federal_records_canaries import SourceCanary, canonical_digest, run_source
+
 from centinelas.releases.pilot import load_manifest, readiness_certificate
 from centinelas.releases.source_endpoints import SOURCE_ENDPOINTS
-from run_federal_records_canaries import SourceCanary, canonical_digest, run_source
 
 REMEDIATION_SCOPE = (
     "nsa_releases",

@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import federation_export_space as exporter  # noqa: E402
+
 from centinelas.space_discovery import ManualReceiptAdapter, build_lead  # noqa: E402
 
 FIXED_NOW = "2026-08-27T12:00:00Z"
