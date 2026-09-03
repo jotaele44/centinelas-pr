@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "email_message_record.v0.1.schema.json",
+  "title": "EmailMessageRecord v0.1",
+  "type": "object",
+  "required": ["schema_version", "email_record_id", "provider", "account_alias", "provider_message_id", "sender_address", "provider_internal_date", "fetched_at", "normalized_envelope_sha256", "normalized_content_sha256", "source_profile_id", "ingestion_run_id", "federation_export_allowed"],
+  "properties": {
+    "schema_version": {"const": "email_message_record.v0.1"},
+    "email_record_id": {"type": "string", "minLength": 1},
+    "provider": {"const": "gmail"},
+    "account_alias": {"type": "string", "minLength": 1},
+    "provider_message_id": {"type": "string", "minLength": 1},
+    "sender_address": {"type": "string", "minLength": 1},
+    "provider_internal_date": {"type": "string", "format": "date-time"},
+    "fetched_at": {"type": "string", "format": "date-time"},
+    "normalized_envelope_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "normalized_content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_profile_id": {"type": "string", "minLength": 1},
+    "ingestion_run_id": {"type": "string", "minLength": 1},
+    "contains_personal_mailbox_data": {"const": true},
+    "federation_export_allowed": {"const": false},
+    "retention_class": {"enum": ["metadata_only", "normalized_content", "raw_message_retained"]}
+  },
+  "additionalProperties": true
+}

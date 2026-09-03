@@ -378,7 +378,10 @@ def _parse_html_table(soup: BeautifulSoup, cfg: dict, base_url: str) -> list[dic
         cells = row.find_all("td")
         if not cells:
             continue
-        values = dict(zip(columns, (c.get_text(" ", strip=True) for c in cells)))
+        # strict=False: scraped HTML tables are commonly ragged (a data row with
+        # fewer/more <td>s than the header row), and truncating to the shorter
+        # sequence here is the existing, intended behavior — not an error case.
+        values = dict(zip(columns, (c.get_text(" ", strip=True) for c in cells), strict=False))
         if not any(values.values()):
             continue
 

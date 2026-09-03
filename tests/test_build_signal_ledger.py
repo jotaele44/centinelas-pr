@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from build_signal_ledger import feed_source_id, item_to_signal, source_name_to_id  # noqa: E402
+
 from centinelas.classify.rules import keyword_classify  # noqa: E402
 from centinelas.models import ClassifiedItem, DomainLabel  # noqa: E402
 

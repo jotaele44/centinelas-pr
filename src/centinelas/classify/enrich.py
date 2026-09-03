@@ -195,9 +195,12 @@ def extract_recipients(title: str, body_text: str, source_name: str = "") -> lis
     candidates: list[str] = []
 
     # (1) Source anchor: the announcer of a procurement award is the awardee.
-    if source_name and _matches_any(_fold(text), _PROCUREMENT_TERMS):
-        if _fold(source_name) in _fold(title):
-            candidates.append(source_name.strip())
+    if (
+        source_name
+        and _matches_any(_fold(text), _PROCUREMENT_TERMS)
+        and _fold(source_name) in _fold(title)
+    ):
+        candidates.append(source_name.strip())
 
     # (2) Award-attribution patterns over title + body.
     for pattern in _RECIPIENT_RES:

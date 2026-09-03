@@ -1,0 +1,37 @@
+{
+  "approval_id": "federal-records-limited-metadata-pilot-20260728",
+  "transitions": [
+    {
+      "state": "pre_pilot",
+      "commit": "0bc3004913ecd5027168bd289c099712eb5541ab",
+      "pilot_enabled": false,
+      "kill_switch_engaged": true,
+      "enabled_sources": []
+    },
+    {
+      "state": "approved_window",
+      "commit": "15502ee4e9b00282a7f0f5e814dd58b141e91dcb",
+      "pilot_enabled": true,
+      "kill_switch_engaged": false,
+      "enabled_sources": [
+        "nara_ndc",
+        "dia_reading_room",
+        "air_force_blue_book"
+      ],
+      "approval_expires_at": "2026-07-28T18:56:54Z"
+    },
+    {
+      "state": "post_pilot",
+      "commit": "666d96ca676e89e7f6fec397c880f068b739bb7c",
+      "pilot_enabled": false,
+      "kill_switch_engaged": true,
+      "enabled_sources": []
+    }
+  ],
+  "nara_catalog_enabled": false,
+  "cia_reading_room_enabled": false,
+  "nsa_releases_enabled": false,
+  "nhhc_enabled": false,
+  "doe_aec_enabled": false,
+  "merged": false
+}

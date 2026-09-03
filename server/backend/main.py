@@ -147,6 +147,7 @@ def handoffs(limit: int = Query(default=500, ge=1, le=5000)) -> JSONResponse:
 @app.post("/handoffs/{item_id}")
 def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
     from datetime import datetime, timezone
+
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch_to_targets

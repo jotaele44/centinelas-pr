@@ -1,0 +1,15 @@
+{
+  "approval_id": "federal-records-limited-metadata-pilot-20260728",
+  "pilot_completed": true,
+  "pilot_enabled": false,
+  "emergency_kill_switch": {
+    "available": true,
+    "engaged": true
+  },
+  "enabled_sources": [],
+  "documents_downloaded": 0,
+  "linked_binary_fetch": false,
+  "baseline_mutated": false,
+  "automatic_attribution": false,
+  "pr_merged": false
+}

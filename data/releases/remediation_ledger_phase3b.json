@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-07-28T16:00:00Z",
+  "baseline_mutated": false,
+  "documents_downloaded": 0,
+  "sources": {
+    "nsa_releases": {
+      "previous_policy_url": "https://www.nsa.gov/Privacy-Program/",
+      "current_policy_url": "https://www.nsa.gov/Site-Policies/",
+      "official_verification": "CURRENT_OFFICIAL_PAGE_FOUND",
+      "disposition": "REVERIFY_CANARY_BEFORE_ANY_ENABLEMENT"
+    },
+    "nhhc": {
+      "index_url": "https://www.history.navy.mil/research/archives/digital-exhibits-highlights.html",
+      "diagnosis": "TLS_CERTIFICATE_VERIFY_FAILED_UNABLE_TO_GET_LOCAL_ISSUER_CERTIFICATE",
+      "tls_verification_bypass_allowed": false,
+      "disposition": "DISABLED_PENDING_CERTIFICATE_CHAIN_REMEDIATION"
+    },
+    "doe_aec": {
+      "previous_index_url": "https://www.energy.gov/nnsa/foia-reading-room",
+      "current_index_url": "https://www.energy.gov/nnsa/nnsa-foia-library",
+      "current_policy_url": "https://www.energy.gov/web-policies",
+      "official_verification": "CURRENT_OFFICIAL_PAGE_FOUND",
+      "disposition": "REVERIFY_CANARY_BEFORE_ANY_ENABLEMENT"
+    },
+    "nara_catalog": {
+      "disposition": "DISABLED_ROBOTS_DENIED",
+      "robots_bypass_allowed": false
+    },
+    "cia_reading_room": {
+      "disposition": "DISABLED_ROBOTS_DENIED",
+      "robots_bypass_allowed": false
+    }
+  }
+}
