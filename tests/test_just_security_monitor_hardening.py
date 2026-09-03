@@ -11,7 +11,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
 import just_security_monitor as monitor  # noqa: E402
-from centinelas.ingest import rss  # noqa: E402
 from just_security_monitor_core import (  # noqa: E402
     MAIN_FEED,
     TAG_FEED,
@@ -20,6 +19,8 @@ from just_security_monitor_core import (  # noqa: E402
     poll_relevant_feeds,
     snapshot_listing,
 )
+
+from centinelas.ingest import rss  # noqa: E402
 
 
 def _client(handler) -> httpx.Client:

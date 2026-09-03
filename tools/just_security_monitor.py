@@ -9,7 +9,6 @@ from pathlib import Path
 from urllib.parse import quote_plus
 
 import httpx
-
 from just_security_monitor_core import (
     LIVING_URLS,
     SEARCH_URL,
@@ -43,10 +42,7 @@ USER_AGENT = "Centinelas-PR/0.1 (+https://github.com/jotaele44/centinelas-pr)"
 
 
 def _load_state(path: Path) -> dict:
-    if not path.exists():
-        state = {}
-    else:
-        state = json.loads(path.read_text(encoding="utf-8"))
+    state = {} if not path.exists() else json.loads(path.read_text(encoding="utf-8"))
     state.setdefault("schema_version", "just_security_monitor_state.v0.1")
     state.setdefault("items", {})
     state.setdefault("listings", {})

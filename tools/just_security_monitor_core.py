@@ -210,9 +210,7 @@ def snapshot_listing(
     first_state = receipts[0]["state"] if receipts else "UNRESOLVED"
     if first_state == "BLOCKED":
         certification = "BLOCKED"
-    elif first_state != "PASS":
-        certification = "PROVISIONAL"
-    elif residue:
+    elif first_state != "PASS" or residue:
         certification = "PROVISIONAL"
     elif declared is not None and declared != len(urls):
         certification = "PROVISIONAL"

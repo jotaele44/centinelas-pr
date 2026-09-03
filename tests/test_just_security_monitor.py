@@ -10,7 +10,6 @@ import httpx
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
-from centinelas.ingest import rss  # noqa: E402
 from just_security_monitor_core import (  # noqa: E402
     MAIN_FEED,
     SEARCH_URL,
@@ -24,6 +23,8 @@ from just_security_monitor_core import (  # noqa: E402
     set_differences,
     snapshot_listing,
 )
+
+from centinelas.ingest import rss  # noqa: E402
 
 
 def _client(handler) -> httpx.Client:
