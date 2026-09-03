@@ -28,8 +28,12 @@ datas = [
     (str(REPO_ROOT / "data" / "reference"), "data/reference"),
     (str(REPO_ROOT / "data" / "signals"), "data/signals"),
     (str(BRANDING / "icon-256.png"), "assets/branding"),
-    # centinelas.ingest.rss loads sources.yaml relative to its own module file.
+    # centinelas.ingest.rss loads these files relative to its own module file.
     (str(REPO_ROOT / "src" / "centinelas" / "ingest" / "sources.yaml"), "centinelas/ingest"),
+    (
+        str(REPO_ROOT / "src" / "centinelas" / "ingest" / "just_security_sources.yaml"),
+        "centinelas/ingest",
+    ),
 ]
 for extra in ("exports", "reports"):
     d = REPO_ROOT / extra

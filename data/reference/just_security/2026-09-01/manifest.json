@@ -1,0 +1,40 @@
+{
+  "schema_version": "just_security_pr_corpus_snapshot.v0.1",
+  "recorded_at_utc": "2026-09-01T21:11:39Z",
+  "scope": "Public-web discovery manifestations available to this session on 2026-09-01.",
+  "source": "Just Security",
+  "source_identity": "publisher",
+  "universal_exhaustion_claim": false,
+  "manifestations": {
+    "literal_search": {
+      "url": "https://www.justsecurity.org/?s=puerto%20rico",
+      "http_status": 403,
+      "denominator": null,
+      "certification": "BLOCKED",
+      "reason": "The literal search manifestation returned HTTP 403 to the retrieval environment; no result count was inferred."
+    },
+    "puerto_rico_tag": {
+      "url": "https://www.justsecurity.org/tag/puerto-rico/",
+      "declared_count": 4,
+      "parsed_count": 4,
+      "certification": "PASS",
+      "arithmetic_closure": "4 = 4"
+    },
+    "expanded_discovery": {
+      "method": "Independent web/site discovery using Puerto Rico and high-precision aliases.",
+      "certification": "AUDIT_ONLY",
+      "search_false_negative_possible": true,
+      "claim": "Candidate discovery only; not a publisher-wide denominator."
+    }
+  },
+  "identity_rules": {
+    "search_result_absence_is_deletion": false,
+    "tag_absence_is_irrelevance": false,
+    "publisher_article_default_evidence_tier": "T4",
+    "linked_document_inherits_article_tier": false,
+    "linked_document_policy": "INDEPENDENT_EVIDENCE_ADJUDICATION_REQUIRED"
+  },
+  "raw_bytes_frozen": false,
+  "byte_identity_certification": "NONCANONICAL",
+  "next_machine_vector": "tools/just_security_monitor.py will acquire response bytes/hashes from the runtime network and persist bounded state/receipts."
+}

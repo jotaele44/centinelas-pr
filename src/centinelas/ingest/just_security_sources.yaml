@@ -1,0 +1,26 @@
+feeds:
+  # Secondary/expert legal-policy source. Publisher content is T4 discovery
+  # evidence; linked primary documents are independently adjudicated.
+  - name: "Just Security"
+    source_id: "CENT-SRC-RSS-JUST-SECURITY"
+    url: "https://www.justsecurity.org/feed/"
+    tier: "T4"
+    match_any:
+      - "Puerto Rico"
+      - "Puerto Rican"
+      - "Commonwealth of Puerto Rico"
+      - "PROMESA"
+      - "Financial Oversight and Management Board"
+      - "Roosevelt Roads"
+      - "Fort Buchanan"
+      - "Vieques"
+      - "José Aponte de la Torre"
+      - "Jose Aponte de la Torre"
+      - "Ramey Air Force Base"
+
+  # Independent high-precision manifestation. It is known to be underinclusive
+  # and must never be treated as the complete Puerto Rico corpus.
+  - name: "Just Security - Puerto Rico tag"
+    source_id: "CENT-SRC-RSS-JUST-SECURITY-PUERTO-RICO-TAG"
+    url: "https://www.justsecurity.org/tag/puerto-rico/feed/"
+    tier: "T4"
