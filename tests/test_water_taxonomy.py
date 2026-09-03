@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from centinelas.classify.labels import DomainLabel, HUB_REPO
+from centinelas.classify.labels import HUB_REPO, DomainLabel
 from centinelas.classify.rules import keyword_classify, water_utility_subtypes
 from centinelas.models import ClassifiedItem
 from centinelas.route.router import build_payload, route

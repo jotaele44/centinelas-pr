@@ -59,7 +59,21 @@ line-length = 100
 [tool.ruff.lint]
 # Keep the repository's established lint contract explicit. Ruff's default rule
 # set can expand between releases because the development dependency is unpinned.
-select = ["E4", "E7", "E9", "F"]
+# Matches the wider federation-standard profile used elsewhere (e.g. aguayluz-pr):
+# pycodestyle errors/warnings, pyflakes, import sorting, bugbear, pyupgrade, and
+# flake8-simplify, rather than just the narrow syntax-error subset this repo
+# started with.
+select = ["E", "F", "I", "B", "UP", "SIM", "W"]
+# E501 (line-too-long) is redundant with the `line-length` setting above for
+# this repo's purposes and mirrors the federation-standard ignore.
+ignore = ["E501"]
+
+# B008 (function-call-in-default-argument) would otherwise flag every
+# `typer.Option(...)` default in cli.py — that's Typer's documented API for
+# declaring CLI option metadata, not a mutable-default bug, so it's exempted
+# the same way flake8-bugbear's own docs recommend for click/typer/FastAPI.
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
 
 # ── mypy ─────────────────────────────────────────────────────────────────────
 # Gradually-typed baseline, matching spiderweb-pr and moneysweep-pr. Scoped to

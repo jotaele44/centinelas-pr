@@ -4,9 +4,10 @@ import hashlib
 import json
 import mimetypes
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from .models import BASELINE_CUTOFF, ReleaseState, classify_release
 
@@ -61,7 +62,7 @@ class DeltaRun:
         temp.replace(path)
 
     @classmethod
-    def resume(cls, path: Path) -> "DeltaRun":
+    def resume(cls, path: Path) -> DeltaRun:
         payload = json.loads(path.read_text())
         if payload["baseline_cutoff"] != BASELINE_CUTOFF:
             raise ValueError("checkpoint baseline does not match immutable cutoff")

@@ -7,9 +7,9 @@ pytest.importorskip("httpx")
 
 from starlette.testclient import TestClient
 
-from server.backend import main
 from centinelas.classify.labels import DomainLabel
 from centinelas.models import ClassifiedItem
+from server.backend import main
 
 
 @pytest.fixture

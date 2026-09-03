@@ -4,11 +4,9 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 from centinelas.classify.labels import DomainLabel
 from centinelas.classify.rules import keyword_classify
 from centinelas.models import RawItem
-
 
 FIXTURES = json.loads(
     (Path(__file__).parent / "fixtures" / "sample_items.json").read_text()

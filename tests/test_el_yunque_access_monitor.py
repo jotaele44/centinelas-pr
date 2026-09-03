@@ -11,7 +11,12 @@ TOOLS = REPO / "tools"
 sys.path.insert(0, str(TOOLS))
 
 import el_yunque_access_monitor as monitor  # noqa: E402
-from el_yunque_access_monitor import compute_transitions, envelope, listing_links, parse_alert  # noqa: E402
+from el_yunque_access_monitor import (  # noqa: E402
+    compute_transitions,
+    envelope,
+    listing_links,
+    parse_alert,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 BINDINGS = {

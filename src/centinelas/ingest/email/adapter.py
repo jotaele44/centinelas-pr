@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 
@@ -63,7 +64,7 @@ class OfflineFakeGmailClient:
         self._messages = {str(item["id"]): item for item in messages}
 
     @classmethod
-    def from_json(cls, path: Path) -> "OfflineFakeGmailClient":
+    def from_json(cls, path: Path) -> OfflineFakeGmailClient:
         return cls(json.loads(path.read_text(encoding="utf-8")))
 
     def search_message_ids(self, query: str, limit: int) -> list[str]:

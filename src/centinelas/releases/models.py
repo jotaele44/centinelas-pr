@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable, Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
@@ -104,7 +105,7 @@ class FederalDocumentRelease(BaseModel):
     extracted_at: datetime
 
     @model_validator(mode="after")
-    def enforce_cutoff(self) -> "FederalDocumentRelease":
+    def enforce_cutoff(self) -> FederalDocumentRelease:
         if self.baseline_cutoff != BASELINE_CUTOFF:
             raise ValueError(f"baseline_cutoff must remain {BASELINE_CUTOFF}")
         return self
@@ -149,7 +150,7 @@ class BaselineManifest(BaseModel):
     page_count: int = Field(ge=0)
 
     @model_validator(mode="after")
-    def frozen_contract(self) -> "BaselineManifest":
+    def frozen_contract(self) -> BaselineManifest:
         if self.cutoff != BASELINE_CUTOFF or self.state != "FROZEN":
             raise ValueError("the July 27 baseline is immutable and must remain FROZEN")
         return self
