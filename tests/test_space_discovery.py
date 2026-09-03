@@ -4,14 +4,14 @@ from pathlib import Path
 import pytest
 
 from centinelas.space_discovery import (
+    REQUIRED_LEAD_FIELDS,
     APICatalogAdapter,
     DedupStore,
     FailureLedger,
     HTMLChangeAdapter,
     ManualReceiptAdapter,
-    RSSAtomAdapter,
-    REQUIRED_LEAD_FIELDS,
     RoutingReceiptStore,
+    RSSAtomAdapter,
     RunLedger,
     SitemapAdapter,
     SourceHealthStore,

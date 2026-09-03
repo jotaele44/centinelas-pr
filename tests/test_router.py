@@ -4,11 +4,9 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-
-from centinelas.classify.labels import DomainLabel, HUB_REPO
+from centinelas.classify.labels import HUB_REPO, DomainLabel
 from centinelas.models import ClassifiedItem
 from centinelas.route.router import resolve_targets, route
-
 
 FIXTURES = json.loads(
     (Path(__file__).parent / "fixtures" / "sample_items.json").read_text()

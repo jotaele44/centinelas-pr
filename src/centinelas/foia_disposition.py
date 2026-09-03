@@ -98,7 +98,7 @@ class FOIAFinding(BaseModel):
     entity_collision: bool = False
 
     @model_validator(mode="after")
-    def citation_document_matches(self) -> "FOIAFinding":
+    def citation_document_matches(self) -> FOIAFinding:
         if any(c.document_id != self.document_id for c in self.citations):
             raise ValueError("all citations must reference finding.document_id")
         return self

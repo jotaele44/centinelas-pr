@@ -184,8 +184,8 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "jsonschema", specifier = ">=4.21.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.0" },
-    { name = "prii-export-utils", git = "https://github.com/jotaele44/thehub-pr.git?subdirectory=packages%2Fprii_export_utils&rev=f2b81769924689b4d959554928810b1d7b7ef3d6" },
-    { name = "prii-maintenance", git = "https://github.com/jotaele44/thehub-pr.git?subdirectory=packages%2Fprii_maintenance&rev=f2b81769924689b4d959554928810b1d7b7ef3d6" },
+    { name = "prii-export-utils", url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_export_utils" },
+    { name = "prii-maintenance", url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_maintenance" },
     { name = "pydantic", specifier = ">=2.6.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5" },
@@ -878,12 +878,22 @@ wheels = [
 [[package]]
 name = "prii-export-utils"
 version = "0.1.0"
-source = { git = "https://github.com/jotaele44/thehub-pr.git?subdirectory=packages%2Fprii_export_utils&rev=f2b81769924689b4d959554928810b1d7b7ef3d6#f2b81769924689b4d959554928810b1d7b7ef3d6" }
+source = { url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_export_utils" }
+sdist = { hash = "sha256:08fac371dd2b08ec87f6e6cfec50dea628170dd8d5d3982e260217c9bfe42dcf" }
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" }]
+provides-extras = ["dev"]
 
 [[package]]
 name = "prii-maintenance"
 version = "0.1.0"
-source = { git = "https://github.com/jotaele44/thehub-pr.git?subdirectory=packages%2Fprii_maintenance&rev=f2b81769924689b4d959554928810b1d7b7ef3d6#f2b81769924689b4d959554928810b1d7b7ef3d6" }
+source = { url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_maintenance" }
+sdist = { hash = "sha256:08fac371dd2b08ec87f6e6cfec50dea628170dd8d5d3982e260217c9bfe42dcf" }
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" }]
+provides-extras = ["dev"]
 
 [[package]]
 name = "pydantic"

@@ -71,7 +71,7 @@ def _llm_classify(title: str, body: str) -> tuple[list[DomainLabel], float, str]
     return labels, confidence, reasoning
 
 
-def classify(item: "RawItem") -> tuple[list[DomainLabel], float, str]:
+def classify(item: RawItem) -> tuple[list[DomainLabel], float, str]:
     """
     Classify a RawItem into domain labels.
 
@@ -105,7 +105,7 @@ def classify(item: "RawItem") -> tuple[list[DomainLabel], float, str]:
         return [DomainLabel.UNCLASSIFIED], 0.3, f"Unclassified — LLM unavailable: {exc}"
 
 
-def build_classified_item(raw: "RawItem") -> "ClassifiedItem":
+def build_classified_item(raw: RawItem) -> ClassifiedItem:
     """Classify + enrich a RawItem into a fully-populated ClassifiedItem.
 
     Single construction site shared by the CLI ``classify`` and ``run`` commands:

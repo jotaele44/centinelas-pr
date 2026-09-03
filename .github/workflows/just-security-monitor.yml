@@ -1,0 +1,67 @@
+name: Just Security Puerto Rico monitor
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      strict_search:
+        description: "Fail when the literal Puerto Rico search manifestation is blocked"
+        required: false
+        default: "false"
+      expanded_audit:
+        description: "Run expanded historical Puerto Rico search audit"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: just-security-puerto-rico-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install Centinelas
+        run: python -m pip install -e ".[dev]"
+      - name: Just Security regression gates
+        run: |
+          pytest -q \
+            tests/test_just_security_monitor.py \
+            tests/test_just_security_monitor_hardening.py
+      - name: Poll Just Security
+        env:
+          STRICT_SEARCH: ${{ github.event.inputs.strict_search }}
+          EXPANDED_AUDIT: ${{ github.event.inputs.expanded_audit }}
+        run: |
+          args=()
+          if [ "${STRICT_SEARCH:-false}" = "true" ]; then args+=(--strict-search); fi
+          if [ "${EXPANDED_AUDIT:-false}" = "true" ]; then args+=(--expanded-audit); fi
+          python tools/just_security_monitor.py "${args[@]}"
+      - name: Persist state and receipts
+        if: ${{ always() }}
+        run: |
+          git config user.name "centinelas-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/monitoring/just_security 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No Just Security state changes to persist."
+          else
+            git commit -m "data: refresh Just Security PR monitor [skip ci]"
+            git push
+          fi
+      - name: Upload monitor receipts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: just-security-pr-monitor
+          path: data/monitoring/just_security
+          if-no-files-found: ignore

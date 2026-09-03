@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 from typer.testing import CliRunner
 
-from centinelas.cli import app
 from centinelas.classify.labels import DomainLabel
+from centinelas.cli import app
 from centinelas.models import RawItem
 
 runner = CliRunner()
