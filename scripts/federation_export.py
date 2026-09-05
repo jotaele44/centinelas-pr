@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 from collections import Counter
 from datetime import datetime, timezone
@@ -42,7 +43,37 @@ PRODUCER_SCRIPT = "scripts/federation_export.py"
 DEFAULT_LEDGER = REPO_ROOT / "data/signals/example_signals.jsonl"
 DEFAULT_SOURCES = REPO_ROOT / "data/reference/source_registry.csv"
 DEFAULT_MAX_AGE_HOURS = 168.0
-ACCEPTABLE_CLASSIFICATION_METHODS = {"keyword_fast_path", "llm"}
+ACCEPTABLE_CLASSIFICATION_METHODS = {
+    "keyword_fast_path",
+    "llm",
+    "model_assisted_adjudication",
+}
+CLASSIFICATION_MODEL_REPOSITORY = "MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli"
+CLASSIFICATION_MODEL_REVISION = "0a71e92a985b6e1ad1828cf67ce9c459639c1dca"
+CLASSIFICATION_OVERLAY_GATES = {
+    "exact_base_ledger_binding",
+    "exact_base_receipt_binding",
+    "model_files_bound",
+    "complete_decision_coverage",
+    "unique_decision_ids",
+    "two_pass_score_determinism",
+    "row_conservation",
+    "immutable_fields_preserved",
+    "terminal_decisions",
+    "zero_unresolved_decisions",
+}
+CLASSIFICATION_MUTABLE_FIELDS = {
+    "beat",
+    "classification_method",
+    "classifier_reasoning",
+    "confidence_score",
+    "labels",
+    "signal_type",
+}
+CLASSIFICATION_LABELS = {
+    "ENVIRONMENTAL", "FINANCIAL", "POLITICAL", "GEO_GEOLOGY",
+    "ANOMALOUS", "MILITARY_AEROSPACE", "SAFETY_COMPLIANCE", "UNCLASSIFIED",
+}
 ACCEPTABLE_SOURCE_STATES = {
     "SUCCESS_WITH_ROWS",
     "SUCCESS_EMPTY",
@@ -150,6 +181,227 @@ def _production_input_errors(
     return []
 
 
+def _load_jsonl_objects(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise ValueError("JSONL row is not an object")
+            rows.append(value)
+    return rows
+
+
+def _bound_file_errors(
+    metadata: Any,
+    *,
+    name: str,
+) -> tuple[list[str], Path | None]:
+    if not isinstance(metadata, dict):
+        return [f"production classification overlay is missing {name} metadata"], None
+    raw_path = metadata.get("path")
+    path = Path(raw_path) if isinstance(raw_path, str) else None
+    if path is None or not path.is_file():
+        return [f"production classification overlay {name} file is unavailable"], path
+    errors: list[str] = []
+    if metadata.get("bytes") != path.stat().st_size:
+        errors.append(f"production classification overlay {name} byte count does not match")
+    if metadata.get("sha256") != _sha256(path):
+        errors.append(f"production classification overlay {name} SHA256 does not match")
+    return errors, path
+
+
+def _classification_overlay_errors(
+    receipt: dict[str, Any],
+    *,
+    signals: list[dict[str, Any]],
+) -> list[str]:
+    if receipt.get("schema_version") != "1.1.0":
+        return []
+    errors: list[str] = []
+    overlay = receipt.get("classification_overlay")
+    if not isinstance(overlay, dict):
+        return ["production classification receipt is missing overlay metadata"]
+
+    gates = receipt.get("gates")
+    if not isinstance(gates, dict):
+        errors.append("production classification overlay gates are missing")
+    else:
+        failed = sorted(
+            gate for gate in CLASSIFICATION_OVERLAY_GATES if gates.get(gate) is not True
+        )
+        if failed:
+            errors.append(f"production classification overlay has failed gates: {failed}")
+
+    classification_head = receipt.get("classification_repository_head")
+    if not isinstance(classification_head, str) or not re.fullmatch(
+        r"[0-9a-f]{40}", classification_head
+    ):
+        errors.append("production classification overlay lacks a full repository head SHA")
+
+    base_ledger_errors, base_ledger_path = _bound_file_errors(
+        overlay.get("base_ledger"), name="base ledger"
+    )
+    errors.extend(base_ledger_errors)
+    base_receipt_errors, _ = _bound_file_errors(
+        overlay.get("base_receipt"), name="base receipt"
+    )
+    errors.extend(base_receipt_errors)
+    source_registry_errors, _ = _bound_file_errors(
+        overlay.get("source_registry"), name="source registry"
+    )
+    errors.extend(source_registry_errors)
+
+    model = overlay.get("model")
+    if not isinstance(model, dict):
+        errors.append("production classification overlay is missing model metadata")
+    else:
+        if model.get("repository") != CLASSIFICATION_MODEL_REPOSITORY:
+            errors.append("production classification overlay names an unsupported model")
+        if model.get("revision") != CLASSIFICATION_MODEL_REVISION:
+            errors.append("production classification overlay model revision is not frozen")
+        model_files = model.get("files")
+        if not isinstance(model_files, list) or not model_files:
+            errors.append("production classification overlay has no model file manifest")
+        else:
+            names = [row.get("name") for row in model_files if isinstance(row, dict)]
+            if len(names) != len(model_files) or len(names) != len(set(names)):
+                errors.append("production classification model file names are invalid or duplicated")
+            for index, row in enumerate(model_files, start=1):
+                file_errors, _ = _bound_file_errors(row, name=f"model file {index}")
+                errors.extend(file_errors)
+
+    algorithm = overlay.get("algorithm")
+    if not isinstance(algorithm, dict):
+        errors.append("production classification overlay is missing algorithm metadata")
+    else:
+        claimed_hash = algorithm.get("sha256")
+        algorithm_payload = {key: value for key, value in algorithm.items() if key != "sha256"}
+        actual_hash = hashlib.sha256(
+            json.dumps(
+                algorithm_payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        if claimed_hash != actual_hash:
+            errors.append("production classification algorithm SHA256 does not match")
+
+    decision_errors, decision_path = _bound_file_errors(
+        overlay.get("decisions"), name="decision ledger"
+    )
+    errors.extend(decision_errors)
+    decisions: list[dict[str, Any]] = []
+    if decision_path is not None and decision_path.is_file():
+        try:
+            decisions = _load_jsonl_objects(decision_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            errors.append("production classification decision ledger is invalid JSONL")
+
+    decision_meta = overlay.get("decisions")
+    if isinstance(decision_meta, dict):
+        if decision_meta.get("rows") != len(decisions):
+            errors.append("production classification decision row count does not match")
+        state_counts = dict(
+            sorted(Counter(str(row.get("state")) for row in decisions).items())
+        )
+        if decision_meta.get("state_counts") != state_counts:
+            errors.append("production classification decision states do not match")
+        if decision_meta.get("unresolved") != state_counts.get("UNRESOLVED", 0):
+            errors.append("production classification unresolved count does not match")
+    if any(row.get("state") != "TERMINAL" for row in decisions):
+        errors.append("production classification decision ledger has unresolved rows")
+
+    signal_ids = [row.get("signal_id") for row in signals]
+    decision_ids = [row.get("signal_id") for row in decisions]
+    if signal_ids != decision_ids or len(decision_ids) != len(set(decision_ids)):
+        errors.append("production classification decisions do not exactly cover ledger IDs")
+    else:
+        for signal, decision in zip(signals, decisions, strict=True):
+            final = decision.get("final")
+            if not isinstance(final, dict) or any(
+                final.get(field) != signal.get(field)
+                for field in CLASSIFICATION_MUTABLE_FIELDS
+            ):
+                errors.append(
+                    "production classification decision does not match derived row: "
+                    f"{signal.get('signal_id')!r}"
+                )
+                break
+            nli_scores = decision.get("nli_scores")
+            if not isinstance(nli_scores, dict) or set(nli_scores) != CLASSIFICATION_LABELS:
+                errors.append("production classification decision has an incomplete NLI vector")
+                break
+            if any(
+                not isinstance(score, (int, float))
+                or isinstance(score, bool)
+                or not math.isfinite(float(score))
+                or not 0.0 <= float(score) <= 1.0
+                for score in nli_scores.values()
+            ):
+                errors.append("production classification decision has invalid NLI scores")
+                break
+            if not math.isclose(
+                sum(float(score) for score in nli_scores.values()), 1.0, abs_tol=1e-6
+            ):
+                errors.append("production classification decision NLI scores do not sum to 1")
+                break
+
+    if base_ledger_path is not None and base_ledger_path.is_file():
+        try:
+            base_rows = _load_jsonl_objects(base_ledger_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            errors.append("production classification base ledger is invalid JSONL")
+            base_rows = []
+        if len(base_rows) != len(signals):
+            errors.append("production classification base and derived row counts differ")
+        else:
+            for before, after in zip(base_rows, signals, strict=True):
+                changed = {
+                    key for key in before.keys() | after.keys()
+                    if before.get(key) != after.get(key)
+                }
+                if not changed.issubset(CLASSIFICATION_MUTABLE_FIELDS):
+                    errors.append(
+                        "production classification changed immutable fields: "
+                        f"{after.get('signal_id')!r}={sorted(changed)}"
+                    )
+                    break
+
+    score_hashes = overlay.get("two_pass_score_vectors_sha256")
+    if (
+        not isinstance(score_hashes, list)
+        or len(score_hashes) != 2
+        or score_hashes[0] != score_hashes[1]
+        or any(not re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in score_hashes)
+    ):
+        errors.append("production classification two-pass score proof is invalid")
+
+    equivalence = overlay.get("original_to_derived_label_equivalence")
+    if not isinstance(equivalence, dict):
+        errors.append("production classification equivalence arithmetic is missing")
+    else:
+        values = [
+            equivalence.get(key)
+            for key in (
+                "intersection", "a_only", "b_only", "union", "symmetric_difference",
+            )
+        ]
+        if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in values):
+            errors.append("production classification equivalence arithmetic is invalid")
+        else:
+            intersection, a_only, b_only, union, symmetric_difference = values
+            if (
+                intersection + a_only + b_only != union
+                or a_only + b_only != symmetric_difference
+            ):
+                errors.append("production classification equivalence arithmetic does not close")
+    return errors
+
+
 def _production_receipt_errors(
     receipt: dict[str, Any] | None,
     *,
@@ -160,7 +412,7 @@ def _production_receipt_errors(
         return ["production export requires --receipt from build_signal_ledger.py"]
 
     errors: list[str] = []
-    if receipt.get("schema_version") != "1.0.0":
+    if receipt.get("schema_version") not in {"1.0.0", "1.1.0"}:
         errors.append("production snapshot receipt has an unsupported schema version")
     if receipt.get("repository") != "jotaele44/centinelas-pr":
         errors.append("production snapshot receipt names the wrong repository")
@@ -388,6 +640,7 @@ def _production_receipt_errors(
         r"[0-9a-f]{40}", repository_head
     ):
         errors.append("production snapshot receipt lacks a full repository head SHA")
+    errors.extend(_classification_overlay_errors(receipt, signals=signals))
     return errors
 
 

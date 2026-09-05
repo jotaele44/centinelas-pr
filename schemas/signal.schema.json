@@ -53,6 +53,8 @@
         "llm",
         "keyword_fallback",
         "unclassified_fallback",
+        "model_assisted_adjudication",
+        "model_assisted_unresolved",
         "unresolved"
       ]
     },

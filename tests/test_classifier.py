@@ -6,7 +6,7 @@ from pathlib import Path
 
 from centinelas.classify import classifier
 from centinelas.classify.labels import DomainLabel
-from centinelas.classify.rules import keyword_classify
+from centinelas.classify.rules import keyword_classify, keyword_evidence
 from centinelas.models import RawItem
 
 FIXTURES = json.loads(
@@ -173,3 +173,18 @@ def test_classification_method_binds_unclassified_fallback(monkeypatch):
     labels, confidence, _, method = classifier.classify_with_provenance(item)
     assert labels == [DomainLabel.UNCLASSIFIED]
     assert (confidence, method) == (0.3, "unclassified_fallback")
+
+
+def test_keyword_evidence_preserves_terms_and_taxonomy_order():
+    evidence = keyword_evidence(
+        "An environmental photography award covered a new aircraft design."
+    )
+
+    assert [label.value for label in evidence] == [
+        "ENVIRONMENTAL",
+        "MILITARY_AEROSPACE",
+        "FINANCIAL",
+    ]
+    assert evidence[DomainLabel.ENVIRONMENTAL] == ["environmental"]
+    assert evidence[DomainLabel.MILITARY_AEROSPACE] == ["aircraft"]
+    assert evidence[DomainLabel.FINANCIAL] == ["award"]

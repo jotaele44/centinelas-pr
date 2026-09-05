@@ -160,3 +160,125 @@ def test_production_receipt_rejects_unadjudicated_excluded_source(tmp_path) -> N
 
     errors = _production_receipt_errors(receipt, ledger_path=ledger, signals=signals)
     assert any("excluded source scope is not fully adjudicated" in error for error in errors)
+
+
+def _bound_file(path: Path, *, name: str | None = None) -> dict:
+    content = path.read_bytes()
+    result = {
+        "path": str(path),
+        "bytes": len(content),
+        "sha256": hashlib.sha256(content).hexdigest(),
+    }
+    if name is not None:
+        result["name"] = name
+    return result
+
+
+def _overlay_fixture(tmp_path: Path) -> tuple[Path, list[dict], dict]:
+    base_ledger = tmp_path / "base.jsonl"
+    base_signals = _write_ledger(base_ledger)
+    base_receipt = tmp_path / "base-receipt.json"
+    base_receipt.write_text("{}\n", encoding="utf-8")
+    source_registry = tmp_path / "source-registry.csv"
+    source_registry.write_text("source_id,source_family\nCENT-SRC-1,news_wire\n")
+    model_file = tmp_path / "model.onnx"
+    model_file.write_bytes(b"frozen model fixture")
+
+    ledger = tmp_path / "derived.jsonl"
+    signal = {
+        **base_signals[0],
+        "labels": ["UNCLASSIFIED"],
+        "beat": "unclassified",
+        "signal_type": "unclassified_signal",
+        "confidence_score": 70.0,
+        "classification_method": "model_assisted_adjudication",
+        "classifier_reasoning": "No sufficiently supported domain label.",
+    }
+    ledger.write_text(json.dumps(signal, sort_keys=True) + "\n", encoding="utf-8")
+    signals = [signal]
+
+    decisions = tmp_path / "decisions.jsonl"
+    final = {
+        field: signal.get(field)
+        for field in (
+            "beat", "classification_method", "classifier_reasoning",
+            "confidence_score", "labels", "signal_type",
+        )
+    }
+    decision = {
+        "signal_id": signal["signal_id"],
+        "state": "TERMINAL",
+        "nli_scores": {
+            label: 0.125
+            for label in (
+                "ENVIRONMENTAL", "FINANCIAL", "POLITICAL", "GEO_GEOLOGY",
+                "ANOMALOUS", "MILITARY_AEROSPACE", "SAFETY_COMPLIANCE",
+                "UNCLASSIFIED",
+            )
+        },
+        "final": final,
+    }
+    decisions.write_text(json.dumps(decision, sort_keys=True) + "\n", encoding="utf-8")
+
+    receipt = _receipt(ledger, signals)
+    receipt["schema_version"] = "1.1.0"
+    receipt["classification_repository_head"] = "b" * 40
+    receipt["ledger"]["classification_method_counts"] = {
+        "model_assisted_adjudication": 1
+    }
+    overlay_gates = {
+        "exact_base_ledger_binding", "exact_base_receipt_binding", "model_files_bound",
+        "complete_decision_coverage", "unique_decision_ids",
+        "two_pass_score_determinism", "row_conservation",
+        "immutable_fields_preserved", "terminal_decisions", "zero_unresolved_decisions",
+    }
+    receipt["gates"].update({gate: True for gate in overlay_gates})
+    algorithm = {"name": "fixture", "acceptance_support_total": 3}
+    algorithm_hash = hashlib.sha256(
+        json.dumps(algorithm, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    score_hash = "c" * 64
+    receipt["classification_overlay"] = {
+        "base_ledger": {**_bound_file(base_ledger), "rows": 1},
+        "base_receipt": _bound_file(base_receipt),
+        "source_registry": _bound_file(source_registry),
+        "model": {
+            "repository": "MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+            "revision": "0a71e92a985b6e1ad1828cf67ce9c459639c1dca",
+            "files": [_bound_file(model_file, name="model.onnx")],
+        },
+        "algorithm": {**algorithm, "sha256": algorithm_hash},
+        "decisions": {
+            **_bound_file(decisions),
+            "rows": 1,
+            "state_counts": {"TERMINAL": 1},
+            "unresolved": 0,
+        },
+        "two_pass_score_vectors_sha256": [score_hash, score_hash],
+        "original_to_derived_label_equivalence": {
+            "intersection": 0,
+            "a_only": 0,
+            "b_only": 1,
+            "union": 1,
+            "symmetric_difference": 1,
+        },
+    }
+    return ledger, signals, receipt
+
+
+def test_production_receipt_accepts_verified_classification_overlay(tmp_path) -> None:
+    ledger, signals, receipt = _overlay_fixture(tmp_path)
+    assert _production_receipt_errors(
+        receipt, ledger_path=ledger, signals=signals
+    ) == []
+
+
+def test_production_receipt_rejects_tampered_or_unresolved_overlay(tmp_path) -> None:
+    ledger, signals, receipt = _overlay_fixture(tmp_path)
+    receipt["classification_overlay"]["model"]["revision"] = "main"
+    receipt["gates"]["zero_unresolved_decisions"] = False
+
+    errors = _production_receipt_errors(receipt, ledger_path=ledger, signals=signals)
+
+    assert any("model revision is not frozen" in error for error in errors)
+    assert any("zero_unresolved_decisions" in error for error in errors)
