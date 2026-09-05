@@ -45,6 +45,17 @@
     "confidence_score": {"type": "number", "minimum": 0, "maximum": 100},
     "evidence_tier": {"type": "string", "enum": ["T1", "T2", "T3", "T4"]},
     "handoff_status": {"type": "string"},
-    "is_synthetic": {"type": "boolean"}
+    "is_synthetic": {"type": "boolean"},
+    "classification_method": {
+      "type": "string",
+      "enum": [
+        "keyword_fast_path",
+        "llm",
+        "keyword_fallback",
+        "unclassified_fallback",
+        "unresolved"
+      ]
+    },
+    "classifier_reasoning": {"type": "string"}
   }
 }

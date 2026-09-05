@@ -33,19 +33,28 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
+import subprocess
 import sys
+from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from centinelas.classify.classifier import classify  # noqa: E402
+from centinelas.classify.classifier import classify_with_provenance  # noqa: E402
 from centinelas.ingest import rss  # noqa: E402
 from centinelas.models import ClassifiedItem  # noqa: E402
 
 DEFAULT_OUT = REPO_ROOT / "data" / "signals" / "live_signals.jsonl"
+SOURCE_CONFIG_PATHS = (
+    REPO_ROOT / "src" / "centinelas" / "ingest" / "sources.yaml",
+    REPO_ROOT / "src" / "centinelas" / "ingest" / "just_security_sources.yaml",
+    REPO_ROOT / "data" / "reference" / "source_registry.csv",
+)
 
 
 def feed_source_id(feed_name: str) -> str:
@@ -54,11 +63,17 @@ def feed_source_id(feed_name: str) -> str:
     return f"CENT-SRC-RSS-{slug}"
 
 
-def source_name_to_id() -> dict[str, str]:
-    return {src["name"]: feed_source_id(src["name"]) for src in rss._load_sources()}
+def source_name_to_id(sources: list[dict] | None = None) -> dict[str, str]:
+    configured_sources = rss._load_sources() if sources is None else sources
+    return {src["name"]: feed_source_id(src["name"]) for src in configured_sources}
 
 
-def item_to_signal(item: ClassifiedItem, source_ids: dict[str, str]) -> dict:
+def item_to_signal(
+    item: ClassifiedItem,
+    source_ids: dict[str, str],
+    *,
+    classification_method: str = "unresolved",
+) -> dict:
     primary = item.labels[0].value.lower() if item.labels else "unclassified"
     return {
         "signal_id": f"CENT-SIG-{item.item_id}",
@@ -83,47 +98,289 @@ def item_to_signal(item: ClassifiedItem, source_ids: dict[str, str]) -> dict:
         "handoff_status": "raw",
         "is_synthetic": False,
         "labels": [label.value for label in item.labels],
+        "classification_method": classification_method,
+        "classifier_reasoning": item.classifier_reasoning,
     }
 
 
-def build_ledger(limit: int | None = None) -> list[dict]:
-    raw_items = rss.poll_all()
+def build_ledger_with_receipts(
+    limit: int | None = None,
+    *,
+    raw_dir: Path | None = None,
+    timeout_seconds: float = 20.0,
+    sources: list[dict] | None = None,
+) -> tuple[list[dict], list[dict], int]:
+    configured_sources = rss._load_sources() if sources is None else sources
+    raw_items, source_receipts = rss.poll_all_with_receipts(
+        raw_dir=raw_dir,
+        timeout_seconds=timeout_seconds,
+        sources=configured_sources,
+    )
     if not raw_items:
         raise SystemExit("FAIL — no feeds returned items; refusing to write an empty live ledger")
+    polled_item_count = len(raw_items)
     if limit:
         raw_items = raw_items[:limit]
-    source_ids = source_name_to_id()
+    source_ids = source_name_to_id(configured_sources)
+    for receipt in source_receipts:
+        receipt["source_registry_id"] = source_ids.get(receipt["name"])
     signals = []
     for raw in raw_items:
-        labels, confidence, reasoning = classify(raw)
+        labels, confidence, reasoning, method = classify_with_provenance(raw)
         classified = ClassifiedItem(
             **raw.model_dump(), labels=labels, confidence=confidence,
             classifier_reasoning=reasoning,
         )
-        signals.append(item_to_signal(classified, source_ids))
+        signals.append(
+            item_to_signal(
+                classified,
+                source_ids,
+                classification_method=method,
+            )
+        )
+    return signals, source_receipts, polled_item_count
+
+
+def build_ledger(limit: int | None = None) -> list[dict]:
+    signals, _, _ = build_ledger_with_receipts(limit)
     return signals
+
+
+def sha256_path(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_text_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(content, encoding="utf-8")
+    temporary.replace(path)
+
+
+def git_head() -> str | None:
+    result = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def source_config_state() -> list[dict]:
+    return [
+        {
+            "path": str(path.relative_to(REPO_ROOT)),
+            "bytes": path.stat().st_size,
+            "sha256": sha256_path(path),
+        }
+        for path in SOURCE_CONFIG_PATHS
+    ]
+
+
+def build_receipt(
+    *,
+    out: Path,
+    raw_dir: Path,
+    signals: list[dict],
+    source_receipts: list[dict],
+    polled_item_count: int,
+    started_at: str,
+    completed_at: str,
+    limit: int | None,
+    configured_source_count: int,
+    repository_head: str | None,
+    source_config_before: list[dict],
+    source_config_after: list[dict],
+) -> dict:
+    source_status_counts = Counter(row["status"] for row in source_receipts)
+    method_counts = Counter(row["classification_method"] for row in signals)
+    terminal_sources = all(row["status"] != "UNRESOLVED" for row in source_receipts)
+    source_conservation = len(source_receipts) == configured_source_count
+    entry_conservation = all(
+        row["entries_seen"]
+        == row["entries_filtered"]
+        + row["entries_without_link"]
+        + row["accepted_entries"]
+        and row["accepted_entries"]
+        == row["duplicates_suppressed"] + row["emitted_items"]
+        for row in source_receipts
+        if row["http_status"] is not None and 200 <= row["http_status"] < 300
+    )
+    raw_hashes_bound = all(
+        row["raw_content_path"] is not None
+        and (raw_dir / row["raw_content_path"]).is_file()
+        and sha256_path(raw_dir / row["raw_content_path"])
+        == row["response_content_sha256"]
+        for row in source_receipts
+        if row["response_content_sha256"] is not None
+    )
+    raw_response_conservation = all(
+        (row["http_status"] is None) == (row["response_content_sha256"] is None)
+        for row in source_receipts
+    )
+    acceptable_source_states = {
+        "SUCCESS_WITH_ROWS",
+        "SUCCESS_EMPTY",
+        "SUCCESS_FILTERED_EMPTY",
+    }
+    source_failures = [
+        row for row in source_receipts if row["status"] not in acceptable_source_states
+    ]
+    classifier_fallback_rows = sum(
+        count
+        for method, count in method_counts.items()
+        if method in {"keyword_fallback", "unclassified_fallback", "unresolved"}
+    )
+    gates = {
+        "nonempty_ledger": bool(signals),
+        "no_synthetic_rows": not any(row.get("is_synthetic") for row in signals),
+        "unique_signal_ids": len(signals)
+        == len({row["signal_id"] for row in signals}),
+        "full_polled_item_retention": len(signals) == polled_item_count,
+        "repository_head_bound": bool(repository_head),
+        "source_config_stable": source_config_before == source_config_after,
+        "terminal_sources": terminal_sources,
+        "source_conservation": source_conservation,
+        "unique_source_names": len(source_receipts)
+        == len({row["name"] for row in source_receipts}),
+        "unique_source_urls": len(source_receipts)
+        == len({row["url"] for row in source_receipts}),
+        "source_registry_ids_bound": all(
+            bool(row.get("source_registry_id")) for row in source_receipts
+        ),
+        "unique_source_registry_ids": len(source_receipts)
+        == len({row.get("source_registry_id") for row in source_receipts}),
+        "entry_conservation": entry_conservation,
+        "raw_response_conservation": raw_response_conservation,
+        "raw_hashes_bound": raw_hashes_bound,
+        "no_source_failures": not source_failures,
+        "no_classifier_fallback": classifier_fallback_rows == 0,
+    }
+    classification = "PASS" if all(gates.values()) else "PROVISIONAL"
+    return {
+        "schema_version": "1.0.0",
+        "classification": classification,
+        "repository": "jotaele44/centinelas-pr",
+        "repository_head": repository_head,
+        "capture_started_at": started_at,
+        "capture_completed_at": completed_at,
+        "ledger": {
+            "path": str(out),
+            "sha256": sha256_path(out),
+            "rows": len(signals),
+            "polled_items_before_limit": polled_item_count,
+            "limit": limit,
+            "synthetic_rows": sum(bool(row.get("is_synthetic")) for row in signals),
+            "duplicate_signal_ids": len(signals)
+            - len({row["signal_id"] for row in signals}),
+            "classification_method_counts": dict(sorted(method_counts.items())),
+        },
+        "sources": {
+            "configured": configured_source_count,
+            "receipts": len(source_receipts),
+            "status_counts": dict(sorted(source_status_counts.items())),
+            "terminal": terminal_sources,
+            "source_conservation": source_conservation,
+            "entry_conservation": entry_conservation,
+            "source_failure_count": len(source_failures),
+            "raw_directory": str(raw_dir),
+            "raw_hashes_bound": raw_hashes_bound,
+            "raw_response_conservation": raw_response_conservation,
+            "response_content_byte_scope": "decoded_http_entity_body",
+            "rows": source_receipts,
+        },
+        "source_config": {
+            "before": source_config_before,
+            "after": source_config_after,
+            "stable": source_config_before == source_config_after,
+        },
+        "gates": gates,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Materialize real signals into the federation ledger.")
     ap.add_argument("--out", default=str(DEFAULT_OUT))
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--receipt")
+    ap.add_argument("--raw-dir")
+    ap.add_argument("--timeout-seconds", type=float, default=20.0)
+    ap.add_argument("--require-complete-sources", action="store_true")
     args = ap.parse_args(argv)
 
-    signals = build_ledger(limit=args.limit)
+    if bool(args.receipt) != bool(args.raw_dir):
+        ap.error("--receipt and --raw-dir must be provided together")
+    if args.timeout_seconds <= 0:
+        ap.error("--timeout-seconds must be greater than zero")
+
+    out = Path(args.out)
+    receipt_path = Path(args.receipt) if args.receipt else None
+    raw_dir = Path(args.raw_dir) if args.raw_dir else None
+    if receipt_path is not None and (
+        out.exists()
+        or receipt_path.exists()
+        or (raw_dir is not None and raw_dir.exists() and any(raw_dir.iterdir()))
+    ):
+        print("FAIL — snapshot paths already exist; refusing to overwrite mutable evidence")
+        return 2
+
+    repository_head = git_head()
+    source_config_before = source_config_state()
+    configured_sources = rss._load_sources()
+    started_at = datetime.now(timezone.utc).isoformat()
+    signals, source_receipts, polled_item_count = build_ledger_with_receipts(
+        limit=args.limit,
+        raw_dir=raw_dir,
+        timeout_seconds=args.timeout_seconds,
+        sources=configured_sources,
+    )
     synthetic = [s for s in signals if s.get("is_synthetic")]
     if synthetic:
         raise SystemExit(f"bridge bug: {len(synthetic)} rows flagged synthetic")
 
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "w", encoding="utf-8") as fh:
-        for sig in signals:
-            fh.write(json.dumps(sig, ensure_ascii=False, sort_keys=True) + "\n")
+    write_text_atomic(
+        out,
+        "".join(json.dumps(sig, ensure_ascii=False, sort_keys=True) + "\n" for sig in signals),
+    )
     beats: dict[str, int] = {}
     for sig in signals:
         beats[sig["beat"]] = beats.get(sig["beat"], 0) + 1
-    print(f"wrote {out} — {len(signals)} real signals, beats={dict(sorted(beats.items()))}")
+    if receipt_path is None or raw_dir is None:
+        print(
+            f"wrote {out} — {len(signals)} real signals, "
+            f"beats={dict(sorted(beats.items()))}; NONCERTIFYING: no source receipt"
+        )
+        return 0
+
+    completed_at = datetime.now(timezone.utc).isoformat()
+    source_config_after = source_config_state()
+    receipt = build_receipt(
+        out=out,
+        raw_dir=raw_dir,
+        signals=signals,
+        source_receipts=source_receipts,
+        polled_item_count=polled_item_count,
+        started_at=started_at,
+        completed_at=completed_at,
+        limit=args.limit,
+        configured_source_count=len(configured_sources),
+        repository_head=repository_head,
+        source_config_before=source_config_before,
+        source_config_after=source_config_after,
+    )
+    write_text_atomic(
+        receipt_path,
+        json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    )
+    print(
+        f"wrote {out} and {receipt_path} — {len(signals)} real signals, "
+        f"classification={receipt['classification']}, "
+        f"source_statuses={receipt['sources']['status_counts']}, "
+        f"beats={dict(sorted(beats.items()))}"
+    )
+    if args.require_complete_sources and receipt["classification"] != "PASS":
+        return 1
     return 0
 
 

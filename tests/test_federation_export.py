@@ -55,6 +55,29 @@ def test_streams_carry_required_canonical_keys():
             assert not missing, f"{stream} row missing {missing}"
 
 
+def test_observation_preserves_classifier_provenance():
+    signals = _signals()
+    signals[0] = {
+        **signals[0],
+        "classification_method": "keyword_fallback",
+        "classifier_reasoning": "LLM unavailable; keyword evidence retained verbatim",
+    }
+    streams = fx.build_streams(
+        signals,
+        fx._load_source_registry(SOURCES),
+        "2026-07-02T00:00:00Z",
+    )
+    observation = next(
+        row
+        for row in streams["observations"]
+        if row["attributes"]["signal_id"] == signals[0]["signal_id"]
+    )
+    assert observation["attributes"]["classification_method"] == "keyword_fallback"
+    assert observation["attributes"]["classifier_reasoning"] == (
+        "LLM unavailable; keyword evidence retained verbatim"
+    )
+
+
 def test_seed_is_entirely_synthetic():
     for row in _signals():
         assert row.get("is_synthetic") is True

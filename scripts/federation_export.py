@@ -127,7 +127,7 @@ def build_streams(
         created = sig.get("captured_at") or now
         confidence = round(float(sig.get("confidence_score", 0)) / 100.0, 3)
         reg_id = sig.get("source_id")
-        reg = registry.get(reg_id, {})
+        reg = registry.get(reg_id, {}) if isinstance(reg_id, str) else {}
 
         # --- source (source family) ---
         source_id = _fid("src", reg_id or "unknown")
@@ -222,6 +222,8 @@ def build_streams(
                 "handoff_status": sig.get("handoff_status"),
                 "deadline_date": sig.get("deadline_date"),
                 "source_url": sig.get("source_url"),
+                "classification_method": sig.get("classification_method"),
+                "classifier_reasoning": sig.get("classifier_reasoning"),
             },
             "confidence": confidence,
             "lineage": _lineage("OBSERVATION"),
