@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from collections import Counter
+from pathlib import Path
 
 from centinelas.ingest import rss
 
@@ -14,6 +16,67 @@ ITEM_FEED = b"""<?xml version="1.0" encoding="UTF-8"?>
 EMPTY_FEED = b"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel><title>Empty fixture</title></channel></rss>
 """
+ADJUDICATION_PATH = Path("docs/source_adjudication_20260905.json")
+
+
+def test_packaged_source_lifecycle_inventory_is_conserved():
+    inventory = rss._load_source_inventory()
+    active = rss._load_sources()
+    excluded = rss._load_excluded_sources()
+
+    assert len(inventory) == 52
+    assert len(active) == 48
+    assert len(excluded) == 4
+    assert len(inventory) == len(active) + len(excluded)
+    assert {source["name"] for source in excluded} == {
+        "NOAA News",
+        "Reuters Business",
+        "Associated Press Top News",
+        "Reuters World",
+    }
+    assert all(source.get("lifecycle_state") for source in excluded)
+    assert all(source.get("retired_at") for source in excluded)
+    assert all(source.get("retirement_reason") for source in excluded)
+    assert all(source.get("adjudication_ref") for source in excluded)
+
+
+def test_packaged_endpoint_refreshes_and_request_identity_are_exact():
+    active = {source["name"]: source for source in rss._load_sources()}
+    assert active["Yale Environment 360"]["url"] == "https://e360.yale.edu/feed.xml"
+    assert active["Volcano Discovery"]["url"] == (
+        "https://www.volcanodiscovery.com/volcanoesandearthquakenews.rss"
+    )
+    assert active["The Black Vault"]["url"] == (
+        "https://www.theblackvault.com/documentarchive/feed/"
+    )
+    assert active["MUFON"]["url"] == "https://mufon.com/feed/"
+    assert rss._HTTP_HEADERS["User-Agent"].startswith("Mozilla/5.0 (compatible;")
+    assert "Centinelas/0.1" in rss._HTTP_HEADERS["User-Agent"]
+    assert "github.com/jotaele44/centinelas-pr" in rss._HTTP_HEADERS["User-Agent"]
+
+
+def test_source_adjudication_arithmetic_closes():
+    adjudication = json.loads(ADJUDICATION_PATH.read_text(encoding="utf-8"))
+    classifications = Counter(
+        source["classification"] for source in adjudication["sources"]
+    )
+    excluded_states = {
+        "NONCANONICAL_ACCESS_BLOCKED",
+        "RETIRED_NO_EQUIVALENT_PUBLIC_FEED",
+        "RETIRED_NO_PUBLIC_FEED",
+    }
+    excluded_count = sum(
+        count for state, count in classifications.items() if state in excluded_states
+    )
+
+    assert classifications == adjudication["classification_counts"]
+    assert len(adjudication["sources"]) == adjudication["source_count"] == 13
+    assert adjudication["arithmetic"] == {
+        "classified": 13,
+        "unresolved": 0,
+        "active_after_adjudication": 13 - excluded_count,
+        "excluded_after_adjudication": excluded_count,
+    }
 
 
 def response(content: bytes, status: int = 200) -> rss.FeedResponse:

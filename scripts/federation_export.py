@@ -66,6 +66,16 @@ REQUIRED_RECEIPT_GATES = {
     "raw_hashes_bound",
     "no_source_failures",
     "no_classifier_fallback",
+    "source_scope_conservation",
+    "active_source_scope_matches_receipts",
+    "source_scope_registry_ids_unique",
+    "excluded_sources_adjudicated",
+}
+TERMINAL_EXCLUDED_SOURCE_STATES = {
+    "NONCANONICAL_ACCESS_BLOCKED",
+    "RETIRED_NO_EQUIVALENT_PUBLIC_FEED",
+    "RETIRED_NO_PUBLIC_FEED",
+    "SUPERSEDED",
 }
 
 STREAM_SCHEMA = {
@@ -313,6 +323,65 @@ def _production_receipt_errors(
         or source_config.get("before") != source_config.get("after")
     ):
         errors.append("production source configuration binding is incomplete or unstable")
+
+    source_scope = receipt.get("source_scope")
+    if not isinstance(source_scope, dict) or not isinstance(
+        source_scope.get("rows"), list
+    ):
+        errors.append("production snapshot receipt is missing source scope rows")
+    else:
+        scope_rows = source_scope["rows"]
+        if not all(isinstance(row, dict) for row in scope_rows):
+            errors.append("production snapshot receipt contains invalid source scope rows")
+            scope_rows = [row for row in scope_rows if isinstance(row, dict)]
+        active_scope = [row for row in scope_rows if row.get("active") is True]
+        excluded_scope = [row for row in scope_rows if row.get("active") is False]
+        inventory_count = source_scope.get("inventory")
+        active_count = source_scope.get("active")
+        excluded_count = source_scope.get("excluded")
+        scope_counts_valid = all(
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value >= 0
+            for value in (inventory_count, active_count, excluded_count)
+        )
+        if (
+            not scope_counts_valid
+            or not isinstance(inventory_count, int)
+            or not isinstance(active_count, int)
+            or not isinstance(excluded_count, int)
+            or not (
+                inventory_count == len(scope_rows)
+                and inventory_count == active_count + excluded_count
+                and active_count == len(active_scope)
+                and excluded_count == len(excluded_scope)
+            )
+        ):
+            errors.append("production source scope arithmetic does not close")
+        scope_ids = [row.get("source_registry_id") for row in scope_rows]
+        if any(not isinstance(value, str) or not value for value in scope_ids):
+            errors.append("production source scope has missing registry IDs")
+        elif len(scope_ids) != len(set(scope_ids)):
+            errors.append("production source scope has registry ID collisions")
+        if isinstance(sources, dict) and isinstance(sources.get("rows"), list):
+            receipt_ids = {
+                row.get("source_registry_id")
+                for row in sources["rows"]
+                if isinstance(row, dict)
+            }
+            active_scope_ids = {
+                row.get("source_registry_id") for row in active_scope
+            }
+            if receipt_ids != active_scope_ids:
+                errors.append("production active source scope does not match source receipts")
+        if any(
+            row.get("lifecycle_state") not in TERMINAL_EXCLUDED_SOURCE_STATES
+            or not str(row.get("retired_at") or "").strip()
+            or not str(row.get("retirement_reason") or "").strip()
+            or not str(row.get("adjudication_ref") or "").strip()
+            for row in excluded_scope
+        ):
+            errors.append("production excluded source scope is not fully adjudicated")
 
     repository_head = receipt.get("repository_head")
     if not isinstance(repository_head, str) or not re.fullmatch(

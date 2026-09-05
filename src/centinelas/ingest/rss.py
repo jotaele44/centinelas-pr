@@ -23,7 +23,10 @@ _SOURCE_OVERLAYS = (Path(__file__).parent / "just_security_sources.yaml",)
 _HTTP_HEADERS = {
     "Accept": "application/atom+xml, application/rss+xml, application/xml, text/xml, */*",
     "Accept-Encoding": "identity",
-    "User-Agent": "Centinelas/0.1 (+https://github.com/jotaele44/centinelas-pr)",
+    "User-Agent": (
+        "Mozilla/5.0 (compatible; Centinelas/0.1; "
+        "+https://github.com/jotaele44/centinelas-pr)"
+    ),
 }
 
 
@@ -76,8 +79,8 @@ def _load_source_file(path: Path) -> list[dict]:
     return [dict(feed) for feed in feeds if isinstance(feed, dict)]
 
 
-def _load_sources() -> list[dict]:
-    """Load the base source registry plus packaged source overlays idempotently."""
+def _load_source_inventory() -> list[dict]:
+    """Load active and retired source declarations, merging overlays idempotently."""
     sources = _load_source_file(_SOURCES_PATH)
     known_ids = {source.get("source_id") for source in sources if source.get("source_id")}
     known_urls = {source.get("url") for source in sources if source.get("url")}
@@ -93,6 +96,18 @@ def _load_sources() -> list[dict]:
             if url:
                 known_urls.add(url)
     return sources
+
+
+def _load_sources() -> list[dict]:
+    """Return only source declarations that are active for network polling."""
+    return [source for source in _load_source_inventory() if source.get("enabled", True)]
+
+
+def _load_excluded_sources() -> list[dict]:
+    """Return preserved source declarations excluded from active polling."""
+    return [
+        source for source in _load_source_inventory() if not source.get("enabled", True)
+    ]
 
 
 def _configured_source(source_id: str) -> dict:

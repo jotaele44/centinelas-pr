@@ -1,0 +1,145 @@
+{
+  "schema_version": "1.0.0",
+  "adjudicated_at": "2026-09-05T22:04:53Z",
+  "scope": "The 13 source failures in acquisition receipt e9035b08b3b3d59ab0579aeb89a0adc7f879c99c6c9d0a0f4cd9ab9df2917ae8",
+  "source_count": 13,
+  "classification_counts": {
+    "ACTIVE_ENDPOINT_REFRESHED": 4,
+    "ACTIVE_REQUEST_POLICY_REPAIRED": 5,
+    "NONCANONICAL_ACCESS_BLOCKED": 1,
+    "RETIRED_NO_EQUIVALENT_PUBLIC_FEED": 1,
+    "RETIRED_NO_PUBLIC_FEED": 2
+  },
+  "sources": [
+    {
+      "source_id": "CENT-SRC-RSS-NOAA-NEWS",
+      "name": "NOAA News",
+      "previous_url": "https://www.noaa.gov/news-release/feed",
+      "previous_observation": "HTTP 403 with the prior user agent and HTTP 404 with a Mozilla-compatible identifying user agent",
+      "classification": "RETIRED_NO_EQUIVALENT_PUBLIC_FEED",
+      "candidate_url": "https://oceanservice.noaa.gov/rss/nosnews.xml",
+      "candidate_observation": "HTTP 200 with 405 parsed entries but feedparser bozo=true due to a mismatched XML tag; source scope is National Ocean Service rather than general NOAA releases",
+      "evidence_urls": [
+        "https://www.noaa.gov/news",
+        "https://oceanservice.noaa.gov/rss.html",
+        "https://oceanservice.noaa.gov/rss/nosnews.xml"
+      ]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-YALE-ENVIRONMENT-360",
+      "name": "Yale Environment 360",
+      "previous_url": "https://e360.yale.edu/feed",
+      "classification": "ACTIVE_ENDPOINT_REFRESHED",
+      "replacement_url": "https://e360.yale.edu/feed.xml",
+      "replacement_observation": "Publisher-advertised RSS; HTTP 200; application/xml; 100 entries; bozo=false",
+      "evidence_urls": ["https://e360.yale.edu/about", "https://e360.yale.edu/feed.xml"]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-VOLCANO-DISCOVERY",
+      "name": "Volcano Discovery",
+      "previous_url": "https://www.volcanodiscovery.com/volcanoes/rss.xml",
+      "classification": "ACTIVE_ENDPOINT_REFRESHED",
+      "replacement_url": "https://www.volcanodiscovery.com/volcanoesandearthquakenews.rss",
+      "replacement_observation": "Publisher-homepage link; HTTP 200; text/xml; 20 entries; bozo=false",
+      "evidence_urls": [
+        "https://www.volcanodiscovery.com/",
+        "https://www.volcanodiscovery.com/volcanoesandearthquakenews.rss"
+      ]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-THE-BLACK-VAULT",
+      "name": "The Black Vault",
+      "previous_url": "https://www.theblackvault.com/documentdb/feed/",
+      "classification": "ACTIVE_ENDPOINT_REFRESHED",
+      "replacement_url": "https://www.theblackvault.com/documentarchive/feed/",
+      "replacement_observation": "Publisher-advertised RSS; HTTP 200; text/xml; 25 entries; bozo=false",
+      "evidence_urls": [
+        "https://www.theblackvault.com/documentarchive/",
+        "https://www.theblackvault.com/documentarchive/feed/"
+      ]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-MUFON",
+      "name": "MUFON",
+      "previous_url": "https://www.mufon.com/blog-feed.xml",
+      "classification": "ACTIVE_ENDPOINT_REFRESHED",
+      "replacement_url": "https://mufon.com/feed/",
+      "replacement_observation": "Publisher-advertised RSS; HTTP 200; application/rss+xml; 10 entries; bozo=false",
+      "evidence_urls": ["https://mufon.com/", "https://mufon.com/feed/"]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-REUTERS-BUSINESS",
+      "name": "Reuters Business",
+      "previous_url": "https://feeds.reuters.com/reuters/businessNews",
+      "previous_observation": "DNS resolution failure",
+      "classification": "RETIRED_NO_PUBLIC_FEED",
+      "evidence_urls": [
+        "https://reutersagency.com/content/coverage-expertise/business-finance/",
+        "https://reutersagency.com/content/content-types/text/"
+      ]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-ASSOCIATED-PRESS-TOP-NEWS",
+      "name": "Associated Press Top News",
+      "previous_url": "https://rsshub.app/apnews/topics/apf-topnews",
+      "previous_observation": "HTTP 403 from a third-party RSSHub route",
+      "classification": "NONCANONICAL_ACCESS_BLOCKED",
+      "candidate_url": "https://apnews.com/index.rss",
+      "candidate_observation": "Publisher homepage advertises the RSS URL; direct acquisition returns HTTP 401",
+      "evidence_urls": ["https://apnews.com/", "https://apnews.com/index.rss"]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-REUTERS-WORLD",
+      "name": "Reuters World",
+      "previous_url": "https://feeds.reuters.com/reuters/worldNews",
+      "previous_observation": "DNS resolution failure",
+      "classification": "RETIRED_NO_PUBLIC_FEED",
+      "evidence_urls": [
+        "https://reutersagency.com/content/content-types/reuters-ready/",
+        "https://reutersagency.com/content/content-types/text/"
+      ]
+    },
+    {
+      "source_id": "CENT-SRC-RSS-OSHA-NEWS-RELEASES",
+      "name": "OSHA News Releases",
+      "url": "https://www.osha.gov/news/newsreleases.xml",
+      "classification": "ACTIVE_REQUEST_POLICY_REPAIRED",
+      "observation": "HTTP 200; 5 entries; bozo=false with a Mozilla-compatible identifying Centinelas user agent"
+    },
+    {
+      "source_id": "CENT-SRC-RSS-OSHA-FEDERAL-REGISTER-NOTICES",
+      "name": "OSHA Federal Register Notices",
+      "url": "https://www.osha.gov/laws-regs/federalregisters.xml",
+      "classification": "ACTIVE_REQUEST_POLICY_REPAIRED",
+      "observation": "HTTP 200; 5 entries; bozo=false with a Mozilla-compatible identifying Centinelas user agent"
+    },
+    {
+      "source_id": "CENT-SRC-RSS-OSHA-STANDARD-INTERPRETATIONS",
+      "name": "OSHA Standard Interpretations",
+      "url": "https://www.osha.gov/laws-regs/standardinterpretations.xml",
+      "classification": "ACTIVE_REQUEST_POLICY_REPAIRED",
+      "observation": "HTTP 200; 5 entries; bozo=false with a Mozilla-compatible identifying Centinelas user agent"
+    },
+    {
+      "source_id": "CENT-SRC-RSS-OSHA-DIRECTIVES",
+      "name": "OSHA Directives",
+      "url": "https://www.osha.gov/enforcement/directives.xml",
+      "classification": "ACTIVE_REQUEST_POLICY_REPAIRED",
+      "observation": "HTTP 200; 5 entries; bozo=false with a Mozilla-compatible identifying Centinelas user agent"
+    },
+    {
+      "source_id": "CENT-SRC-RSS-OSHA-QUICKTAKES",
+      "name": "OSHA QuickTakes",
+      "url": "https://www.osha.gov/sites/default/files/quicktakes.xml",
+      "classification": "ACTIVE_REQUEST_POLICY_REPAIRED",
+      "observation": "HTTP 200; 289 entries; bozo=false with a Mozilla-compatible identifying Centinelas user agent"
+    }
+  ],
+  "arithmetic": {
+    "classified": 13,
+    "unresolved": 0,
+    "active_after_adjudication": 9,
+    "excluded_after_adjudication": 4
+  },
+  "certification_boundary": "This adjudicates the 13 failed source configurations. It does not certify future availability or equivalence between retired and candidate sources."
+}

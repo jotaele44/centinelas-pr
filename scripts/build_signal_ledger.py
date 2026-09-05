@@ -54,7 +54,14 @@ SOURCE_CONFIG_PATHS = (
     REPO_ROOT / "src" / "centinelas" / "ingest" / "sources.yaml",
     REPO_ROOT / "src" / "centinelas" / "ingest" / "just_security_sources.yaml",
     REPO_ROOT / "data" / "reference" / "source_registry.csv",
+    REPO_ROOT / "docs" / "source_adjudication_20260905.json",
 )
+TERMINAL_EXCLUDED_SOURCE_STATES = {
+    "NONCANONICAL_ACCESS_BLOCKED",
+    "RETIRED_NO_EQUIVALENT_PUBLIC_FEED",
+    "RETIRED_NO_PUBLIC_FEED",
+    "SUPERSEDED",
+}
 
 
 def feed_source_id(feed_name: str) -> str:
@@ -65,7 +72,32 @@ def feed_source_id(feed_name: str) -> str:
 
 def source_name_to_id(sources: list[dict] | None = None) -> dict[str, str]:
     configured_sources = rss._load_sources() if sources is None else sources
-    return {src["name"]: feed_source_id(src["name"]) for src in configured_sources}
+    return {
+        src["name"]: src.get("source_id") or feed_source_id(src["name"])
+        for src in configured_sources
+    }
+
+
+def build_source_scope(source_inventory: list[dict]) -> list[dict]:
+    source_ids = source_name_to_id(source_inventory)
+    return [
+        {
+            "source_registry_id": source_ids.get(source["name"]),
+            "name": source["name"],
+            "url": source.get("url"),
+            "active": bool(source.get("enabled", True)),
+            "lifecycle_state": (
+                "ACTIVE"
+                if source.get("enabled", True)
+                else source.get("lifecycle_state", "UNRESOLVED")
+            ),
+            "retired_at": source.get("retired_at"),
+            "retirement_reason": source.get("retirement_reason"),
+            "adjudication_ref": source.get("adjudication_ref"),
+            "candidate_url": source.get("candidate_url"),
+        }
+        for source in source_inventory
+    ]
 
 
 def item_to_signal(
@@ -192,6 +224,7 @@ def build_receipt(
     repository_head: str | None,
     source_config_before: list[dict],
     source_config_after: list[dict],
+    source_scope_rows: list[dict] | None = None,
 ) -> dict:
     source_status_counts = Counter(row["status"] for row in source_receipts)
     method_counts = Counter(row["classification_method"] for row in signals)
@@ -232,6 +265,37 @@ def build_receipt(
         for method, count in method_counts.items()
         if method in {"keyword_fallback", "unclassified_fallback", "unresolved"}
     )
+    if source_scope_rows is None:
+        source_scope_rows = [
+            {
+                "source_registry_id": row.get("source_registry_id"),
+                "name": row.get("name"),
+                "url": row.get("url"),
+                "active": True,
+                "lifecycle_state": "ACTIVE",
+                "retired_at": None,
+                "retirement_reason": None,
+                "adjudication_ref": None,
+                "candidate_url": None,
+            }
+            for row in source_receipts
+        ]
+    active_scope_rows = [row for row in source_scope_rows if row.get("active") is True]
+    excluded_scope_rows = [row for row in source_scope_rows if row.get("active") is False]
+    source_scope_conservation = (
+        len(source_scope_rows) == len(active_scope_rows) + len(excluded_scope_rows)
+        and len(active_scope_rows) == configured_source_count
+    )
+    active_scope_matches_receipts = {
+        row.get("source_registry_id") for row in active_scope_rows
+    } == {row.get("source_registry_id") for row in source_receipts}
+    excluded_sources_adjudicated = all(
+        row.get("lifecycle_state") in TERMINAL_EXCLUDED_SOURCE_STATES
+        and bool(row.get("retired_at"))
+        and bool(row.get("retirement_reason"))
+        and bool(row.get("adjudication_ref"))
+        for row in excluded_scope_rows
+    )
     gates = {
         "nonempty_ledger": bool(signals),
         "no_synthetic_rows": not any(row.get("is_synthetic") for row in signals),
@@ -256,6 +320,14 @@ def build_receipt(
         "raw_hashes_bound": raw_hashes_bound,
         "no_source_failures": not source_failures,
         "no_classifier_fallback": classifier_fallback_rows == 0,
+        "source_scope_conservation": source_scope_conservation,
+        "active_source_scope_matches_receipts": active_scope_matches_receipts,
+        "source_scope_registry_ids_unique": all(
+            bool(row.get("source_registry_id")) for row in source_scope_rows
+        )
+        and len(source_scope_rows)
+        == len({row.get("source_registry_id") for row in source_scope_rows}),
+        "excluded_sources_adjudicated": excluded_sources_adjudicated,
     }
     classification = "PASS" if all(gates.values()) else "PROVISIONAL"
     return {
@@ -295,6 +367,15 @@ def build_receipt(
             "after": source_config_after,
             "stable": source_config_before == source_config_after,
         },
+        "source_scope": {
+            "inventory": len(source_scope_rows),
+            "active": len(active_scope_rows),
+            "excluded": len(excluded_scope_rows),
+            "conservation": source_scope_conservation,
+            "active_matches_receipts": active_scope_matches_receipts,
+            "excluded_adjudicated": excluded_sources_adjudicated,
+            "rows": source_scope_rows,
+        },
         "gates": gates,
     }
 
@@ -327,7 +408,10 @@ def main(argv: list[str] | None = None) -> int:
 
     repository_head = git_head()
     source_config_before = source_config_state()
-    configured_sources = rss._load_sources()
+    source_inventory = rss._load_source_inventory()
+    configured_sources = [
+        source for source in source_inventory if source.get("enabled", True)
+    ]
     started_at = datetime.now(timezone.utc).isoformat()
     signals, source_receipts, polled_item_count = build_ledger_with_receipts(
         limit=args.limit,
@@ -368,6 +452,7 @@ def main(argv: list[str] | None = None) -> int:
         repository_head=repository_head,
         source_config_before=source_config_before,
         source_config_after=source_config_after,
+        source_scope_rows=build_source_scope(source_inventory),
     )
     write_text_atomic(
         receipt_path,

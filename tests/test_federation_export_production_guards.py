@@ -134,3 +134,29 @@ def test_production_receipt_rejects_missing_provisional_and_tampered(tmp_path) -
     ledger.write_text(json.dumps({"signal_id": "tampered"}) + "\n", encoding="utf-8")
     errors = _production_receipt_errors(receipt, ledger_path=ledger, signals=signals)
     assert any("SHA256" in error for error in errors)
+
+
+def test_production_receipt_rejects_unadjudicated_excluded_source(tmp_path) -> None:
+    ledger = tmp_path / "signals.jsonl"
+    signals = _write_ledger(ledger)
+    receipt = _receipt(ledger, signals)
+    receipt["source_scope"]["inventory"] = 2
+    receipt["source_scope"]["excluded"] = 1
+    receipt["source_scope"]["rows"].append(
+        {
+            "source_registry_id": "CENT-SRC-RSS-UNRESOLVED",
+            "name": "Unresolved",
+            "url": "https://example.test/unresolved",
+            "active": False,
+            "lifecycle_state": "UNRESOLVED",
+            "retired_at": None,
+            "retirement_reason": None,
+            "adjudication_ref": None,
+        }
+    )
+    receipt["gates"]["excluded_sources_adjudicated"] = True
+    receipt["gates"]["source_scope_conservation"] = True
+    receipt["gates"]["source_scope_registry_ids_unique"] = True
+
+    errors = _production_receipt_errors(receipt, ledger_path=ledger, signals=signals)
+    assert any("excluded source scope is not fully adjudicated" in error for error in errors)

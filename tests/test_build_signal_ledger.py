@@ -145,6 +145,39 @@ def test_receipt_pass_requires_closed_provenance_gates(tmp_path, monkeypatch):
     assert receipt["classification"] == "PASS"
     assert all(receipt["gates"].values())
 
+    receipt = ledger_builder.build_receipt(
+        out=out,
+        raw_dir=raw_dir,
+        signals=[signal],
+        source_receipts=[source_receipt("fixture.feed", content)],
+        polled_item_count=1,
+        started_at="2026-09-05T20:00:00+00:00",
+        completed_at="2026-09-05T20:01:00+00:00",
+        limit=None,
+        configured_source_count=1,
+        repository_head="a" * 40,
+        source_config_before=config_state,
+        source_config_after=config_state,
+        source_scope_rows=[
+            {
+                "source_registry_id": "CENT-SRC-RSS-FIXTURE",
+                "active": True,
+                "lifecycle_state": "ACTIVE",
+            },
+            {
+                "source_registry_id": None,
+                "active": False,
+                "lifecycle_state": "RETIRED_NO_PUBLIC_FEED",
+                "retired_at": "2026-09-05T22:04:53Z",
+                "retirement_reason": "Publisher removed the public feed.",
+                "adjudication_ref": "docs/source-adjudication.json",
+            },
+        ],
+    )
+
+    assert receipt["classification"] == "PROVISIONAL"
+    assert receipt["gates"]["source_scope_registry_ids_unique"] is False
+
 
 def test_strict_snapshot_preserves_provisional_receipt_before_failing(
     tmp_path, monkeypatch
@@ -223,6 +256,28 @@ def test_receipt_is_provisional_when_limit_truncates_polled_items(tmp_path):
 
     assert receipt["classification"] == "PROVISIONAL"
     assert receipt["gates"]["full_polled_item_retention"] is False
+
+
+def test_source_scope_preserves_adjudicated_exclusions():
+    scope = ledger_builder.build_source_scope(
+        [
+            {"name": "Active", "url": "https://example.test/active"},
+            {
+                "name": "Retired",
+                "url": "https://example.test/retired",
+                "enabled": False,
+                "lifecycle_state": "RETIRED_NO_PUBLIC_FEED",
+                "retired_at": "2026-09-05T22:04:53Z",
+                "retirement_reason": "Publisher removed the public feed.",
+                "adjudication_ref": "docs/source-adjudication.json",
+            },
+        ]
+    )
+
+    assert len(scope) == 2
+    assert [row["active"] for row in scope] == [True, False]
+    assert scope[1]["lifecycle_state"] == "RETIRED_NO_PUBLIC_FEED"
+    assert scope[1]["source_registry_id"] == "CENT-SRC-RSS-RETIRED"
 
 
 def test_snapshot_refuses_to_overwrite_existing_evidence(tmp_path, monkeypatch):
