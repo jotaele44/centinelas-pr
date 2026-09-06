@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -87,15 +88,38 @@ def _dispatched_record_path(item_id: str) -> Path:
     return _DATA_DIR / "dispatched" / f"{item_id}.json"
 
 
+def _fsync_directory(path: Path) -> None:
+    """Best-effort directory durability after an atomic replace."""
+
+    try:
+        directory_fd = os.open(path, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(directory_fd)
+    except OSError:
+        pass
+    finally:
+        os.close(directory_fd)
+
+
 def _persist_dispatch_record(record: DispatchRecord) -> None:
-    """Persist Centinelas-local bookkeeping, including dry runs and failures."""
+    """Atomically persist local bookkeeping, including dry runs and failures."""
 
     path = _dispatched_record_path(record.item_id)
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    payload = (record.model_dump_json(indent=2) + "\n").encode("utf-8")
+    file_descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent
+    )
+    temporary = Path(temporary_name)
     try:
-        temporary.write_text(record.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        with os.fdopen(file_descriptor, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(temporary, path)
+        _fsync_directory(path.parent)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -247,10 +271,11 @@ def dispatch_to_targets(
     succeeded = sum(
         attempt["status"] in {"staged_local", "dry_run"} for attempt in attempts
     )
+    complete_state = "dry_run" if dry_run else "staged_local"
     return {
         "item_id": item.item_id,
         "status": (
-            "staged_local"
+            complete_state
             if succeeded == len(attempts)
             else ("partial" if succeeded else "failed")
         ),
