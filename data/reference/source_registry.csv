@@ -15,19 +15,19 @@ CENT-SRC-RSS-THE-DRIVE-WAR-ZONE,The Drive - War Zone,en,military_aerospace_media
 CENT-SRC-RSS-FLIGHTGLOBAL,FlightGlobal,en,military_aerospace_media,0.9,rss,active,Live RSS intake (T1); engine feed https://www.flightglobal.com/rss
 CENT-SRC-RSS-DEFENSE-NEWS,Defense News,en,military_aerospace_media,0.9,rss,active,Live RSS intake (T1); engine feed https://www.defensenews.com/arc/outboundfeeds/rss/
 CENT-SRC-RSS-SPACE-NEWS,Space News,en,military_aerospace_media,0.9,rss,active,Live RSS intake (T1); engine feed https://spacenews.com/feed/
-CENT-SRC-RSS-NOAA-NEWS,NOAA News,en,environmental_agency,0.9,rss,active,Live RSS intake (T1); engine feed https://www.noaa.gov/news-release/feed
+CENT-SRC-RSS-NOAA-NEWS,NOAA News,en,environmental_agency,0.9,rss,retired,Retired 2026-09-05; general feed gone; narrower NOS candidate malformed; adjudication docs/source_adjudication_20260905.json
 CENT-SRC-RSS-INSIDE-CLIMATE-NEWS,Inside Climate News,en,environmental_media,0.9,rss,active,Live RSS intake (T1); engine feed https://insideclimatenews.org/feed/
-CENT-SRC-RSS-YALE-ENVIRONMENT-360,Yale Environment 360,en,environmental_media,0.9,rss,active,Live RSS intake (T1); engine feed https://e360.yale.edu/feed
+CENT-SRC-RSS-YALE-ENVIRONMENT-360,Yale Environment 360,en,environmental_media,0.9,rss,active,Live RSS intake (T1); engine feed https://e360.yale.edu/feed.xml; refreshed 2026-09-05
 CENT-SRC-RSS-USGS-EARTHQUAKES,USGS Earthquakes,en,geo_geology_agency,0.9,rss,active,Live RSS intake (T1); engine feed https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.atom
-CENT-SRC-RSS-VOLCANO-DISCOVERY,Volcano Discovery,en,geo_geology_media,0.7,rss,active,Live RSS intake (T2); engine feed https://www.volcanodiscovery.com/volcanoes/rss.xml
+CENT-SRC-RSS-VOLCANO-DISCOVERY,Volcano Discovery,en,geo_geology_media,0.7,rss,active,Live RSS intake (T2); engine feed https://www.volcanodiscovery.com/volcanoesandearthquakenews.rss; refreshed 2026-09-05
 CENT-SRC-RSS-AGU-EOS,AGU EOS,en,geo_geology_media,0.9,rss,active,Live RSS intake (T1); engine feed https://eos.org/feed
-CENT-SRC-RSS-THE-BLACK-VAULT,The Black Vault,en,anomalous_archive,0.5,rss,active,Live RSS intake (T3); engine feed https://www.theblackvault.com/documentdb/feed/
+CENT-SRC-RSS-THE-BLACK-VAULT,The Black Vault,en,anomalous_archive,0.5,rss,active,Live RSS intake (T3); engine feed https://www.theblackvault.com/documentarchive/feed/; refreshed 2026-09-05
 CENT-SRC-RSS-EARTHFILES,Earthfiles,en,anomalous_media,0.5,rss,active,Live RSS intake (T3); engine feed https://www.earthfiles.com/feed/
-CENT-SRC-RSS-MUFON,MUFON,en,anomalous_org,0.5,rss,active,Live RSS intake (T3); engine feed https://www.mufon.com/blog-feed.xml
-CENT-SRC-RSS-REUTERS-BUSINESS,Reuters Business,en,financial_wire,0.9,rss,active,Live RSS intake (T1); engine feed https://feeds.reuters.com/reuters/businessNews
+CENT-SRC-RSS-MUFON,MUFON,en,anomalous_org,0.5,rss,active,Live RSS intake (T3); engine feed https://mufon.com/feed/; refreshed 2026-09-05
+CENT-SRC-RSS-REUTERS-BUSINESS,Reuters Business,en,financial_wire,0.9,rss,retired,Retired 2026-09-05; legacy public RSS DNS removed; Reuters licensed feeds only; adjudication docs/source_adjudication_20260905.json
 CENT-SRC-RSS-FINANCIAL-TIMES,Financial Times,en,financial_media,0.9,rss,active,Live RSS intake (T1); engine feed https://www.ft.com/rss/home
-CENT-SRC-RSS-ASSOCIATED-PRESS-TOP-NEWS,Associated Press Top News,en,political_wire,0.9,rss,active,Live RSS intake (T1); engine feed https://rsshub.app/apnews/topics/apf-topnews
-CENT-SRC-RSS-REUTERS-WORLD,Reuters World,en,political_wire,0.9,rss,active,Live RSS intake (T1); engine feed https://feeds.reuters.com/reuters/worldNews
+CENT-SRC-RSS-ASSOCIATED-PRESS-TOP-NEWS,Associated Press Top News,en,political_wire,0.9,rss,retired,Retired 2026-09-05; third-party mirror noncanonical; official AP RSS returns 401; adjudication docs/source_adjudication_20260905.json
+CENT-SRC-RSS-REUTERS-WORLD,Reuters World,en,political_wire,0.9,rss,retired,Retired 2026-09-05; legacy public RSS DNS removed; Reuters licensed feeds only; adjudication docs/source_adjudication_20260905.json
 CENT-SRC-RSS-FOREIGN-POLICY,Foreign Policy,en,political_media,0.9,rss,active,Live RSS intake (T1); engine feed https://foreignpolicy.com/feed/
 CENT-SRC-RSS-BBC-WORLD,BBC World,en,news_wire,0.9,rss,active,Live RSS intake (T1); engine feed https://feeds.bbci.co.uk/news/world/rss.xml
 CENT-SRC-RSS-SCIENCE-DAILY,Science Daily,en,science_wire,0.7,rss,active,Live RSS intake (T2); engine feed https://www.sciencedaily.com/rss/all.xml

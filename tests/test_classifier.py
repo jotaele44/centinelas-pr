@@ -4,8 +4,9 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from centinelas.classify import classifier
 from centinelas.classify.labels import DomainLabel
-from centinelas.classify.rules import keyword_classify
+from centinelas.classify.rules import keyword_classify, keyword_evidence
 from centinelas.models import RawItem
 
 FIXTURES = json.loads(
@@ -122,3 +123,68 @@ def test_item_id_differs_by_date():
     dt1 = datetime(2026, 7, 1, tzinfo=timezone.utc)
     dt2 = datetime(2026, 7, 2, tzinfo=timezone.utc)
     assert RawItem.make_id(url, dt1) != RawItem.make_id(url, dt2)
+
+
+def test_classification_method_binds_fast_path():
+    item = next(i for i in FIXTURES if i["item_id"] == "multi001")
+    _, _, _, method = classifier.classify_with_provenance(_make_raw(item))
+    assert method == "keyword_fast_path"
+
+
+def test_classification_method_binds_llm(monkeypatch):
+    item = next(i for i in FIXTURES if i["item_id"] == "env001")
+    monkeypatch.setattr(
+        classifier,
+        "_llm_classify",
+        lambda title, body: ([DomainLabel.ENVIRONMENTAL], 0.91, "model result"),
+    )
+    _, confidence, reasoning, method = classifier.classify_with_provenance(_make_raw(item))
+    assert (confidence, reasoning, method) == (0.91, "model result", "llm")
+
+
+def test_classification_method_binds_keyword_fallback(monkeypatch):
+    item = next(i for i in FIXTURES if i["item_id"] == "env001")
+
+    def fail_llm(title, body):
+        raise RuntimeError("offline")
+
+    monkeypatch.setattr(classifier, "_llm_classify", fail_llm)
+    labels, confidence, _, method = classifier.classify_with_provenance(_make_raw(item))
+    assert DomainLabel.ENVIRONMENTAL in labels
+    assert (confidence, method) == (0.6, "keyword_fallback")
+
+
+def test_classification_method_binds_unclassified_fallback(monkeypatch):
+    item = RawItem(
+        item_id="plain",
+        source_url="https://example.test/plain",
+        source_name="Example",
+        title="Local restaurant review",
+        body_text="A quiet dining room",
+        published_at=datetime(2026, 9, 5, tzinfo=timezone.utc),
+        captured_at=datetime(2026, 9, 5, tzinfo=timezone.utc),
+        evidence_tier="T2",
+    )
+
+    def fail_llm(title, body):
+        raise RuntimeError("offline")
+
+    monkeypatch.setattr(classifier, "_llm_classify", fail_llm)
+    labels, confidence, _, method = classifier.classify_with_provenance(item)
+    assert labels == [DomainLabel.UNCLASSIFIED]
+    assert (confidence, method) == (0.3, "unclassified_fallback")
+
+
+def test_keyword_evidence_preserves_terms_and_taxonomy_order():
+    evidence = keyword_evidence(
+        "An environmental photography award covered a new aircraft design."
+    )
+
+    assert [label.value for label in evidence] == [
+        "ENVIRONMENTAL",
+        "MILITARY_AEROSPACE",
+        "FINANCIAL",
+    ]
+    assert evidence[DomainLabel.ENVIRONMENTAL] == ["environmental"]
+    assert evidence[DomainLabel.MILITARY_AEROSPACE] == ["aircraft"]
+    assert evidence[DomainLabel.FINANCIAL] == ["award"]

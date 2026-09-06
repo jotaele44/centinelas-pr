@@ -1,0 +1,67 @@
+schema_version: "1.0.0"
+sources:
+  - source_registry_id: CENT-SRC-PREB-NOTICES
+    name: PREB Public Notices
+    family: PREB
+    manifestation: public_notices_archive
+    url: https://energia.pr.gov/avisos/
+    parser: preb_notices
+    next_selector: ".pager a.next_page"
+    max_requests: 200
+    bound: all linked archive pages at capture time, with 200-page fail-closed ceiling
+    tier: T1
+
+  - source_registry_id: CENT-SRC-AAA-PRESS
+    name: AAA Press Releases
+    family: AAA
+    manifestation: press_release_archive
+    url: https://www.acueductos.pr.gov/comunicaciones/comunicados-de-prensa
+    parser: aaa_press
+    next_selector: "a.w-pagination-next"
+    max_requests: 200
+    bound: all linked Webflow archive pages at capture time, with 200-page fail-closed ceiling
+    tier: T1
+
+  - source_registry_id: CENT-SRC-COR3-PRESS
+    name: COR3 Press Releases
+    family: COR3
+    manifestation: press_release_api
+    url: "https://recovery.pr.gov/tpbackend_prod/api/page/search?page_type_id=2&pageOffset={offset}&pageSize=15&sortValue=display_date&sortDirection=desc&state=PUBLISHED&lang=en"
+    public_listing_url: https://recovery.pr.gov/en/newsroom/press-releases
+    parser: cor3_press
+    max_requests: 200
+    bound: all rows declared by the stable rowcount header, 15 rows per request
+    tier: T1
+
+  - source_registry_id: CENT-SRC-COR3-ACTIVE-RFPS
+    name: COR3 Active RFPs
+    family: COR3
+    manifestation: active_rfp_api
+    url: "https://recovery.pr.gov/tpbackend_prod/api/rfp-contract/active-rfps?groupId=1&statusRfd=1&sortColumn=expirationDate&sortValue=asc&expirationDate={capture_date}&expirationDateOption=after&lang=en"
+    public_listing_url: https://recovery.pr.gov/en/cor3-rfps-and-contracts/active-rfps
+    parser: cor3_active_rfps
+    max_requests: 1
+    allow_empty: true
+    bound: all COR3 RFPs active on the Puerto Rico local capture date
+    empty_semantics: CURRENT_EMPTY
+    tier: T1
+
+  - source_registry_id: CENT-SRC-SENATE-CALENDAR
+    name: Puerto Rico Senate Legislative Calendar
+    family: LEGISLATIVE
+    manifestation: senate_current_calendar
+    url: https://senado.pr.gov/
+    parser: senate_calendar
+    max_requests: 1
+    bound: every calendar item published on the Senate homepage at capture time
+    tier: T1
+
+  - source_registry_id: CENT-SRC-HOUSE-CALENDAR
+    name: Puerto Rico House Legislative Calendar
+    family: LEGISLATIVE
+    manifestation: house_current_calendar
+    url: https://www.camara.pr.gov/calendario/
+    parser: house_calendar
+    max_requests: 1
+    bound: every event item published on the House calendar page at capture time
+    tier: T1
