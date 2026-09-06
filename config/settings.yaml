@@ -1,18 +1,23 @@
 centinelas:
-  # Anthropic API key — loaded from env at runtime
-  anthropic_api_key: "${ANTHROPIC_API_KEY}"
+  # Local is the credential-free authoritative classifier. Anthropic is an
+  # explicit optional adapter selected with CENTINELAS_CLASSIFIER_BACKEND.
+  classifier_backend: "${CENTINELAS_CLASSIFIER_BACKEND:-local}"
+  anthropic_api_key: "${ANTHROPIC_API_KEY:-}"
 
-  # Base directory where sibling repos live (e.g. ~/Developer)
-  repos_dir: "${CENTINELAS_REPOS_DIR:-~/Developer}"
+  # Canonical cross-repository authority. Hosted bridges may mirror exact bytes
+  # only after a local envelope exists.
+  exchange_root: "${CENTINELAS_EXCHANGE_ROOT:-.centinelas/exchange}"
 
   # Logging
   log_level: "INFO"
 
   # Classification
   classifier:
-    model: "claude-haiku-4-5-20251001"
+    local_engine: "deterministic_keyword_rules"
+    hosted_adapter: "anthropic"
+    hosted_model: "claude-haiku-4-5-20251001"
     keyword_confidence_threshold: 0.85
-    llm_confidence_threshold: 0.5
+    route_confidence_threshold: 0.55
 
   # Ingest
   ingest:
@@ -22,4 +27,5 @@ centinelas:
   # Routing
   routing:
     dry_run: false
-    always_log_to_hub: true
+    always_stage_to_hub: true
+    hosted_mirror_default: false
