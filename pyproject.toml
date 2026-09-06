@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "Universal online intelligence monitor and routing engine"
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.40.0",
     "httpx>=0.27.0",
     "feedparser>=6.0.0",
     "beautifulsoup4>=4.12.0",
@@ -34,6 +33,12 @@ dev = [
     "pytest-httpx>=0.30.0",
     "ruff>=0.4.0",
     "mypy>=1.11.0",
+]
+# Explicitly non-core. The default classifier imports no hosted client and needs
+# no model credential. Install this extra only when an operator deliberately
+# selects CENTINELAS_CLASSIFIER_MODE=anthropic.
+hosted-classifier = [
+    "anthropic>=0.40.0",
 ]
 server = [
     "fastapi>=0.111.0",
