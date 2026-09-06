@@ -88,7 +88,7 @@ optional hosted action:
 ```text
 .centinelas/exchange/
   outbox/<target>/<message_id>.json
-  inbox/<source>/<message_id>.json
+  inbox/<target>/<message_id>.json
   receipts/<target>/<message_id>.json
 ```
 
