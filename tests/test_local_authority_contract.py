@@ -49,10 +49,15 @@ def test_anthropic_is_optional_not_core() -> None:
 
 
 def test_shared_transport_is_pinned_to_exact_policy_child() -> None:
-    text = _read("pyproject.toml")
-    assert f"thehub-pr/archive/{IMPLEMENTATION_SHA}.zip" in text
-    assert "prii-export-utils" in text
-    assert "@main" not in text
+    pyproject = _read("pyproject.toml")
+    desktop = _read("requirements-desktop.txt")
+    expected = f"thehub-pr/archive/{IMPLEMENTATION_SHA}.zip"
+    assert expected in pyproject
+    assert expected in desktop
+    assert "prii-export-utils" in pyproject
+    assert "prii-export-utils" in desktop
+    assert "@main" not in pyproject
+    assert "@main" not in desktop
 
 
 def test_application_dispatch_has_no_hosted_network_client() -> None:
@@ -85,6 +90,15 @@ def test_dispatch_workflows_default_to_local_and_stage_before_mirror() -> None:
         assert "optional" in source.lower(), path
         assert "--exchange-root" in source, path
         assert 'CLASSIFIER_BACKEND" == "anthropic"' in source, path
+
+
+def test_validation_workflow_is_read_only_and_lock_drift_fails_closed() -> None:
+    source = _read(".github/workflows/validate.yml")
+    assert "permissions:\n  contents: read" in source
+    assert "contents: write" not in source
+    assert "git push" not in source
+    assert "uv lock" in source
+    assert "git diff --exit-code -- uv.lock" in source
 
 
 def test_manifest_preserves_provisional_eight_gate_ceiling() -> None:
