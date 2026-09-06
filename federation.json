@@ -20,9 +20,12 @@
     "item_schema": "schemas/centinelas_item.schema.json",
     "source_registry": "data/reference/source_registry.csv",
     "engine_sources": "src/centinelas/ingest/sources.yaml",
+    "preofficial_record_schema": "schemas/puerto_rico_source_record.schema.json",
+    "preofficial_source_registry": "data/reference/puerto_rico_source_registry.csv",
+    "preofficial_sources": "src/centinelas/ingest/puerto_rico_sources.yaml",
     "seed_ledger": "data/signals/example_signals.jsonl",
     "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
-    "intake_doctrine": "scripts/build_signal_ledger.py bridges live RSS intake (real, non-synthetic) into the signal ledger; the synthetic seed remains only as a contract fixture. PR pre-officialization source families remain future intake.",
+    "intake_doctrine": "scripts/build_signal_ledger.py bridges live RSS intake into the signal ledger. scripts/build_pr_source_tranche.py separately freezes source-native PREB, AAA, COR3, Senate, and House discovery records with identity_effect=NONE and binding_state=UNRESOLVED; it does not promote source taxonomy into canonical identity.",
     "live_ledger": "data/signals/live_signals.jsonl"
   },
   "domain_routing": {
@@ -44,7 +47,9 @@
     "route": "centinelas route",
     "run_pipeline": "centinelas run",
     "status": "centinelas status",
+    "preofficial_source_status": "centinelas source-status --receipt <acquisition_receipt.json>",
     "build_signal_ledger": "python3 scripts/build_signal_ledger.py",
+    "build_preofficial_source_tranche": "python3 scripts/build_pr_source_tranche.py --out <records.jsonl> --receipt <acquisition_receipt.json> --raw-dir <raw-dir>",
     "maintenance": "python3 scripts/run_maintenance.py --repo centinelas-pr --mode audit"
   },
   "canonical_outputs": {
@@ -67,9 +72,12 @@
       "universal intake engine (src/centinelas) merged: ingest/classify/route across six domains with hub_parent logging",
       "real (non-synthetic) signal intake and canonical production export are implemented",
       "production export rejects synthetic, empty, malformed, future-dated, and stale ledgers",
+      "receipt-first Puerto Rico source acquisition is locally implemented with immutable member hashes, fail-closed pagination, source-local identity, and operator freshness/failure status",
       "2026-08-25 live RSS refresh wrote 100 real non-synthetic signals; production export passed and thehub-pr validate-package returned VALID (classifier ran in keyword fallback mode because ANTHROPIC_API_KEY was unavailable)"
     ],
-    "blocking_conditions": []
+    "blocking_conditions": [
+      "Puerto Rico source tranche is published only on draft PR #124; all exact-head GitHub Actions jobs are blocked before executing because the account is locked for billing"
+    ]
   },
   "notes": "Every item is also logged to hub_parent regardless of domain labels."
 }
