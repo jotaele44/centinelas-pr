@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from centinelas.classify.adjudication import adjudicate_signal, immutable_projection
+from centinelas.classify.adjudication import (
+    adjudicate_signal,
+    apply_review_adjudication,
+    immutable_projection,
+)
 from centinelas.classify.labels import DomainLabel
 
 
@@ -109,3 +113,83 @@ def test_generic_source_with_strong_unclassified_score_is_terminal():
     assert decision["state"] == "TERMINAL"
     assert derived["labels"] == ["UNCLASSIFIED"]
     assert derived["classification_method"] == "model_assisted_adjudication"
+
+
+def test_official_scoped_source_is_authoritative_routing_evidence():
+    row = _row("QuickTakes 5/7/2026")
+    derived, decision = adjudicate_signal(
+        row,
+        source_family="osha_enforcement",
+        nli_scores=_scores(UNCLASSIFIED=0.45, ENVIRONMENTAL=0.20),
+    )
+
+    assert decision["state"] == "TERMINAL"
+    assert derived["labels"] == ["SAFETY_COMPLIANCE"]
+    assert decision["support"]["SAFETY_COMPLIANCE"]["evidence"][0]["kind"] == (
+        "official_scoped_source"
+    )
+
+
+def test_specialist_source_requires_content_corroboration():
+    row = _row("USAF selects a new MQ-9 Reaper successor")
+    derived, decision = adjudicate_signal(
+        row,
+        source_family="military_aerospace_media",
+        nli_scores=_scores(UNCLASSIFIED=0.35, ENVIRONMENTAL=0.25),
+    )
+
+    assert decision["state"] == "TERMINAL"
+    assert derived["labels"] == ["MILITARY_AEROSPACE"]
+    assert "mq-9" in decision["support"]["MILITARY_AEROSPACE"]["evidence"][1]["values"]
+
+
+def test_model_only_moderate_score_on_generic_source_is_unclassified():
+    row = _row("A longer exhale may push your brain toward bolder decisions")
+    derived, decision = adjudicate_signal(
+        row,
+        source_family="science_wire",
+        nli_scores=_scores(ENVIRONMENTAL=0.40, UNCLASSIFIED=0.25),
+    )
+
+    assert decision["state"] == "TERMINAL"
+    assert derived["labels"] == ["UNCLASSIFIED"]
+
+
+def test_model_only_strong_environmental_score_is_not_accepted():
+    row = _row("A quantum bath puts quantum entanglement on autopilot")
+    derived, decision = adjudicate_signal(
+        row,
+        source_family="science_wire",
+        nli_scores=_scores(ENVIRONMENTAL=0.70, UNCLASSIFIED=0.10),
+    )
+
+    assert decision["state"] == "TERMINAL"
+    assert derived["labels"] == ["UNCLASSIFIED"]
+
+
+def test_review_adjudication_requires_exact_provenance_binding():
+    import hashlib
+
+    row = _row("Bunker Talk: Weekend Edition")
+    derived, decision = adjudicate_signal(
+        row,
+        source_family="military_aerospace_media",
+        nli_scores=_scores(ENVIRONMENTAL=0.40, UNCLASSIFIED=0.30),
+    )
+    review = {
+        "signal_id": row["signal_id"],
+        "source_id": row["source_id"],
+        "title_sha256": hashlib.sha256(row["title"].encode()).hexdigest(),
+        "classification_basis": "INFERENCE",
+        "labels": ["UNCLASSIFIED"],
+        "confidence_score": 80.0,
+        "rationale": "The frozen title and summary contain no domain event.",
+    }
+
+    reviewed, reviewed_decision = apply_review_adjudication(
+        row, derived, decision, review
+    )
+
+    assert reviewed_decision["state"] == "TERMINAL"
+    assert reviewed["classification_method"] == "review_adjudication"
+    assert reviewed_decision["review_adjudication"] == review

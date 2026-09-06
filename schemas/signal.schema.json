@@ -55,6 +55,7 @@
         "unclassified_fallback",
         "model_assisted_adjudication",
         "model_assisted_unresolved",
+        "review_adjudication",
         "unresolved"
       ]
     },

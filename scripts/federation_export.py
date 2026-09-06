@@ -47,6 +47,7 @@ ACCEPTABLE_CLASSIFICATION_METHODS = {
     "keyword_fast_path",
     "llm",
     "model_assisted_adjudication",
+    "review_adjudication",
 }
 CLASSIFICATION_MODEL_REPOSITORY = "MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli"
 CLASSIFICATION_MODEL_REVISION = "0a71e92a985b6e1ad1828cf67ce9c459639c1dca"
@@ -61,6 +62,8 @@ CLASSIFICATION_OVERLAY_GATES = {
     "immutable_fields_preserved",
     "terminal_decisions",
     "zero_unresolved_decisions",
+    "review_ledger_bound",
+    "review_exact_target_coverage",
 }
 CLASSIFICATION_MUTABLE_FIELDS = {
     "beat",
@@ -289,6 +292,23 @@ def _classification_overlay_errors(
         ).hexdigest()
         if claimed_hash != actual_hash:
             errors.append("production classification algorithm SHA256 does not match")
+        inference = algorithm.get("inference")
+        reused = isinstance(inference, dict) and inference.get("reused") is True
+        reused_inference = overlay.get("reused_inference")
+        if reused:
+            if not isinstance(reused_inference, dict):
+                errors.append("production classification reused-inference binding is missing")
+            else:
+                for key, label in (
+                    ("parent_receipt", "parent receipt"),
+                    ("parent_decisions", "parent decisions"),
+                ):
+                    reused_errors, _ = _bound_file_errors(
+                        reused_inference.get(key), name=label
+                    )
+                    errors.extend(reused_errors)
+        elif reused_inference is not None:
+            errors.append("production classification has an unexpected reused-inference binding")
 
     decision_errors, decision_path = _bound_file_errors(
         overlay.get("decisions"), name="decision ledger"
@@ -315,6 +335,36 @@ def _classification_overlay_errors(
     if any(row.get("state") != "TERMINAL" for row in decisions):
         errors.append("production classification decision ledger has unresolved rows")
 
+    review_signal_ids = {
+        str(row.get("signal_id"))
+        for row in signals
+        if row.get("classification_method") == "review_adjudication"
+    }
+    review_rows: list[dict[str, Any]] = []
+    review_by_id: dict[str, dict[str, Any]] = {}
+    review_metadata = overlay.get("review_ledger")
+    if review_signal_ids:
+        review_errors, review_path = _bound_file_errors(
+            review_metadata, name="review ledger"
+        )
+        errors.extend(review_errors)
+        if review_path is not None and review_path.is_file():
+            try:
+                review_rows = _load_jsonl_objects(review_path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                errors.append("production classification review ledger is invalid JSONL")
+        review_ids = [str(row.get("signal_id")) for row in review_rows]
+        if (
+            len(review_ids) != len(set(review_ids))
+            or set(review_ids) != review_signal_ids
+            or not isinstance(review_metadata, dict)
+            or review_metadata.get("rows") != len(review_rows)
+        ):
+            errors.append("production classification review coverage does not match")
+        review_by_id = {str(row.get("signal_id")): row for row in review_rows}
+    elif review_metadata is not None:
+        errors.append("production classification has an unexpected review ledger")
+
     signal_ids = [row.get("signal_id") for row in signals]
     decision_ids = [row.get("signal_id") for row in decisions]
     if signal_ids != decision_ids or len(decision_ids) != len(set(decision_ids)):
@@ -328,6 +378,16 @@ def _classification_overlay_errors(
             ):
                 errors.append(
                     "production classification decision does not match derived row: "
+                    f"{signal.get('signal_id')!r}"
+                )
+                break
+            if (
+                signal.get("classification_method") == "review_adjudication"
+                and decision.get("review_adjudication")
+                != review_by_id.get(str(signal.get("signal_id")))
+            ):
+                errors.append(
+                    "production classification decision review binding does not match: "
                     f"{signal.get('signal_id')!r}"
                 )
                 break
@@ -368,6 +428,36 @@ def _classification_overlay_errors(
                     errors.append(
                         "production classification changed immutable fields: "
                         f"{after.get('signal_id')!r}={sorted(changed)}"
+                    )
+                    break
+            base_by_id = {str(row.get("signal_id")): row for row in base_rows}
+            for signal_id, review in review_by_id.items():
+                before = base_by_id.get(signal_id)
+                title = str(before.get("title") or "") if before else ""
+                if (
+                    before is None
+                    or review.get("source_id") != before.get("source_id")
+                    or review.get("title_sha256")
+                    != hashlib.sha256(title.encode("utf-8")).hexdigest()
+                    or review.get("classification_basis") != "INFERENCE"
+                    or not isinstance(review.get("rationale"), str)
+                    or not review["rationale"].strip()
+                    or not isinstance(review.get("confidence_score"), (int, float))
+                    or isinstance(review.get("confidence_score"), bool)
+                    or not 0.0 <= float(review["confidence_score"]) <= 100.0
+                    or review.get("labels")
+                    != next(
+                        (
+                            row.get("labels")
+                            for row in signals
+                            if row.get("signal_id") == signal_id
+                        ),
+                        None,
+                    )
+                ):
+                    errors.append(
+                        "production classification review provenance does not match: "
+                        f"{signal_id!r}"
                     )
                     break
 

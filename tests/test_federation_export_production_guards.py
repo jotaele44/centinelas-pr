@@ -231,6 +231,7 @@ def _overlay_fixture(tmp_path: Path) -> tuple[Path, list[dict], dict]:
         "complete_decision_coverage", "unique_decision_ids",
         "two_pass_score_determinism", "row_conservation",
         "immutable_fields_preserved", "terminal_decisions", "zero_unresolved_decisions",
+        "review_ledger_bound", "review_exact_target_coverage",
     }
     receipt["gates"].update({gate: True for gate in overlay_gates})
     algorithm = {"name": "fixture", "acceptance_support_total": 3}

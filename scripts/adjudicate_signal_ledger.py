@@ -29,6 +29,7 @@ from centinelas.classify.adjudication import (  # noqa: E402
     MUTABLE_CLASSIFICATION_FIELDS,
     NLI_LABEL_DESCRIPTIONS,
     adjudicate_signal,
+    apply_review_adjudication,
     immutable_projection,
     signal_text,
 )
@@ -62,7 +63,7 @@ MODEL_FILES: dict[str, tuple[int, str]] = {
         "10dd51e1952b6725b3c65edd16411a4ffe97a6f61636f11a7505bcb0bdb6b360",
     ),
 }
-ALGORITHM_VERSION = "centinelas-evidence-adjudication-v1"
+ALGORITHM_VERSION = "centinelas-evidence-adjudication-v2"
 ALLOWED_BASE_METHODS = {
     "keyword_fast_path",
     "llm",
@@ -316,6 +317,14 @@ def equivalence_counts(
     }
 
 
+def score_vectors_sha256(score_pass: list[dict[DomainLabel, float]]) -> str:
+    serializable = [
+        {label.value: row[label] for label in NLI_LABEL_DESCRIPTIONS}
+        for row in score_pass
+    ]
+    return sha256_bytes(json_bytes(serializable))
+
+
 def runtime_manifest() -> dict[str, Any]:
     packages = {
         distribution.metadata["Name"]: distribution.version
@@ -340,6 +349,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out-ledger", required=True)
     parser.add_argument("--out-decisions", required=True)
     parser.add_argument("--out-receipt", required=True)
+    parser.add_argument("--reuse-decisions")
+    parser.add_argument("--reuse-receipt")
+    parser.add_argument("--review-ledger")
     parser.add_argument("--batch-rows", type=int, default=16)
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--require-pass", action="store_true")
@@ -347,10 +359,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.batch_rows <= 0 or args.threads <= 0:
         parser.error("--batch-rows and --threads must be greater than zero")
+    if bool(args.reuse_decisions) != bool(args.reuse_receipt):
+        parser.error("--reuse-decisions and --reuse-receipt must be provided together")
 
     base_ledger = Path(args.base_ledger).resolve()
     base_receipt_path = Path(args.base_receipt).resolve()
     source_registry = Path(args.source_registry).resolve()
+    review_ledger = Path(args.review_ledger).resolve() if args.review_ledger else None
     model_dir = Path(args.model_dir).resolve()
     out_ledger = Path(args.out_ledger).resolve()
     out_decisions = Path(args.out_decisions).resolve()
@@ -380,22 +395,117 @@ def main(argv: list[str] | None = None) -> int:
         print(f"FAIL - ledger source IDs are absent from the registry: {missing_sources}")
         return 2
 
-    classifier = OnnxNliClassifier(model_dir, threads=args.threads)
+    review_rows = load_jsonl(review_ledger) if review_ledger is not None else []
+    review_ids = [row.get("signal_id") for row in review_rows]
+    if (
+        any(not isinstance(value, str) or not value for value in review_ids)
+        or len(review_ids) != len(set(review_ids))
+    ):
+        print("FAIL - review ledger signal IDs are missing or duplicated")
+        return 2
+    reviews = {str(row["signal_id"]): row for row in review_rows}
+
     texts = [signal_text(row) for row in rows]
-    first_scores = classifier.score(texts, batch_rows=args.batch_rows)
-    second_scores = classifier.score(texts, batch_rows=args.batch_rows)
-    deterministic_scores = first_scores == second_scores
+    reused_inference: dict[str, Any] | None = None
+    if args.reuse_decisions and args.reuse_receipt:
+        reuse_decisions = Path(args.reuse_decisions).resolve()
+        reuse_receipt = Path(args.reuse_receipt).resolve()
+        if not reuse_decisions.is_file() or not reuse_receipt.is_file():
+            print("FAIL - reused decision or receipt file is unavailable")
+            return 2
+        parent = json.loads(reuse_receipt.read_text(encoding="utf-8"))
+        parent_overlay = parent.get("classification_overlay")
+        if parent.get("schema_version") != "1.1.0" or not isinstance(parent_overlay, dict):
+            print("FAIL - reused receipt is not a classification overlay")
+            return 2
+        parent_decisions = parent_overlay.get("decisions")
+        parent_model = parent_overlay.get("model")
+        parent_base = parent_overlay.get("base_ledger")
+        parent_hashes = parent_overlay.get("two_pass_score_vectors_sha256")
+        parent_gates = parent.get("gates")
+        if (
+            not isinstance(parent_decisions, dict)
+            or parent_decisions.get("path") != str(reuse_decisions)
+            or parent_decisions.get("bytes") != reuse_decisions.stat().st_size
+            or parent_decisions.get("sha256") != sha256_path(reuse_decisions)
+            or not isinstance(parent_model, dict)
+            or parent_model.get("repository") != MODEL_REPOSITORY
+            or parent_model.get("revision") != MODEL_REVISION
+            or not isinstance(parent_base, dict)
+            or parent_base.get("sha256") != sha256_path(base_ledger)
+            or not isinstance(parent_hashes, list)
+            or len(parent_hashes) != 2
+            or parent_hashes[0] != parent_hashes[1]
+            or not isinstance(parent_gates, dict)
+            or parent_gates.get("two_pass_score_determinism") is not True
+        ):
+            print("FAIL - reused inference bindings do not match the parent receipt")
+            return 2
+        prior_decisions = load_jsonl(reuse_decisions)
+        if [row.get("signal_id") for row in prior_decisions] != [
+            row.get("signal_id") for row in rows
+        ]:
+            print("FAIL - reused decisions do not exactly cover the base ledger")
+            return 2
+        try:
+            first_scores = [
+                {
+                    label: float(decision["nli_scores"][label.value])
+                    for label in NLI_LABEL_DESCRIPTIONS
+                }
+                for decision in prior_decisions
+            ]
+        except (KeyError, TypeError, ValueError):
+            print("FAIL - reused decisions contain an invalid NLI score vector")
+            return 2
+        if score_vectors_sha256(first_scores) != parent_hashes[0]:
+            print("FAIL - reused NLI score vectors do not match the parent receipt")
+            return 2
+        second_scores = copy.deepcopy(first_scores)
+        deterministic_scores = True
+        reused_inference = {
+            "parent_receipt": {
+                "path": str(reuse_receipt),
+                "bytes": reuse_receipt.stat().st_size,
+                "sha256": sha256_path(reuse_receipt),
+            },
+            "parent_decisions": {
+                "path": str(reuse_decisions),
+                "bytes": reuse_decisions.stat().st_size,
+                "sha256": sha256_path(reuse_decisions),
+            },
+        }
+    else:
+        classifier = OnnxNliClassifier(model_dir, threads=args.threads)
+        first_scores = classifier.score(texts, batch_rows=args.batch_rows)
+        second_scores = classifier.score(texts, batch_rows=args.batch_rows)
+        deterministic_scores = first_scores == second_scores
 
     derived_rows: list[dict[str, Any]] = []
     decisions: list[dict[str, Any]] = []
+    used_review_ids: set[str] = set()
     for row, scores in zip(rows, first_scores, strict=True):
         derived, decision = adjudicate_signal(
             row,
             source_family=source_families[str(row["source_id"])],
             nli_scores=scores,
         )
+        review = reviews.get(str(row["signal_id"]))
+        if review is not None:
+            try:
+                derived, decision = apply_review_adjudication(
+                    row, derived, decision, review
+                )
+            except ValueError as exc:
+                print(f"FAIL - invalid review for {row['signal_id']}: {exc}")
+                return 2
+            used_review_ids.add(str(row["signal_id"]))
         derived_rows.append(derived)
         decisions.append(decision)
+    unused_reviews = sorted(set(reviews) - used_review_ids)
+    if unused_reviews:
+        print(f"FAIL - reviews do not target current unresolved rows: {unused_reviews}")
+        return 2
 
     base_ids = [row["signal_id"] for row in rows]
     derived_ids = [row["signal_id"] for row in derived_rows]
@@ -418,7 +528,9 @@ def main(argv: list[str] | None = None) -> int:
     gates.update(
         {
             "no_classifier_fallback": unresolved_count == 0
-            and set(method_counts) == {"model_assisted_adjudication"},
+            and set(method_counts).issubset(
+                {"model_assisted_adjudication", "review_adjudication"}
+            ),
             "exact_base_ledger_binding": base_receipt["ledger"]["sha256"]
             == sha256_path(base_ledger),
             "exact_base_receipt_binding": True,
@@ -430,6 +542,8 @@ def main(argv: list[str] | None = None) -> int:
             "immutable_fields_preserved": immutable_rows_preserved,
             "terminal_decisions": unresolved_count == 0,
             "zero_unresolved_decisions": unresolved_count == 0,
+            "review_ledger_bound": review_ledger is None or review_ledger.is_file(),
+            "review_exact_target_coverage": set(reviews) == used_review_ids,
         }
     )
 
@@ -462,6 +576,7 @@ def main(argv: list[str] | None = None) -> int:
         "review_support_total": 2,
         "nli_strong": {"score": 0.55, "top_two_margin": 0.25},
         "nli_moderate": {"score": 0.35, "top_two_margin": 0.10},
+        "review_method": "exact_id_source_id_title_hash_ai_inference",
         "inference": {
             "provider": "CPUExecutionProvider",
             "batch_rows": args.batch_rows,
@@ -469,6 +584,7 @@ def main(argv: list[str] | None = None) -> int:
             "max_length": 384,
             "score_decimal_places": 8,
             "passes": 2,
+            "reused": reused_inference is not None,
         },
     }
     receipt["classification_overlay"] = {
@@ -488,6 +604,16 @@ def main(argv: list[str] | None = None) -> int:
             "bytes": source_registry.stat().st_size,
             "sha256": sha256_path(source_registry),
         },
+        "review_ledger": (
+            {
+                "path": str(review_ledger),
+                "bytes": review_ledger.stat().st_size,
+                "sha256": sha256_path(review_ledger),
+                "rows": len(review_rows),
+            }
+            if review_ledger is not None
+            else None
+        ),
         "model": {
             "repository": MODEL_REPOSITORY,
             "revision": MODEL_REVISION,
@@ -511,13 +637,10 @@ def main(argv: list[str] | None = None) -> int:
         "classification_method_counts": method_counts,
         "original_to_derived_label_equivalence": equivalence_counts(rows, derived_rows),
         "two_pass_score_vectors_sha256": [
-            sha256_bytes(
-                json_bytes(
-                    [{label.value: value for label, value in row.items()} for row in score_pass]
-                )
-            )
+            score_vectors_sha256(score_pass)
             for score_pass in (first_scores, second_scores)
         ],
+        "reused_inference": reused_inference,
         "invariants": {
             "input_rows": len(rows),
             "derived_rows": len(derived_rows),
