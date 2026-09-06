@@ -102,40 +102,19 @@ jobs:
 
   lock:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
       - name: Assert isolated checkout
         run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
-      - name: Regenerate exact lock
+      - name: Regenerate lock candidate
         run: uv lock
-      - name: Commit the generated lock only on the dedicated migration branch
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'remediate/local-authority-v1' }}
-        shell: bash
+      - name: Assert exact lock has been committed
         run: |
-          set -euo pipefail
-          if git diff --quiet -- uv.lock; then
-            echo "uv.lock already canonical"
-            exit 0
-          fi
-          changed=$(git diff --name-only)
-          if [[ "$changed" != "uv.lock" ]]; then
-            echo "::error::lock regeneration changed unexpected paths: $changed"
+          if ! git diff --exit-code -- uv.lock; then
+            echo "::error::uv.lock is stale for this exact source tree. Regenerate it externally and commit the reviewed bytes."
             exit 1
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uv.lock
-          git commit -m "chore: regenerate uv lock for local authority migration"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
-      - name: Assert no lock drift outside the dedicated migration update
-        if: ${{ !(github.event_name == 'pull_request' && github.head_ref == 'remediate/local-authority-v1') }}
-        run: git diff --exit-code -- uv.lock
 
   typecheck:
     runs-on: ubuntu-latest
