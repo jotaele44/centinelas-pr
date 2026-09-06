@@ -81,7 +81,8 @@ def test_handoff_dry_run_creates_no_outbox(client):
     )
     assert response.status_code == 200
     receipt = response.json()
-    assert receipt["status"] == "staged_local"
+    assert receipt["status"] == "dry_run"
+    assert receipt["dry_run"] is True
     assert receipt["attempts"][0]["status"] == "dry_run"
     assert not (data / "exchange").exists()
 
