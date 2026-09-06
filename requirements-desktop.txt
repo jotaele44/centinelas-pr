@@ -1,7 +1,9 @@
 # Extra dependencies for the double-click desktop wrapper (see desktop/).
 pywebview>=6.2.1
-# Shared federation runtime pinned to an immutable TheHub commit so generated
+# Shared federation runtime pinned to immutable TheHub commits so generated
 # repositories install independently without requiring a sibling checkout.
 prii-desktop @ https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip#subdirectory=packages/prii_desktop
 prii-maintenance @ https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip#subdirectory=packages/prii_maintenance
-prii-export-utils @ https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip#subdirectory=packages/prii_export_utils
+# Exact child of freedom-policy PR #246; provides local envelopes and exact-byte
+# optional mirrors. This source pin does not by itself retain offline bytes.
+prii-export-utils @ https://github.com/jotaele44/thehub-pr/archive/2a8b662262130fc9013a7bc5016a6c74117e8c4a.zip#subdirectory=packages/prii_export_utils
