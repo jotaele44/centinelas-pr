@@ -11,19 +11,22 @@
     "accent_color": "#df630d"
   },
   "jurisdiction": "Puerto Rico",
-  "active_vector": "CENTINELAS_SIGNAL_STREAM",
-  "production_status": "PRODUCTION",
+  "active_vector": "CENTINELAS_LOCAL_AUTHORITY_MIGRATION_V1",
+  "production_status": "PROVISIONAL_LOCAL_AUTHORITY_MIGRATION",
   "pause_lock_required": true,
   "source_truth": {
-    "role_note": "Upstream early-signal monitor and universal intake engine: ingests, classifies, and routes public-interest items across six domains to sibling producers; the parent hub (thehub-pr) discovers, validates, and aggregates the canonical export; officialized matters hand off to moneysweep-pr.",
+    "role_note": "Upstream early-signal monitor and universal intake engine: ingests, classifies, and stages public-interest items across six domains. Local artifact envelopes are authoritative; hosted transport is an optional exact-byte mirror. Officialized matters remain downstream responsibilities.",
     "signal_schema": "schemas/signal.schema.json",
     "item_schema": "schemas/centinelas_item.schema.json",
     "source_registry": "data/reference/source_registry.csv",
     "engine_sources": "src/centinelas/ingest/sources.yaml",
     "seed_ledger": "data/signals/example_signals.jsonl",
     "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
-    "intake_doctrine": "scripts/build_signal_ledger.py bridges live RSS intake (real, non-synthetic) into the signal ledger; the synthetic seed remains only as a contract fixture. PR pre-officialization source families remain future intake.",
-    "live_ledger": "data/signals/live_signals.jsonl"
+    "intake_doctrine": "scripts/build_signal_ledger.py bridges live RSS intake into the signal ledger; the synthetic seed remains only a contract fixture. This migration does not alter raw source acquisitions or promoted ledgers.",
+    "live_ledger": "data/signals/live_signals.jsonl",
+    "classifier_authority": "deterministic local keyword rules by default; Anthropic is an explicit optional adapter",
+    "transport_authority": ".centinelas/exchange/outbox canonical envelopes",
+    "hosted_transport": "optional prii.artifact-mirror.v1 manifestation only"
   },
   "domain_routing": {
     "ENVIRONMENTAL": "aguayluz-pr",
@@ -36,13 +39,15 @@
   },
   "hub_callable_commands": {
     "setup": "python -m pip install uv && uv pip install --system -e .[dev]",
+    "runtime_setup": "python -m pip install uv && uv pip install --system -e .",
     "validate_grid": "python3 scripts/validate_pr_grid.py --require-sha",
     "test_suite": "python -m pytest -q",
     "export_canonical": "python3 scripts/federation_export.py --ledger data/signals/live_signals.jsonl --mode production",
     "ingest": "centinelas ingest",
-    "classify": "centinelas classify",
-    "route": "centinelas route",
-    "run_pipeline": "centinelas run",
+    "classify_local": "CENTINELAS_CLASSIFIER_BACKEND=local centinelas classify",
+    "route_local": "centinelas route",
+    "run_pipeline_local": "CENTINELAS_CLASSIFIER_BACKEND=local centinelas run",
+    "mirror_outbox_dry_run": "python3 scripts/emit_dispatches.py --exchange-root .centinelas/exchange --dry-run",
     "status": "centinelas status",
     "build_signal_ledger": "python3 scripts/build_signal_ledger.py",
     "maintenance": "python3 scripts/run_maintenance.py --repo centinelas-pr --mode audit"
@@ -55,21 +60,43 @@
     "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
     "canonical_export_dir": "exports/federation",
     "live_ledger": "data/signals/live_signals.jsonl",
+    "local_exchange_root": ".centinelas/exchange",
     "maintenance_report": "reports/maintenance/latest.json"
   },
   "federation_readiness_gate": {
     "ready_for_hub_discovery": true,
-    "ready_for_hub_live_execution": true,
+    "ready_for_hub_live_execution": false,
     "resolved_conditions": [
       "root federation.json manifest present and Hub-schema conformant",
-      "canonical export adapter (scripts/federation_export.py) emits sources/entities/relationships/observations + manifest.json",
+      "canonical export adapter emits sources/entities/relationships/observations plus manifest.json",
       "source registry and signal schema defined; CI manifest gate present",
-      "universal intake engine (src/centinelas) merged: ingest/classify/route across six domains with hub_parent logging",
-      "real (non-synthetic) signal intake and canonical production export are implemented",
+      "real non-synthetic signal intake and canonical production export are implemented",
       "production export rejects synthetic, empty, malformed, future-dated, and stale ledgers",
-      "2026-08-25 live RSS refresh wrote 100 real non-synthetic signals; production export passed and thehub-pr validate-package returned VALID (classifier ran in keyword fallback mode because ANTHROPIC_API_KEY was unavailable)"
+      "local classifier and local artifact outbox require no hosted credential"
     ],
-    "blocking_conditions": []
+    "blocking_conditions": [
+      "downstream repositories do not yet consume prii.artifact-mirror.v1 or the local inbox contract",
+      "uv.lock must be regenerated and verified at the exact remediation head",
+      "all eight Federation freedom dynamic gates remain open",
+      "no disconnected dependency-byte rebuild has been executed"
+    ]
   },
-  "notes": "Every item is also logged to hub_parent regardless of domain labels."
+  "federation_freedom_gate": {
+    "policy_pr": "Jotaele44/thehub-pr#246",
+    "implementation_pr": "Jotaele44/thehub-pr#260",
+    "implementation_sha": "2a8b662262130fc9013a7bc5016a6c74117e8c4a",
+    "certified": false,
+    "certification_state": "PROVISIONAL",
+    "dynamic_gates": {
+      "CLEAN_CACHE_INSTALL": "OPEN",
+      "NETWORK_DENY_STARTUP": "OPEN",
+      "ALLOWLIST_ONLY_CONNECTOR_RUN": "OPEN",
+      "NO_SECRET_STARTUP": "OPEN",
+      "PACKAGED_RELEASE_EGRESS_CAPTURE": "OPEN",
+      "POSTINSTALL_BINARY_CAPTURE": "OPEN",
+      "OFFLINE_CORE_BROWSE_ANALYZE_EXPORT": "OPEN",
+      "OFFLINE_REBUILD_FROM_LOCAL_DEPENDENCY_BYTES": "OPEN"
+    }
+  },
+  "notes": "Every routed item is staged locally for TheHub. Hosted services remain optional and non-authoritative."
 }
