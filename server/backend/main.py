@@ -132,6 +132,11 @@ class HandoffRequest(BaseModel):
     targets: list[str]
     dry_run: bool = False
     retry_receipt_id: str | None = None
+    # Hosted delivery is never implied by a configured token. The request must
+    # select it explicitly; local staging remains authoritative either way.
+    hosted_mirror: bool = False
+    # Transitional compatibility until each downstream consumer reads envelopes.
+    legacy_mirror: bool = True
 
 
 @app.get("/handoffs")
@@ -151,6 +156,7 @@ def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch_to_targets
+
     raw = _load_json(CLASSIFIED_DIR / f"{item_id}.json")
     if raw is None:
         raise HTTPException(status_code=404, detail=f"Item not found: {item_id}")
@@ -159,19 +165,33 @@ def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
         previous = _load_json(HANDOFF_DIR / f"{req.retry_receipt_id}.json")
         if previous is None or previous.get("item_id") != item_id:
             raise HTTPException(status_code=404, detail="Retry receipt not found")
-        failed = {attempt["target"] for attempt in previous.get("attempts", []) if attempt.get("status") == "failed"}
+        failed = {
+            attempt["target"]
+            for attempt in previous.get("attempts", [])
+            if attempt.get("status") == "failed"
+            or str(attempt.get("hosted_mirror", "")).startswith("failed:")
+            or str(attempt.get("legacy_mirror", "")).startswith("failed:")
+        }
         targets = [target for target in req.targets if target in failed]
         if not targets:
             raise HTTPException(status_code=409, detail="Receipt has no failed targets to retry")
     dispatch_mod._DATA_DIR = DATA_DIR
     try:
-        receipt = dispatch_to_targets(ClassifiedItem.model_validate(raw), targets, dry_run=req.dry_run)
+        receipt = dispatch_to_targets(
+            ClassifiedItem.model_validate(raw),
+            targets,
+            dry_run=req.dry_run,
+            hosted_mirror=req.hosted_mirror,
+            legacy_mirror=req.legacy_mirror,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     receipt["receipt_id"] = f"{item_id}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}"
     receipt["created_at"] = datetime.now(timezone.utc).isoformat()
     HANDOFF_DIR.mkdir(parents=True, exist_ok=True)
-    (HANDOFF_DIR / f"{receipt['receipt_id']}.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+    (HANDOFF_DIR / f"{receipt['receipt_id']}.json").write_text(
+        json.dumps(receipt, indent=2), encoding="utf-8"
+    )
     return JSONResponse(receipt)
 
 
@@ -184,6 +204,7 @@ def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch
+
     dispatch_mod._DATA_DIR = DATA_DIR
     req = req or RunRequest()
     try:
