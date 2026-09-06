@@ -161,7 +161,10 @@ def build_classified_item(
     from centinelas.classify import enrich
     from centinelas.models import ClassifiedItem
 
-    labels, confidence, reasoning = classify(raw, backend=backend)
+    if backend is None:
+        labels, confidence, reasoning = classify(raw)
+    else:
+        labels, confidence, reasoning = classify(raw, backend=backend)
     enrichment = enrich.extract(raw.title, raw.body_text, raw.source_name)
     return ClassifiedItem(
         **raw.model_dump(),
