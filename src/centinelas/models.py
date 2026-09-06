@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from centinelas.classify.labels import DomainLabel
 
@@ -66,3 +66,8 @@ class DispatchRecord(BaseModel):
     dispatched_at: datetime
     status: DispatchStatus
     error: str | None = None
+    # The local exchange is the authoritative transition. Hosted or legacy
+    # deliveries are explicitly recorded as mirrors and cannot mint identity.
+    authority: Literal["local_exchange"] = "local_exchange"
+    local_envelopes: dict[str, str] = Field(default_factory=dict)
+    mirror_states: dict[str, str] = Field(default_factory=dict)
