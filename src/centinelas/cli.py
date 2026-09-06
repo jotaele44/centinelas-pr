@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -183,6 +184,47 @@ def status(
 
     console.print(f"Raw queue:    [bold]{raw_count}[/bold] items")
     console.print(f"Classified:   [bold]{cls_count}[/bold] items")
+
+
+@app.command("source-status")
+def source_status(
+    receipt: Path = typer.Option(
+        Path(".centinelas/puerto-rico/acquisition_receipt.json"),
+        "--receipt",
+        help="Puerto Rico tranche receipt to verify and display",
+    ),
+) -> None:
+    """Show verified freshness, failure, and pagination state for PR sources."""
+    from centinelas.ingest.puerto_rico import snapshot_errors
+
+    if not receipt.is_file():
+        console.print(f"[red]Receipt not found: {receipt}[/red]")
+        raise typer.Exit(code=1)
+    payload = json.loads(receipt.read_text(encoding="utf-8"))
+    verification_errors = snapshot_errors(payload)
+    table = Table("Source", "Family", "Status", "Records", "Freshness", "Pagination")
+    for source in payload.get("sources", {}).get("rows", []):
+        status_value = str(source.get("status", "UNKNOWN"))
+        status_style = "green" if status_value.startswith("SUCCESS") else "red"
+        table.add_row(
+            str(source.get("name", "")),
+            str(source.get("family", "")),
+            f"[{status_style}]{status_value}[/{status_style}]",
+            str(source.get("emitted_items", 0)),
+            str(source.get("freshness_state", "UNKNOWN")),
+            "complete" if source.get("pagination_complete") else "incomplete",
+        )
+    console.print(table)
+    classification = payload.get("classification", "UNKNOWN")
+    console.print(
+        f"Receipt: [bold]{classification}[/bold]; "
+        f"verification errors: [bold]{len(verification_errors)}[/bold]"
+    )
+    if verification_errors:
+        for error in verification_errors:
+            console.print(f"[red]- {error}[/red]")
+    if classification != "PASS" or verification_errors:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":

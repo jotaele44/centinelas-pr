@@ -1,0 +1,7 @@
+source_id,name,language,source_family,reliability_default,scrape_method,active,notes
+CENT-SRC-PREB-NOTICES,Negociado de Energia de Puerto Rico - Avisos Publicos,es,public_hearing_notice,0.95,html,active,T1 official PREB notice archive; source IDs remain manifestation-local and do not bind canonical matters
+CENT-SRC-AAA-PRESS,Autoridad de Acueductos y Alcantarillados - Comunicados de Prensa,es,agency_press_release,0.9,html,active,T1 official AAA Webflow archive; URL identity is source-local only
+CENT-SRC-COR3-PRESS,Central Office for Recovery Reconstruction and Resiliency - Press Releases,es,agency_press_release,0.95,api,active,T1 official COR3 page API; full capture is closed against the response rowcount header
+CENT-SRC-COR3-ACTIVE-RFPS,Central Office for Recovery Reconstruction and Resiliency - Active RFPs,en,procurement_rfp,0.95,api,active,T1 official COR3 active-RFP API scoped to the Puerto Rico local capture date
+CENT-SRC-SENATE-CALENDAR,Senado de Puerto Rico - Calendario Legislativo,es,legislative_calendar,0.95,html,active,T1 official current Senate homepage calendar; event IDs are source-local only
+CENT-SRC-HOUSE-CALENDAR,Camara de Representantes de Puerto Rico - Calendario,es,legislative_calendar,0.95,html,active,T1 official House calendar page; event IDs are source-local only
