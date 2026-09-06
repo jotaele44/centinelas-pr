@@ -1,0 +1,33 @@
+{
+  "schema_version": "federation.gui-backend-contract/1.0",
+  "repository": "Jotaele44/centinelas-pr",
+  "source_commit": "caf086598a4f99e2eb0ca4aac6d51e2d9bd46321",
+  "policy": {"require_zero_material_residue": true, "dimensions": ["executability", "semantic", "state", "auth", "data", "provenance", "device", "identity", "geometry", "authority"]},
+  "discovery": {
+    "backend_roots": ["server/backend", "src/centinelas", "desktop"],
+    "frontend_roots": ["frontend/src"],
+    "route_files": ["frontend/src/App.jsx"],
+    "navigation_files": ["frontend/src/components/Header.jsx"],
+    "existing_gui_capability_manifests": [".federation/gui-capabilities.json"]
+  },
+  "authority": {
+    "semantic_authority": "alert-advisory-intake-validation-and-handoff",
+    "mutation_authority": "centinelas-intake-validation-handoff-state-only",
+    "identity_authority": "candidate-advisory-alert-and-handoff-identities",
+    "geometry_authority": "consumer-of-spiderweb-for-federated-geometry",
+    "provenance_authority": "intake-source-validation-and-handoff-provenance"
+  },
+  "auth": {"mutating_route_policy": "require_guard_or_explicit_public", "guard_patterns": ["Depends\\(", "require_admin", "require_write", "_WRITE_GUARD", "_require_key", "dependencies\\s*="], "explicit_public_mutations": []},
+  "provenance": {"required_fields_when_available": ["source_ref", "source_hash", "evidence_ids", "truth_state", "review_status"], "frontend_evidence_files": ["frontend/src/App.jsx", "frontend/src/components/Header.jsx"]},
+  "devices": {"desktop": true, "mobile_web": true, "native_ios": false, "native_evidence_files": [], "intentional_restrictions": []},
+  "backend_only_allowlist": [],
+  "gui_only_allowlist": [],
+  "state_claims": [],
+  "runtime_evidence": {
+    "data": {"state": "OPEN", "evidence": []},
+    "identity": {"state": "OPEN", "evidence": []},
+    "geometry": {"state": "OPEN", "evidence": []},
+    "device": {"state": "OPEN", "evidence": []}
+  },
+  "certification": {"state": "OPEN", "material_residue": ["Prove candidate→validated→handoff GUI state transitions against backend lifecycle and role enforcement."]}
+}
