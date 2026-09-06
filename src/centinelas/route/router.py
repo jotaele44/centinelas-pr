@@ -1,8 +1,8 @@
-"""Maps ClassifiedItem labels → target repos and builds dispatch payloads."""
+"""Maps ClassifiedItem labels to targets and builds deterministic payloads."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import timezone
 
 from centinelas.classify.labels import HUB_REPO, LABEL_TO_REPO
 from centinelas.classify.rules import (
@@ -12,37 +12,34 @@ from centinelas.classify.rules import (
 )
 from centinelas.models import ClassifiedItem
 
-# Targets that consume the pre-officialization finance/location enrichment.
-# Only the MoneySweep anchor needs it (to build a *located* finance candidate);
-# its intake contract declares the fields. The Hub stays on its base contract
-# (thehub.schema.json) and receives the fused finance/location result later via
-# the canonical federation packages, not this raw enrichment. Other domain repos
-# keep the lean base payload.
 _FINANCE_ENRICHED_REPOS = {"moneysweep-pr"}
-
-# Targets that consume the water/utility sub-taxonomy tags. aguayluz-pr (the
-# water/power/outage node) uses them to recognize *which* utility beat a signal
-# is about; the Hub gets them for cross-repo correlation. Other repos keep the
-# lean base payload.
 _WATER_TAGGED_REPOS = {"aguayluz-pr", HUB_REPO}
-
-# Targets that consume the resolved PR municipalities. ovnis-pr (the anomalous
-# case corpus) is Puerto Rico-scoped and requires a location_name on every case;
-# passing the already-resolved municipalities lets its intake derive that
-# location instead of quarantining an otherwise valid signal. This reuses the
-# classifier's existing enrichment (item.municipalities) — no new resolution.
 _LOCATION_TAGGED_REPOS = {"ovnis-pr"}
 
 
-def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
-    """Build the JSON payload for a target repo's intake/ folder.
+def _stable_routed_at(item: ClassifiedItem) -> str:
+    """Bind routing payloads to the stable capture observation.
 
-    The MoneySweep anchor additionally receives the pre-officialization
-    finance/location enrichment when the classifier populated it, so it can
-    build a *located* finance candidate. The fields are always present for that
-    target (empty when unknown) so its intake contract is stable. Every other
-    target — including the Hub — keeps the base payload shape.
+    The transport envelope records the actual emission time outside message
+    identity. Keeping a fresh wall-clock value inside the payload would give the
+    same logical item different payload hashes and message IDs on every replay.
     """
+
+    captured = item.captured_at
+    if captured.tzinfo is None:
+        captured = captured.replace(tzinfo=timezone.utc)
+    return captured.astimezone(timezone.utc).isoformat()
+
+
+def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
+    """Build one deterministic target payload.
+
+    MoneySweep receives finance/location enrichment, AguaYLuz receives the
+    water/permit taxonomy, and OVNIS receives resolved municipality candidates.
+    Unknown values remain explicit empty or null fields where target contracts
+    already require stable shape.
+    """
+
     payload = {
         "schema_version": "1.0",
         "item_id": item.item_id,
@@ -57,10 +54,7 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
         "confidence": item.confidence,
         "classifier_reasoning": item.classifier_reasoning,
         "routed_to": target_repo,
-        "routed_at": datetime.now(timezone.utc).isoformat(),
-        # Life-safety flag: emergency/evacuation/boil-water/hurricane-warning language
-        # in the signal. Lets downstream producers + the Hub fast-track it into the
-        # ASAP push/SMS tier instead of a batched brief.
+        "routed_at": _stable_routed_at(item),
         "is_critical": is_critical_signal(f"{item.title} {item.body_text}"),
     }
     if target_repo in _FINANCE_ENRICHED_REPOS:
@@ -75,10 +69,6 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
             }
         )
     if target_repo in _WATER_TAGGED_REPOS:
-        # Fine-grained beat tags so aguayluz can route within its domain:
-        # water/utility (potable_water, boil_water, reservoir_drought, power_grid, …)
-        # plus permit-ecosystem (coastal_zmt, environmental_impact, public_hearing, …).
-        # Deduped, water tags first, both order-stable within their taxonomy.
         text = f"{item.title} {item.body_text}"
         tags = water_utility_subtypes(text)
         for tag in permit_subtypes(text):
@@ -86,14 +76,13 @@ def build_payload(item: ClassifiedItem, target_repo: str) -> dict:
                 tags.append(tag)
         payload["domain_tags"] = tags
     if target_repo in _LOCATION_TAGGED_REPOS:
-        # Resolved PR municipalities so ovnis can set a case location_name.
-        # Always present (empty when unknown) so its intake contract is stable.
         payload["municipalities"] = list(item.municipalities)
     return payload
 
 
 def resolve_targets(item: ClassifiedItem) -> list[str]:
-    """Return list of target repo names for the item (excludes thehub — always dispatched separately)."""
+    """Return deduplicated domain targets, excluding the always-present Hub."""
+
     repos: list[str] = []
     seen: set[str] = set()
     for label in item.labels:
@@ -105,17 +94,8 @@ def resolve_targets(item: ClassifiedItem) -> list[str]:
 
 
 def route(item: ClassifiedItem) -> dict[str, dict]:
-    """
-    Return mapping of {repo_name: payload} for all targets including thehub.
-    thehub always receives every item regardless of labels.
-    """
-    targets = resolve_targets(item)
-    result: dict[str, dict] = {}
+    """Return deterministic payloads for domain targets and TheHub."""
 
-    for repo in targets:
-        result[repo] = build_payload(item, repo)
-
-    # Hub always gets a copy — full payload with all labels
+    result = {repo: build_payload(item, repo) for repo in resolve_targets(item)}
     result[HUB_REPO] = build_payload(item, HUB_REPO)
-
     return result
