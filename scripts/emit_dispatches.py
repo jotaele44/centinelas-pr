@@ -1,22 +1,10 @@
 #!/usr/bin/env python3
-"""Emit GitHub ``repository_dispatch`` events for staged Centinelas intake payloads.
+"""Optionally mirror canonical Centinelas outbox envelopes through GitHub.
 
-This is the CI half of the event-driven export: ``centinelas run`` (with
-``CENTINELAS_OUTBOUND_DIR`` set) stages one JSON payload per routed item under
-``<outbound>/<repo>/<item_id>.json``; this script POSTs each as a
-``repository_dispatch`` to the corresponding downstream repo, so a workflow there
-(e.g. moneysweep-pr ``centinelas-intake.yml``) fires and ingests it.
-
-GitHub caps ``client_payload`` at 10 top-level properties, so the (larger) intake
-record is wrapped under a single ``signal`` key alongside ``item_id`` / ``repo``.
-
-Auth: ``FEDERATION_DISPATCH_TOKEN`` (preferred) or ``GITHUB_TOKEN`` — a token with
-``contents:write`` (or classic ``repo``) on the downstream repo.
-
-Usage:
-  python3 scripts/emit_dispatches.py --outbound .centinelas/outbound
-  python3 scripts/emit_dispatches.py --outbound .centinelas/outbound --dry-run
-  python3 scripts/emit_dispatches.py --outbound out --owner jotaele44 --event-type centinelas-signal
+The local envelope file is authoritative. This script never constructs a new
+application payload, truncates body text, or mints message identity. It wraps the
+exact committed bytes with `prii.artifact-mirror.v1` and POSTs that wrapper only
+when an operator explicitly enables the hosted bridge.
 """
 
 from __future__ import annotations
@@ -28,138 +16,214 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Iterator
+
+from prii_export_utils import (
+    InvalidMirrorError,
+    build_mirror_payload,
+    read_canonical_envelope,
+    verify_mirror_payload,
+)
 
 DEFAULT_OWNER = "jotaele44"
-DEFAULT_EVENT_TYPE = "centinelas-signal"
+DEFAULT_EVENT_TYPE = "centinelas-artifact-mirror"
 GITHUB_API = "https://api.github.com"
-
-# GitHub caps repository_dispatch client_payload at 65,535 characters. body_text is
-# the only unbounded field (full-article RSS feeds), so trim it — keeping the
-# structured fields + source_url intact so MoneySweep can re-fetch the full text if
-# needed. Cap the wrapped client_payload with headroom below GitHub's hard limit.
-_MAX_BODY_TEXT = 8000
-_MAX_CLIENT_PAYLOAD_CHARS = 60000
-_TRUNCATION_MARKER = "… [truncated]"
+SOURCE_REPOSITORY = "centinelas-pr"
+_MAX_CLIENT_PAYLOAD_CHARS = 60_000
 
 
-def _bounded_signal(payload: dict) -> dict:
-    """Copy the intake record with body_text trimmed to a sane length."""
-    signal = dict(payload)
-    body = signal.get("body_text")
-    if isinstance(body, str) and len(body) > _MAX_BODY_TEXT:
-        signal["body_text"] = body[:_MAX_BODY_TEXT] + _TRUNCATION_MARKER
-    return signal
+class MirrorDispatchError(RuntimeError):
+    """Raised when a selected outbox cannot be mirrored without drift."""
 
 
-def iter_payloads(outbound: Path):
-    """Yield (repo_name, item_id, payload) for every staged ``<repo>/<id>.json``."""
-    for repo_dir in sorted(p for p in outbound.iterdir() if p.is_dir()):
-        for payload_path in sorted(repo_dir.glob("*.json")):
-            try:
-                payload = json.loads(payload_path.read_text(encoding="utf-8"))
-            except (ValueError, OSError) as exc:
-                print(f"  skip {payload_path}: {exc}", file=sys.stderr)
-                continue
-            yield repo_dir.name, payload_path.stem, payload
+def _outbox(exchange_root: Path) -> Path:
+    return exchange_root / "outbox"
 
 
-def build_dispatch_body(item_id: str, repo: str, payload: dict, event_type: str) -> dict:
-    """Wrap the intake record so client_payload stays within GitHub's key + size limits.
+def iter_envelopes(
+    exchange_root: Path,
+) -> Iterator[tuple[str, Path, dict]]:
+    """Yield validated whole envelopes in deterministic target/file order."""
 
-    client_payload is limited to 10 top-level keys (here: item_id/repo/signal) and to
-    65,535 characters total. body_text is trimmed up front and then hard-bounded so a
-    long signal still delivers (HTTP 422 otherwise) instead of being dropped silently.
-    """
-    signal = _bounded_signal(payload)
-    client_payload = {"item_id": item_id, "repo": repo, "signal": signal}
-    # Hard guard: if many structured fields still push over the cap, halve body_text
-    # until the serialized payload fits (or drop it entirely as a last resort).
-    while len(json.dumps(client_payload)) > _MAX_CLIENT_PAYLOAD_CHARS and signal.get("body_text"):
-        trimmed = signal["body_text"][: max(0, len(signal["body_text"]) // 2)]
-        signal["body_text"] = "" if len(trimmed) < 100 else trimmed + _TRUNCATION_MARKER
-    return {"event_type": event_type, "client_payload": client_payload}
+    outbox = _outbox(exchange_root)
+    if not outbox.exists():
+        return
+    if outbox.is_symlink() or not outbox.is_dir():
+        raise MirrorDispatchError(f"outbox is not a regular directory: {outbox}")
+
+    for target_dir in sorted(outbox.iterdir(), key=lambda path: path.name):
+        if target_dir.is_symlink() or not target_dir.is_dir():
+            raise MirrorDispatchError(
+                f"unexpected non-directory outbox member: {target_dir}"
+            )
+        for path in sorted(target_dir.iterdir(), key=lambda member: member.name):
+            if path.suffix != ".json":
+                raise MirrorDispatchError(f"unexpected outbox member: {path}")
+            envelope, _data = read_canonical_envelope(path)
+            if envelope["source"] != SOURCE_REPOSITORY:
+                raise MirrorDispatchError(
+                    f"source mismatch in {path}: {envelope['source']!r}"
+                )
+            if envelope["target"] != target_dir.name:
+                raise MirrorDispatchError(
+                    f"target directory mismatch in {path}: "
+                    f"{target_dir.name!r} != {envelope['target']!r}"
+                )
+            if path.name != f"{envelope['message_id']}.json":
+                raise MirrorDispatchError(
+                    f"filename does not match message_id in {path}"
+                )
+            yield target_dir.name, path, envelope
+
+
+def build_dispatch_body(path: Path, event_type: str) -> dict:
+    """Build one hosted request around the exact local envelope bytes."""
+
+    mirror = build_mirror_payload(path)
+    verify_mirror_payload(mirror)
+    serialized = json.dumps(
+        mirror,
+        ensure_ascii=False,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    if len(serialized) > _MAX_CLIENT_PAYLOAD_CHARS:
+        raise MirrorDispatchError(
+            f"mirror payload is {len(serialized)} characters; "
+            f"hosted limit is {_MAX_CLIENT_PAYLOAD_CHARS}. "
+            "The local envelope remains authoritative and was not modified."
+        )
+    return {"event_type": event_type, "client_payload": mirror}
 
 
 def post_dispatch(owner: str, repo: str, body: dict, token: str) -> int:
     url = f"{GITHUB_API}/repos/{owner}/{repo}/dispatches"
-    data = json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(url, data=data, method="POST")
-    req.add_header("Authorization", f"Bearer {token}")
-    req.add_header("Accept", "application/vnd.github+json")
-    req.add_header("X-GitHub-Api-Version", "2022-11-28")
-    req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req) as resp:  # noqa: S310 (fixed GitHub API host)
-        return resp.status
+    data = json.dumps(
+        body,
+        ensure_ascii=False,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=data,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "Content-Type": "application/json",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:  # noqa: S310
+        return response.status
 
 
 def run(
-    outbound: Path,
+    exchange_root: Path,
     owner: str,
     event_type: str,
     token: str | None,
     dry_run: bool,
     only_repo: str | None = None,
 ) -> int:
-    if not outbound.is_dir():
-        print(f"No outbound dir {outbound} — nothing to dispatch.")
+    outbox = _outbox(exchange_root)
+    if not outbox.exists():
+        print(f"No local outbox {outbox} - nothing to mirror.")
         return 0
+    if not dry_run and not token:
+        print(
+            "FEDERATION_DISPATCH_TOKEN / GITHUB_TOKEN not set; "
+            "local outbox remains authoritative.",
+            file=sys.stderr,
+        )
+        return 2
 
-    emitted = 0
+    mirrored = 0
     failed = 0
-    for repo, item_id, payload in iter_payloads(outbound):
-        # Chain scoping: Centinelas triggers only its direct downstream (MoneySweep);
-        # the Hub is triggered later by MoneySweep's own export event, so it receives
-        # the fused finance/location result rather than the raw signal.
-        if only_repo and repo != only_repo:
-            continue
-        body = build_dispatch_body(item_id, repo, payload, event_type)
-        target = f"{owner}/{repo}"
-        if dry_run:
-            print(f"[dry-run] {event_type} → {target} (item {item_id})")
-            emitted += 1
-            continue
-        if not token:
-            print("  FEDERATION_DISPATCH_TOKEN / GITHUB_TOKEN not set", file=sys.stderr)
-            return 2
-        try:
-            status = post_dispatch(owner, repo, body, token)
-            print(f"  dispatched {item_id} → {target} (HTTP {status})")
-            emitted += 1
-        except urllib.error.HTTPError as exc:
-            print(f"  FAILED {item_id} → {target}: HTTP {exc.code} {exc.reason}", file=sys.stderr)
-            failed += 1
-        except urllib.error.URLError as exc:
-            print(f"  FAILED {item_id} → {target}: {exc.reason}", file=sys.stderr)
-            failed += 1
+    try:
+        selected = iter_envelopes(exchange_root)
+        for repo, path, envelope in selected:
+            if only_repo and repo != only_repo:
+                continue
+            target = f"{owner}/{repo}"
+            try:
+                body = build_dispatch_body(path, event_type)
+                if dry_run:
+                    print(
+                        f"[dry-run] {event_type} -> {target} "
+                        f"(message {envelope['message_id']})"
+                    )
+                    mirrored += 1
+                    continue
+                assert token is not None
+                status = post_dispatch(owner, repo, body, token)
+                print(
+                    f"mirrored {envelope['message_id']} -> {target} "
+                    f"(HTTP {status})"
+                )
+                mirrored += 1
+            except (InvalidMirrorError, MirrorDispatchError, OSError, ValueError) as exc:
+                print(
+                    f"FAILED {envelope['message_id']} -> {target}: {exc}",
+                    file=sys.stderr,
+                )
+                failed += 1
+            except urllib.error.HTTPError as exc:
+                print(
+                    f"FAILED {envelope['message_id']} -> {target}: "
+                    f"HTTP {exc.code} {exc.reason}",
+                    file=sys.stderr,
+                )
+                failed += 1
+            except urllib.error.URLError as exc:
+                print(
+                    f"FAILED {envelope['message_id']} -> {target}: {exc.reason}",
+                    file=sys.stderr,
+                )
+                failed += 1
+    except (InvalidMirrorError, MirrorDispatchError, OSError, ValueError) as exc:
+        print(f"OUTBOX INVALID: {exc}", file=sys.stderr)
+        return 1
 
-    print(f"\nDispatched {emitted} event(s), {failed} failure(s).")
+    print(f"\nMirrored {mirrored} envelope(s), {failed} failure(s).")
     return 1 if failed else 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--outbound",
-        default=os.environ.get("CENTINELAS_OUTBOUND_DIR", ".centinelas/outbound"),
-        help="Staged payload dir (<outbound>/<repo>/<item_id>.json)",
-    )
-    parser.add_argument("--owner", default=DEFAULT_OWNER, help="GitHub owner of downstream repos")
-    parser.add_argument(
-        "--event-type", default=DEFAULT_EVENT_TYPE, help="repository_dispatch event_type"
+        "--exchange-root",
+        default=os.environ.get(
+            "CENTINELAS_EXCHANGE_ROOT", ".centinelas/exchange"
+        ),
+        help="Canonical local exchange root containing outbox/<target>/*.json",
     )
     parser.add_argument(
-        "--dry-run", action="store_true", help="Print intended dispatches, do not POST"
+        "--owner", default=DEFAULT_OWNER, help="GitHub owner of downstream repos"
+    )
+    parser.add_argument(
+        "--event-type",
+        default=DEFAULT_EVENT_TYPE,
+        help="repository_dispatch event_type for the optional mirror",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Validate and report; do not POST"
     )
     parser.add_argument(
         "--only-repo",
         default=None,
-        help="Only dispatch payloads staged for this repo (e.g. moneysweep-pr)",
+        help="Only mirror envelopes addressed to this repository",
     )
     args = parser.parse_args()
 
-    token = os.environ.get("FEDERATION_DISPATCH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    token = os.environ.get("FEDERATION_DISPATCH_TOKEN") or os.environ.get(
+        "GITHUB_TOKEN"
+    )
     return run(
-        Path(args.outbound),
+        Path(args.exchange_root),
         args.owner,
         args.event_type,
         token,
