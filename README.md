@@ -47,29 +47,65 @@ cd centinelas-pr
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Runtime + dev tooling (matches CI). The shared prii-maintenance/prii-export-utils
-# packages are pinned to an immutable thehub-pr git commit via [tool.uv.sources]
-# (rev = a fixed SHA, not a local path), so uv fetches them straight from GitHub
-# at that commit -- no sibling thehub-pr checkout is required:
-pip install uv && uv pip install -e ".[dev]" -r server/backend/requirements.txt
+# Runtime core: deterministic local classification and local artifact transport.
+pip install uv && uv pip install -e . -r server/backend/requirements.txt
+
+# Development and tests.
+uv pip install -e ".[dev]" -r server/backend/requirements.txt
+
+# Optional hosted classifier adapter; never required for the core path.
+uv pip install -e ".[hosted-classifier]"
 ```
 
-Run the checks CI runs (`.github/workflows/validate.yml`):
+The shared `prii-maintenance` and `prii-export-utils` packages resolve from exact
+TheHub commit archives through `[tool.uv.sources]`; no sibling checkout is
+required. The desktop manifest independently pins the same local-authority
+`prii-export-utils` implementation. A source pin is provenance, not retained
+offline bytes or a completed disconnected rebuild.
+
+Run the checks CI declares (`.github/workflows/validate.yml`):
 
 ```bash
-python scripts/validate_pr_grid.py --require-sha     # spatial-grid gate
+python scripts/validate_pr_grid.py --require-sha
 python3 scripts/federation_export.py --ledger data/signals/live_signals.jsonl --mode test
-pytest -q                                            # tests
+pytest -q
+ruff check .
+python -m mypy
+uv lock && git diff --exit-code -- uv.lock
 ```
 
-`ruff` is configured in `pyproject.toml` and installed via the `dev` extra, but
-`validate.yml` does not currently gate on it — run `ruff check .` locally if you
-want lint feedback, just don't expect it to block CI.
-
 The `centinelas` CLI (`ingest`, `classify`, `route`, `run`, `status`) drives the
-live pipeline; live RSS intake needs internet and LLM classification needs an
-`ANTHROPIC_API_KEY`. For the double-click desktop app, see
-[`desktop/README.md`](desktop/README.md).
+pipeline. Live acquisition connectors require network access. Classification is
+local and credential-free by default; Anthropic runs only after explicit
+`--classifier-backend anthropic` selection, installation of the
+`hosted-classifier` extra, and provision of `ANTHROPIC_API_KEY`.
+
+## Local Federation authority
+
+Centinelas stages every routed item as a canonical local envelope before any
+optional hosted action:
+
+```text
+.centininelas/exchange/
+  outbox/<target>/<message_id>.json
+  inbox/<source>/<message_id>.json
+  receipts/<target>/<message_id>.json
+```
+
+The configured default path is `.centinelas/exchange`—the spelling above is an
+illustrative tree only; use `CENTINELAS_EXCHANGE_ROOT` to select another local
+root. Application dispatch performs no GitHub request and requires no hosted
+token. Exact replay is idempotent; conflicting bytes under one identity fail
+closed.
+
+`scripts/emit_dispatches.py` is an optional bridge. It wraps the exact committed
+envelope bytes in `prii.artifact-mirror.v1`; it does not reconstruct or truncate
+the signal. Hosted failure leaves the local message intact. Downstream consumers
+must migrate separately before treating the new mirror event as processable.
+
+The current migration remains `PROVISIONAL`. GitHub workflow success does not
+prove service independence, and retaining a wheel does not prove a disconnected
+source rebuild. See [`docs/LOCAL_AUTHORITY_MIGRATION_V1.md`](docs/LOCAL_AUTHORITY_MIGRATION_V1.md).
 
 ## Core concept: Public Matter
 
@@ -372,6 +408,8 @@ app (ADR 0001).
 | QA | Unit, integration, route smoke, and Playwright checks for core flows |
 | Observability | Source failures, ingest failures, and frontend errors are visible |
 | Gap detection | Broken, stale, missing, or manual sources are reported |
+| Local authority | Canonical envelopes exist before optional hosted mirrors |
+| Freedom certification | All eight dynamic gates close on frozen source and dependency bytes |
 
 ## Architecture sentence
 
