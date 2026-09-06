@@ -92,6 +92,18 @@ def test_dispatch_workflows_default_to_local_and_stage_before_mirror() -> None:
         assert 'CLASSIFIER_BACKEND" == "anthropic"' in source, path
 
 
+def test_legacy_hosted_ack_is_audit_only_and_cannot_commit() -> None:
+    workflow = _read(".github/workflows/handoff-ack.yml")
+    observer = _read("scripts/record_handoff_ack.py")
+    assert "contents: read" in workflow
+    assert "contents: write" not in workflow
+    assert "git push" not in workflow
+    assert "data/handoff_receipts" not in workflow
+    assert "upload-artifact" in workflow
+    assert "NONCANONICAL_HOSTED_ACK_OBSERVATION" in observer
+    assert '"certification_state": "AUDIT_ONLY"' in observer
+
+
 def test_validation_workflow_is_read_only_and_lock_drift_fails_closed() -> None:
     source = _read(".github/workflows/validate.yml")
     assert "permissions:\n  contents: read" in source
@@ -99,6 +111,12 @@ def test_validation_workflow_is_read_only_and_lock_drift_fails_closed() -> None:
     assert "git push" not in source
     assert "uv lock" in source
     assert "git diff --exit-code -- uv.lock" in source
+
+
+def test_readme_names_the_canonical_exchange_path() -> None:
+    source = _read("README.md")
+    assert ".centinelas/exchange" in source
+    assert ".centininelas" not in source
 
 
 def test_manifest_preserves_provisional_eight_gate_ceiling() -> None:
