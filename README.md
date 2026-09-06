@@ -86,17 +86,16 @@ Centinelas stages every routed item as a canonical local envelope before any
 optional hosted action:
 
 ```text
-.centininelas/exchange/
+.centinelas/exchange/
   outbox/<target>/<message_id>.json
   inbox/<source>/<message_id>.json
   receipts/<target>/<message_id>.json
 ```
 
-The configured default path is `.centinelas/exchange`—the spelling above is an
-illustrative tree only; use `CENTINELAS_EXCHANGE_ROOT` to select another local
-root. Application dispatch performs no GitHub request and requires no hosted
-token. Exact replay is idempotent; conflicting bytes under one identity fail
-closed.
+The configured default path is `.centinelas/exchange`; use
+`CENTINELAS_EXCHANGE_ROOT` to select another local root. Application dispatch
+performs no GitHub request and requires no hosted token. Exact replay is
+idempotent; conflicting bytes under one identity fail closed.
 
 `scripts/emit_dispatches.py` is an optional bridge. It wraps the exact committed
 envelope bytes in `prii.artifact-mirror.v1`; it does not reconstruct or truncate
