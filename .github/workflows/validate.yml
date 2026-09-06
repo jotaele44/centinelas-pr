@@ -62,18 +62,26 @@ jobs:
               "schema_version", "program_id", "repository_full_name",
               "federation_role", "hub_parent", "hub_callable_commands",
               "canonical_outputs", "federation_readiness_gate",
+              "federation_freedom_gate",
           }
           missing = sorted(required - set(manifest))
           assert not missing, f"federation.json missing required keys: {missing}"
           assert manifest["schema_version"] == "repo_federation_manifest_v1"
           assert manifest["program_id"] == "centinelas-pr"
           assert manifest["hub_parent"] == "thehub-pr"
-          assert "setup" in manifest["hub_callable_commands"]
-          assert "test_suite" in manifest["hub_callable_commands"]
-          gate = manifest["federation_readiness_gate"]
-          assert isinstance(gate.get("ready_for_hub_discovery"), bool)
-          assert isinstance(gate.get("ready_for_hub_live_execution"), bool)
-          assert isinstance(gate.get("blocking_conditions"), list)
+          commands = manifest["hub_callable_commands"]
+          assert "setup" in commands
+          assert "runtime_setup" in commands
+          assert "test_suite" in commands
+          readiness = manifest["federation_readiness_gate"]
+          assert isinstance(readiness.get("ready_for_hub_discovery"), bool)
+          assert readiness["ready_for_hub_live_execution"] is False
+          assert isinstance(readiness.get("blocking_conditions"), list)
+          freedom = manifest["federation_freedom_gate"]
+          assert freedom["certified"] is False
+          assert freedom["certification_state"] == "PROVISIONAL"
+          assert len(freedom["dynamic_gates"]) == 8
+          assert set(freedom["dynamic_gates"].values()) == {"OPEN"}
           print("federation manifest gate passed")
           PY
       - name: Validate PR spatial grid
@@ -99,10 +107,14 @@ jobs:
       - name: Assert isolated checkout
         run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
-      - name: Lock file is canonical
+      - name: Regenerate lock candidate
+        run: uv lock
+      - name: Assert exact lock has been committed
         run: |
-          uv lock
-          git diff --exit-code -- uv.lock
+          if ! git diff --exit-code -- uv.lock; then
+            echo "::error::uv.lock is stale for this exact source tree. Regenerate it externally and commit the reviewed bytes."
+            exit 1
+          fi
 
   typecheck:
     runs-on: ubuntu-latest

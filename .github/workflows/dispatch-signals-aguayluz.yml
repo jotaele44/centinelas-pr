@@ -1,25 +1,24 @@
-name: Dispatch signals to AguaYLuz
+name: Stage signals for AguaYLuz
 
-# Event-driven export hop: run the Centinelas pipeline (ingest -> classify ->
-# route) and emit a GitHub repository_dispatch to aguayluz-pr for each fresh
-# ENVIRONMENTAL (water/utility) signal above the confidence gate. aguayluz-pr's
-# centinelas-intake.yml listens for these and ingests them via
-# scripts/ingest_centinelas_dispatch.py.
-#
-# Mirrors dispatch-signals.yml (the MoneySweep hop): manual-only
-# (workflow_dispatch), operator-triggered, dry-run unless confirm=YES, and
-# requires the FEDERATION_DISPATCH_TOKEN secret (a token with contents:write on
-# aguayluz-pr). The routed aguayluz payload carries `domain_tags` (potable_water,
-# boil_water, reservoir_drought, power_grid, …) so the consumer can pick the right
-# event_type.
+# Manual producer run. Centinelas commits canonical local envelopes before any
+# optional GitHub mirror. AguaYLuz domain ingestion remains a separate consumer
+# change and this workflow does not alter source acquisitions.
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Type 'YES' to actually POST repository_dispatch (else dry-run)"
+        description: "Type YES to attempt the optional GitHub mirror after local staging"
         required: true
         default: "no"
+      classifier_backend:
+        description: "Classifier adapter; local is credential-free and authoritative"
+        required: true
+        default: "local"
+        type: choice
+        options:
+          - local
+          - anthropic
       limit:
         description: "Max items to process (0 = no cap)"
         required: false
@@ -29,11 +28,8 @@ permissions:
   contents: read
 
 env:
-  CENTINELAS_OUTBOUND_DIR: .centinelas/outbound
+  CENTINELAS_EXCHANGE_ROOT: .centinelas/exchange
 
-# Serialise runs on the same ref without cancelling. This workflow can
-# publish, write data, or hand off to another repo, and killing it
-# mid-flight risks leaving that work half-done.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -42,40 +38,72 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.11"
           cache: pip
 
-      - name: Install
-        run: python -m pip install -e ".[dev,export]"
-
-      - name: Run pipeline (ingest -> classify -> route, stage to outbound)
+      - name: Install selected profile
         env:
+          CLASSIFIER_BACKEND: ${{ github.event.inputs.classifier_backend }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+          extras="dev,export"
+          if [[ "$CLASSIFIER_BACKEND" == "anthropic" ]]; then
+            extras="dev,export,hosted-classifier"
+          fi
+          uv pip install --system -e ".[${extras}]"
+
+      - name: Require credential only for explicit hosted classification
+        env:
+          CLASSIFIER_BACKEND: ${{ github.event.inputs.classifier_backend }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$CLASSIFIER_BACKEND" == "anthropic" && -z "$ANTHROPIC_API_KEY" ]]; then
+            echo "::error::classifier_backend=anthropic requires ANTHROPIC_API_KEY"
+            exit 1
+          fi
+
+      - name: Run pipeline and commit local outbox authority
+        env:
+          CENTINELAS_CLASSIFIER_BACKEND: ${{ github.event.inputs.classifier_backend }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LIMIT: ${{ github.event.inputs.limit }}
+        shell: bash
         run: |
+          set -euo pipefail
           centinelas run --limit "$LIMIT"
-          echo "Staged payloads:"
-          find "$CENTINELAS_OUTBOUND_DIR" -name '*.json' -print 2>/dev/null | sort || true
+          echo "Canonical local envelopes:"
+          find "$CENTINELAS_EXCHANGE_ROOT/outbox" -type f -name '*.json' -print 2>/dev/null | sort || true
 
-      - name: Emit repository_dispatch to aguayluz-pr
+      - name: Validate or attempt optional AguaYLuz mirror
         env:
           FEDERATION_DISPATCH_TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
           CONFIRM: ${{ github.event.inputs.confirm }}
+        shell: bash
         run: |
-          if [ "$(printf '%s' "$CONFIRM" | tr '[:upper:]' '[:lower:]')" = "yes" ]; then
-            python3 scripts/emit_dispatches.py --only-repo aguayluz-pr
+          set -euo pipefail
+          if [[ "$(printf '%s' "$CONFIRM" | tr '[:upper:]' '[:lower:]')" == "yes" ]]; then
+            python3 scripts/emit_dispatches.py \
+              --exchange-root "$CENTINELAS_EXCHANGE_ROOT" \
+              --only-repo aguayluz-pr
           else
-            echo "confirm != YES — dry-run (no POST)."
-            python3 scripts/emit_dispatches.py --only-repo aguayluz-pr --dry-run
+            echo "confirm != YES - validating mirror bytes without POST."
+            python3 scripts/emit_dispatches.py \
+              --exchange-root "$CENTINELAS_EXCHANGE_ROOT" \
+              --only-repo aguayluz-pr \
+              --dry-run
           fi
 
-      - name: Upload staged payloads artifact
+      - name: Upload local exchange snapshot
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: centinelas-outbound-aguayluz
-          path: .centinelas/outbound
+          name: centinelas-local-exchange-aguayluz
+          path: .centinelas/exchange
           if-no-files-found: ignore

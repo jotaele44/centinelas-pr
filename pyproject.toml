@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "Universal online intelligence monitor and routing engine"
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.40.0",
     "httpx>=0.27.0",
     "feedparser>=6.0.0",
     "beautifulsoup4>=4.12.0",
@@ -25,7 +24,9 @@ dependencies = [
 
 [tool.uv.sources]
 prii-maintenance = { url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_maintenance" }
-prii-export-utils = { url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_export_utils" }
+# PR #260 is stacked on the Federation freedom policy PR #246. This exact
+# commit provides local artifact authority plus exact-byte optional mirrors.
+prii-export-utils = { url = "https://github.com/jotaele44/thehub-pr/archive/2a8b662262130fc9013a7bc5016a6c74117e8c4a.zip", subdirectory = "packages/prii_export_utils" }
 
 [project.optional-dependencies]
 dev = [
@@ -39,6 +40,12 @@ server = [
     "fastapi>=0.111.0",
     "uvicorn[standard]>=0.29.0",
 ]
+# Hosted classification is an explicit adapter, never part of the core runtime.
+hosted-classifier = [
+    "anthropic>=0.40.0",
+]
+# Retained for existing workflow command compatibility; exports use core deps.
+export = []
 
 [project.scripts]
 centinelas = "centinelas.cli:app"
