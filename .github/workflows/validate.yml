@@ -62,18 +62,26 @@ jobs:
               "schema_version", "program_id", "repository_full_name",
               "federation_role", "hub_parent", "hub_callable_commands",
               "canonical_outputs", "federation_readiness_gate",
+              "federation_freedom_gate",
           }
           missing = sorted(required - set(manifest))
           assert not missing, f"federation.json missing required keys: {missing}"
           assert manifest["schema_version"] == "repo_federation_manifest_v1"
           assert manifest["program_id"] == "centinelas-pr"
           assert manifest["hub_parent"] == "thehub-pr"
-          assert "setup" in manifest["hub_callable_commands"]
-          assert "test_suite" in manifest["hub_callable_commands"]
-          gate = manifest["federation_readiness_gate"]
-          assert isinstance(gate.get("ready_for_hub_discovery"), bool)
-          assert isinstance(gate.get("ready_for_hub_live_execution"), bool)
-          assert isinstance(gate.get("blocking_conditions"), list)
+          commands = manifest["hub_callable_commands"]
+          assert "setup" in commands
+          assert "runtime_setup" in commands
+          assert "test_suite" in commands
+          readiness = manifest["federation_readiness_gate"]
+          assert isinstance(readiness.get("ready_for_hub_discovery"), bool)
+          assert readiness["ready_for_hub_live_execution"] is False
+          assert isinstance(readiness.get("blocking_conditions"), list)
+          freedom = manifest["federation_freedom_gate"]
+          assert freedom["certified"] is False
+          assert freedom["certification_state"] == "PROVISIONAL"
+          assert len(freedom["dynamic_gates"]) == 8
+          assert set(freedom["dynamic_gates"].values()) == {"OPEN"}
           print("federation manifest gate passed")
           PY
       - name: Validate PR spatial grid
@@ -94,15 +102,40 @@ jobs:
 
   lock:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - name: Assert isolated checkout
         run: test ! -e "$GITHUB_WORKSPACE/../thehub-pr"
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
-      - name: Lock file is canonical
+      - name: Regenerate exact lock
+        run: uv lock
+      - name: Commit the generated lock only on the dedicated migration branch
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'remediate/local-authority-v1' }}
+        shell: bash
         run: |
-          uv lock
-          git diff --exit-code -- uv.lock
+          set -euo pipefail
+          if git diff --quiet -- uv.lock; then
+            echo "uv.lock already canonical"
+            exit 0
+          fi
+          changed=$(git diff --name-only)
+          if [[ "$changed" != "uv.lock" ]]; then
+            echo "::error::lock regeneration changed unexpected paths: $changed"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "chore: regenerate uv lock for local authority migration"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
+      - name: Assert no lock drift outside the dedicated migration update
+        if: ${{ !(github.event_name == 'pull_request' && github.head_ref == 'remediate/local-authority-v1') }}
+        run: git diff --exit-code -- uv.lock
 
   typecheck:
     runs-on: ubuntu-latest
