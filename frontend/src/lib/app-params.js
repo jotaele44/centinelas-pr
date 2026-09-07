@@ -1,6 +1,5 @@
+import { browserStorage as storage } from './browser-storage.js';
 const isNode = typeof window === 'undefined';
-const windowObj = isNode ? { localStorage: new Map() } : window;
-const storage = windowObj.localStorage;
 
 const toSnakeCase = (str) => str.replace(/([A-Z])/g, '_$1').toLowerCase();
 
@@ -33,7 +32,7 @@ const getAppParams = () => {
   return {
     appId: getAppParamValue('app_id', { defaultValue: import.meta.env.VITE_CENTINELAS_APP_ID || 'centinelas-local' }),
     token: getAppParamValue('access_token', { removeFromUrl: true }),
-    fromUrl: getAppParamValue('from_url', { defaultValue: window.location.href }),
+    fromUrl: getAppParamValue('from_url', { defaultValue: isNode ? '' : window.location.href }),
     functionsVersion: getAppParamValue('functions_version', { defaultValue: import.meta.env.VITE_CENTINELAS_FUNCTIONS_VERSION || 'local' }),
     appBaseUrl: getAppParamValue('app_base_url', { defaultValue: import.meta.env.VITE_CENTINELAS_APP_BASE_URL || window.location.origin }),
   };
