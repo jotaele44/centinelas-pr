@@ -53,7 +53,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.0",
     "vitest-axe": "^0.1.0"
   },
   "description": "Centinelas-PR frontend: Puerto Rico civic/legislative pre-officialization signal monitor (linked to MoneySweep) plus universal 6-domain online-intelligence intake and routing visibility for the PR federation."
