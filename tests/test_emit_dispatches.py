@@ -1,96 +1,191 @@
-"""Tests for the repository_dispatch emitter (offline — no network)."""
+"""Offline tests for the optional exact-byte GitHub mirror."""
 
 from __future__ import annotations
 
 import importlib.util
-import json
 from pathlib import Path
+
+from prii_export_utils import emit_message, sha256, verify_mirror_payload
 
 _SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "emit_dispatches.py"
 _spec = importlib.util.spec_from_file_location("emit_dispatches", _SCRIPT)
+assert _spec and _spec.loader
 emit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(emit)
 
 
-def _stage(outbound: Path, repo: str, item_id: str, payload: dict) -> None:
-    d = outbound / repo
-    d.mkdir(parents=True, exist_ok=True)
-    (d / f"{item_id}.json").write_text(json.dumps(payload), encoding="utf-8")
-
-
-def test_build_body_wraps_within_client_payload_key_limit():
-    # A realistic intake record has >10 fields; wrapping must keep client_payload <= 10 keys.
-    payload = {f"field_{i}": i for i in range(15)}
-    body = emit.build_dispatch_body("abc123", "moneysweep-pr", payload, "centinelas-signal")
-    assert body["event_type"] == "centinelas-signal"
-    assert set(body["client_payload"]) == {"item_id", "repo", "signal"}
-    assert len(body["client_payload"]) <= 10
-    assert body["client_payload"]["signal"] == payload
-    assert body["client_payload"]["item_id"] == "abc123"
-
-
-def test_long_body_text_is_bounded_under_github_limit():
-    # A full-article feed can yield an enormous body_text; the wrapped client_payload
-    # must stay under GitHub's 65,535-char cap so the dispatch is not rejected (HTTP 422).
+def _stage(exchange: Path, target: str, item_id: str, *, body_text: str = "body"):
     payload = {
-        "item_id": "big001",
-        "source_url": "https://example.com/article",
-        "labels": ["FINANCIAL"],
-        "municipalities": ["San Juan"],
-        "body_text": "x" * 200_000,
+        "schema_version": "1.0",
+        "item_id": item_id,
+        "source_url": f"https://example.com/{item_id}",
+        "title": "Test",
+        "body_text": body_text,
+        "routed_to": target,
+        "routed_at": "2026-01-02T12:00:00+00:00",
     }
-    body = emit.build_dispatch_body("big001", "moneysweep-pr", payload, "centinelas-signal")
-    serialized = json.dumps(body["client_payload"])
-    assert len(serialized) < 65_535
-    # Structured fields survive; only body_text is trimmed.
-    signal = body["client_payload"]["signal"]
-    assert signal["item_id"] == "big001"
-    assert signal["source_url"] == "https://example.com/article"
-    assert signal["municipalities"] == ["San Juan"]
-    assert len(signal["body_text"]) < len(payload["body_text"])
-    # The caller's payload is not mutated.
-    assert len(payload["body_text"]) == 200_000
+    return emit_message(
+        exchange,
+        source="centinelas-pr",
+        target=target,
+        kind="centinelas-signal",
+        idempotency_key=f"fixture-{item_id}-{target}",
+        payload=payload,
+    )
 
 
-def test_short_body_text_is_left_intact():
-    payload = {"item_id": "s1", "body_text": "short body"}
-    body = emit.build_dispatch_body("s1", "moneysweep-pr", payload, "centinelas-signal")
-    assert body["client_payload"]["signal"]["body_text"] == "short body"
+def test_build_body_wraps_exact_local_envelope_bytes(tmp_path):
+    exchange = tmp_path / "exchange"
+    staged = _stage(exchange, "moneysweep-pr", "abc123")
+
+    body = emit.build_dispatch_body(staged.path, "centinelas-artifact-mirror")
+    envelope, data = verify_mirror_payload(body["client_payload"])
+
+    assert body["event_type"] == "centinelas-artifact-mirror"
+    assert data == staged.path.read_bytes()
+    assert envelope["message_id"] == staged.message_id
+    assert envelope["payload"]["item_id"] == "abc123"
 
 
-def test_iter_payloads_discovers_staged_files(tmp_path):
-    _stage(tmp_path, "moneysweep-pr", "id1", {"item_id": "id1"})
-    _stage(tmp_path, "thehub-pr", "id2", {"item_id": "id2"})
-    found = {(repo, item_id) for repo, item_id, _ in emit.iter_payloads(tmp_path)}
-    assert found == {("moneysweep-pr", "id1"), ("thehub-pr", "id2")}
+def test_large_envelope_fails_closed_without_truncating_local_bytes(tmp_path):
+    exchange = tmp_path / "exchange"
+    staged = _stage(
+        exchange,
+        "moneysweep-pr",
+        "big001",
+        body_text="x" * 100_000,
+    )
+    before = sha256(staged.path)
+
+    try:
+        emit.build_dispatch_body(staged.path, "centinelas-artifact-mirror")
+    except emit.MirrorDispatchError as exc:
+        assert "local envelope remains authoritative" in str(exc)
+    else:
+        raise AssertionError("oversized hosted mirror must fail closed")
+
+    assert sha256(staged.path) == before
+    assert len(staged.path.read_bytes()) > 100_000
 
 
-def test_dry_run_emits_nothing_over_network(tmp_path, capsys):
-    _stage(tmp_path, "moneysweep-pr", "id1", {"item_id": "id1"})
-    rc = emit.run(tmp_path, owner="jotaele44", event_type="centinelas-signal", token=None, dry_run=True)
-    assert rc == 0
-    out = capsys.readouterr().out
-    assert "[dry-run] centinelas-signal → jotaele44/moneysweep-pr (item id1)" in out
+def test_iter_envelopes_discovers_validated_outbox(tmp_path):
+    exchange = tmp_path / "exchange"
+    one = _stage(exchange, "moneysweep-pr", "id1")
+    two = _stage(exchange, "thehub-pr", "id2")
+
+    found = {
+        (target, path.name, envelope["message_id"])
+        for target, path, envelope in emit.iter_envelopes(exchange)
+    }
+    assert found == {
+        ("moneysweep-pr", one.path.name, one.message_id),
+        ("thehub-pr", two.path.name, two.message_id),
+    }
 
 
-def test_missing_outbound_dir_is_noop(tmp_path):
-    rc = emit.run(tmp_path / "nope", owner="jotaele44", event_type="x", token=None, dry_run=False)
-    assert rc == 0
+def test_dry_run_performs_no_network_call(tmp_path, capsys, monkeypatch):
+    exchange = tmp_path / "exchange"
+    staged = _stage(exchange, "moneysweep-pr", "id1")
 
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("dry run must not call the hosted bridge")
 
-def test_only_repo_filters_dispatch_targets(tmp_path, capsys):
-    """--only-repo scopes the chain: Centinelas fires MoneySweep, not the Hub copy."""
-    _stage(tmp_path, "moneysweep-pr", "id1", {"item_id": "id1"})
-    _stage(tmp_path, "thehub-pr", "id1", {"item_id": "id1"})
-    rc = emit.run(
-        tmp_path,
+    monkeypatch.setattr(emit, "post_dispatch", forbidden)
+    code = emit.run(
+        exchange,
         owner="jotaele44",
-        event_type="centinelas-signal",
+        event_type="centinelas-artifact-mirror",
+        token=None,
+        dry_run=True,
+    )
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert staged.message_id in output
+    assert "jotaele44/moneysweep-pr" in output
+
+
+def test_missing_outbox_is_noop(tmp_path):
+    code = emit.run(
+        tmp_path / "exchange",
+        owner="jotaele44",
+        event_type="x",
+        token=None,
+        dry_run=False,
+    )
+    assert code == 0
+
+
+def test_only_repo_filters_mirror_targets(tmp_path, capsys):
+    exchange = tmp_path / "exchange"
+    moneysweep = _stage(exchange, "moneysweep-pr", "id1")
+    _stage(exchange, "thehub-pr", "id1")
+
+    code = emit.run(
+        exchange,
+        owner="jotaele44",
+        event_type="centinelas-artifact-mirror",
         token=None,
         dry_run=True,
         only_repo="moneysweep-pr",
     )
-    assert rc == 0
-    out = capsys.readouterr().out
-    assert "jotaele44/moneysweep-pr" in out
-    assert "thehub-pr" not in out
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert moneysweep.message_id in output
+    assert "jotaele44/moneysweep-pr" in output
+    assert "thehub-pr" not in output
+
+
+def test_non_dry_mirror_requires_token_but_preserves_local_message(tmp_path):
+    exchange = tmp_path / "exchange"
+    staged = _stage(exchange, "moneysweep-pr", "id1")
+
+    code = emit.run(
+        exchange,
+        owner="jotaele44",
+        event_type="centinelas-artifact-mirror",
+        token=None,
+        dry_run=False,
+    )
+
+    assert code == 2
+    assert staged.path.is_file()
+
+
+def test_outbox_target_directory_mismatch_fails_closed(tmp_path, capsys):
+    exchange = tmp_path / "exchange"
+    staged = _stage(exchange, "moneysweep-pr", "id1")
+    wrong_dir = exchange / "outbox" / "thehub-pr"
+    wrong_dir.mkdir(parents=True)
+    staged.path.replace(wrong_dir / staged.path.name)
+    (exchange / "outbox" / "moneysweep-pr").rmdir()
+
+    code = emit.run(
+        exchange,
+        owner="jotaele44",
+        event_type="centinelas-artifact-mirror",
+        token=None,
+        dry_run=True,
+    )
+
+    assert code == 1
+    assert "target directory mismatch" in capsys.readouterr().err
+
+
+def test_unexpected_outbox_member_fails_closed(tmp_path, capsys):
+    exchange = tmp_path / "exchange"
+    target = exchange / "outbox" / "moneysweep-pr"
+    target.mkdir(parents=True)
+    (target / "residue.tmp").write_text("residue", encoding="utf-8")
+
+    code = emit.run(
+        exchange,
+        owner="jotaele44",
+        event_type="centinelas-artifact-mirror",
+        token=None,
+        dry_run=True,
+    )
+
+    assert code == 1
+    assert "unexpected outbox member" in capsys.readouterr().err
