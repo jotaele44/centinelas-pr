@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "centinelas_puerto_rico_source_record.schema.json",
+  "title": "Puerto Rico pre-official source record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "record_id", "source_registry_id", "source_family",
+    "source_manifestation", "source_record_id_raw", "identity_basis",
+    "identity_effect", "binding_state", "candidate_cardinality", "source_url",
+    "title_raw", "body_raw", "published_at", "event_at", "captured_at",
+    "evidence_tier", "source_fields_raw", "raw_response_path",
+    "raw_response_sha256", "is_synthetic"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "record_id": {"type": "string", "pattern": "^CENT-PR-[0-9a-f]{24}$"},
+    "source_registry_id": {"type": "string", "pattern": "^CENT-SRC-"},
+    "source_family": {"enum": ["PREB", "AAA", "COR3", "LEGISLATIVE"]},
+    "source_manifestation": {"type": "string", "minLength": 1},
+    "source_record_id_raw": {"type": "string", "minLength": 1},
+    "identity_basis": {"enum": ["OFFICIAL_STABLE_ID", "SOURCE_URL"]},
+    "identity_effect": {"const": "NONE"},
+    "binding_state": {"const": "UNRESOLVED"},
+    "candidate_cardinality": {"const": "UNRESOLVED"},
+    "source_url": {"type": "string", "format": "uri"},
+    "title_raw": {"type": "string"},
+    "body_raw": {"type": "string"},
+    "published_at": {"type": ["string", "null"], "format": "date-time"},
+    "event_at": {"type": ["string", "null"], "format": "date-time"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "evidence_tier": {"enum": ["T1", "T2", "T3", "T4"]},
+    "source_fields_raw": {"type": "object"},
+    "raw_response_path": {"type": "string", "minLength": 1},
+    "raw_response_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "is_synthetic": {"const": false}
+  }
+}

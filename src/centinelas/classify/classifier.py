@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import anthropic
 
@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 _MODEL = "claude-haiku-4-5-20251001"
+
+ClassificationMethod = Literal[
+    "keyword_fast_path",
+    "llm",
+    "keyword_fallback",
+    "unclassified_fallback",
+]
 
 _SYSTEM_PROMPT = """You are an online intelligence classifier. Given a news article title and body, classify it into one or more of these domains:
 
@@ -71,22 +78,26 @@ def _llm_classify(title: str, body: str) -> tuple[list[DomainLabel], float, str]
     return labels, confidence, reasoning
 
 
-def classify(item: RawItem) -> tuple[list[DomainLabel], float, str]:
-    """
-    Classify a RawItem into domain labels.
+def classify_with_provenance(
+    item: RawItem,
+) -> tuple[list[DomainLabel], float, str, ClassificationMethod]:
+    """Classify a RawItem and bind the result to its execution path.
 
     Fast path: keyword rules. If 2+ strong hits, return immediately.
     Slow path: Claude Haiku for ambiguous/unmatched items.
     Falls back to keyword rules if API call fails.
-
-    Returns (labels, confidence, reasoning).
     """
     text = f"{item.title} {item.body_text}"
     keyword_hits = keyword_classify(text)
 
     # High-confidence keyword path: multiple distinct labels or single clear hit
     if len(keyword_hits) >= 2:
-        return keyword_hits, 0.85, "Multi-domain keyword match — skipped LLM."
+        return (
+            keyword_hits,
+            0.85,
+            "Multi-domain keyword match — skipped LLM.",
+            "keyword_fast_path",
+        )
 
     try:
         labels, confidence, reasoning = _llm_classify(item.title, item.body_text)
@@ -96,13 +107,29 @@ def classify(item: RawItem) -> tuple[list[DomainLabel], float, str]:
             if kw_label not in labels and kw_label != DomainLabel.UNCLASSIFIED:
                 labels.append(kw_label)
 
-        return labels, confidence, reasoning
+        return labels, confidence, reasoning, "llm"
 
     except Exception as exc:
         log.warning("LLM classify failed (%s), falling back to keyword rules.", exc)
         if keyword_hits:
-            return keyword_hits, 0.6, f"Keyword fallback (LLM unavailable: {exc})"
-        return [DomainLabel.UNCLASSIFIED], 0.3, f"Unclassified — LLM unavailable: {exc}"
+            return (
+                keyword_hits,
+                0.6,
+                f"Keyword fallback (LLM unavailable: {exc})",
+                "keyword_fallback",
+            )
+        return (
+            [DomainLabel.UNCLASSIFIED],
+            0.3,
+            f"Unclassified — LLM unavailable: {exc}",
+            "unclassified_fallback",
+        )
+
+
+def classify(item: RawItem) -> tuple[list[DomainLabel], float, str]:
+    """Classify a RawItem while preserving the historical three-value API."""
+    labels, confidence, reasoning, _ = classify_with_provenance(item)
+    return labels, confidence, reasoning
 
 
 def build_classified_item(raw: RawItem) -> ClassifiedItem:

@@ -26,13 +26,22 @@ The former ~90% figure measured offline code completeness. It is historical and 
 - PR #80 is a governance-only skill disposition and no longer blocks runtime delivery.
 - Production export is fail-closed for empty, malformed, future-dated, synthetic, or stale ledgers. Hub live execution remains blocked until acquisition refreshes the committed ledger and downstream validation succeeds.
 - The Water Disruption shadow console is wired through API discovery, navigation, failure/retry UI, unit coverage, and GUI-parity E2E coverage.
-- The central product gap remains Puerto Rico pre-official source acquisition and a durable Matter lifecycle through MoneySweep.
+- Puerto Rico pre-official source acquisition is locally complete on draft PR #124 at `d0006cfe20a6fbc1fca663d2607d8f68e0c83092`; hosted checks are blocked before execution by the GitHub Actions billing lock.
+- The remaining central product gap is a durable Matter lifecycle through MoneySweep.
+
+## 2026-09-06 Puerto Rico source checkpoint
+
+- Scope: six official source manifestations across PREB, AAA, COR3, Senate, and House; source records are discovery candidates with `identity_effect=NONE`, `binding_state=UNRESOLVED`, and `candidate_cardinality=UNRESOLVED`.
+- Frozen result: `1,131 = 56 PREB notices + 363 AAA releases + 706 COR3 releases + 0 active COR3 RFPs + 5 Senate calendar items + 1 House calendar item` across 80 byte-bound responses.
+- Provenance: PREB and AAA linked archives are fully paginated; COR3 press pagination closes against a stable 706-row response header; current COR3 RFP emptiness is explicit; Senate and House scope is every item exposed on their configured current calendar pages.
+- Verification: 373 tests pass with 1 skip; Ruff and mypy pass; the final receipt has zero failed gates and zero self-verification errors.
+- Boundaries: this is bounded source-manifestation exhaustion, not universal Puerto Rico source exhaustion and not canonical matter identity. The implementation remains off `main` while PR #124 is draft and exact-head hosted checks cannot execute.
 
 ## Priority exit sequence
 
 1. Refresh the live ledger through a bounded, receipt-producing Puerto Rico acquisition run and validate the production export downstream.
 2. Dispose of rescued and governance-only PRs without importing stale data by assumption.
-3. Complete PREB, AAA, COR3, and legislative acquisition accounting and expose freshness/failure state to operators.
+3. Land the locally complete PREB, AAA, COR3, and legislative acquisition accounting after exact-head hosted checks can execute; operator freshness/failure state is implemented by `centinelas source-status`.
 4. Certify shared Matter stages 0–6 and MoneySweep reconciliation across repositories.
 5. Exercise the LLM tier with secret-safe production receipts while preserving deterministic fallback.
 

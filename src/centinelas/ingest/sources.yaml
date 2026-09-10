@@ -20,14 +20,23 @@ feeds:
   - name: "NOAA News"
     url: "https://www.noaa.gov/news-release/feed"
     tier: "T1"
+    enabled: false
+    lifecycle_state: "RETIRED_NO_EQUIVALENT_PUBLIC_FEED"
+    retired_at: "2026-09-05T22:04:53Z"
+    retirement_reason: "Configured general NOAA news feed is gone; the official NOS feed is narrower and currently malformed."
+    adjudication_ref: "docs/source_adjudication_20260905.json"
+    candidate_url: "https://oceanservice.noaa.gov/rss/nosnews.xml"
 
   - name: "Inside Climate News"
     url: "https://insideclimatenews.org/feed/"
     tier: "T1"
 
   - name: "Yale Environment 360"
-    url: "https://e360.yale.edu/feed"
+    url: "https://e360.yale.edu/feed.xml"
     tier: "T1"
+    previous_url: "https://e360.yale.edu/feed"
+    endpoint_verified_at: "2026-09-05T22:04:53Z"
+    adjudication_ref: "docs/source_adjudication_20260905.json"
 
   # ── Geology & Geography ───────────────────────────────
   - name: "USGS Earthquakes"
@@ -35,8 +44,11 @@ feeds:
     tier: "T1"
 
   - name: "Volcano Discovery"
-    url: "https://www.volcanodiscovery.com/volcanoes/rss.xml"
+    url: "https://www.volcanodiscovery.com/volcanoesandearthquakenews.rss"
     tier: "T2"
+    previous_url: "https://www.volcanodiscovery.com/volcanoes/rss.xml"
+    endpoint_verified_at: "2026-09-05T22:04:53Z"
+    adjudication_ref: "docs/source_adjudication_20260905.json"
 
   - name: "AGU EOS"
     url: "https://eos.org/feed"
@@ -44,21 +56,32 @@ feeds:
 
   # ── Anomalous ─────────────────────────────────────────
   - name: "The Black Vault"
-    url: "https://www.theblackvault.com/documentdb/feed/"
+    url: "https://www.theblackvault.com/documentarchive/feed/"
     tier: "T3"
+    previous_url: "https://www.theblackvault.com/documentdb/feed/"
+    endpoint_verified_at: "2026-09-05T22:04:53Z"
+    adjudication_ref: "docs/source_adjudication_20260905.json"
 
   - name: "Earthfiles"
     url: "https://www.earthfiles.com/feed/"
     tier: "T3"
 
   - name: "MUFON"
-    url: "https://www.mufon.com/blog-feed.xml"
+    url: "https://mufon.com/feed/"
     tier: "T3"
+    previous_url: "https://www.mufon.com/blog-feed.xml"
+    endpoint_verified_at: "2026-09-05T22:04:53Z"
+    adjudication_ref: "docs/source_adjudication_20260905.json"
 
   # ── Financial ─────────────────────────────────────────
   - name: "Reuters Business"
     url: "https://feeds.reuters.com/reuters/businessNews"
     tier: "T1"
+    enabled: false
+    lifecycle_state: "RETIRED_NO_PUBLIC_FEED"
+    retired_at: "2026-09-05T22:04:53Z"
+    retirement_reason: "Legacy public RSS hostname no longer resolves; Reuters documents licensed content feeds."
+    adjudication_ref: "docs/source_adjudication_20260905.json"
 
   - name: "Financial Times"
     url: "https://www.ft.com/rss/home"
@@ -68,10 +91,21 @@ feeds:
   - name: "Associated Press Top News"
     url: "https://rsshub.app/apnews/topics/apf-topnews"
     tier: "T1"
+    enabled: false
+    lifecycle_state: "NONCANONICAL_ACCESS_BLOCKED"
+    retired_at: "2026-09-05T22:04:53Z"
+    retirement_reason: "Configured URL is a third-party mirror; AP advertises an official RSS URL that returns HTTP 401 to this runtime."
+    adjudication_ref: "docs/source_adjudication_20260905.json"
+    candidate_url: "https://apnews.com/index.rss"
 
   - name: "Reuters World"
     url: "https://feeds.reuters.com/reuters/worldNews"
     tier: "T1"
+    enabled: false
+    lifecycle_state: "RETIRED_NO_PUBLIC_FEED"
+    retired_at: "2026-09-05T22:04:53Z"
+    retirement_reason: "Legacy public RSS hostname no longer resolves; Reuters documents licensed content feeds."
+    adjudication_ref: "docs/source_adjudication_20260905.json"
 
   - name: "Foreign Policy"
     url: "https://foreignpolicy.com/feed/"
