@@ -1,0 +1,12 @@
+{
+  "schema": "floot-archive-provenance/1.0",
+  "app": "Centinelas PR",
+  "source_archive": "Centinelas PR.zip",
+  "retrieved_context_date": "2026-09-12",
+  "sha256": "edac6369f27bfe2f174f4cfbafb081ce2eed4354e994fbe92f64865562675de7",
+  "byte_size": 594544,
+  "zip_member_count": 250,
+  "archive_role": "HISTORICAL_DONOR_SNAPSHOT",
+  "canonicality": "NONCANONICAL",
+  "rules": {"overwrite_current_main": false, "schema_is_canonical_by_age": false, "infer_database_contents_from_schema": false, "preserve_raw_before_normalization": true}
+}
