@@ -11,7 +11,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+_repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(_repo_root))
+sys.path.insert(0, str(_repo_root / "src"))
 
 from prii_desktop import DesktopConfig, make_desktop_app  # noqa: E402
 
