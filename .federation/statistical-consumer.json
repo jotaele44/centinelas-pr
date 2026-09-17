@@ -1,0 +1,9 @@
+{
+  "contract_version":"1.0.0",
+  "registry_authority":"thehub-pr/.federation/statistical-routing-manifest.json",
+  "repo":"centinelas-pr",
+  "primary_domains":["Violencia y Justicia","Tecnologia y Telecomunicaciones"],
+  "secondary_domains":["Transportacion","Demografia y Poblacion","Proteccion Social","Salud","Geografia"],
+  "ingest_policy":"consume routed public-safety, justice, emergency and telecom context with record-level provenance",
+  "guardrails":["crime rate != misconduct proof","incident count != causation","source absence != historical absence","unknown != zero"]
+}
