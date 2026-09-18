@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from centinelas.water_disruption import SourceRecord, WaterDisruptionProducer, stable_id
+from server.backend.auth import WRITE_GUARD
 
 router = APIRouter(prefix="/water-disruption", tags=["water-disruption"])
 _ROOT = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas")) / "water-disruption"
@@ -84,14 +85,14 @@ def outbox() -> dict[str, Any]:
     return {"shadow_mode": True, "notifications_enabled": False, "total": len(items), "items": items, "receipts": service.store.read("delivery_receipts"), "dead_letter": service.store.read("dead_letter")}
 
 
-@router.post("/capture")
+@router.post("/capture", dependencies=WRITE_GUARD)
 def capture(request: CaptureRequest) -> dict[str, Any]:
     evidence_item = service.capture_evidence(request.source_id, request.source_url, request.title, request.body_text, request.published_at)
     candidate = service.extract_candidate(evidence_item, request.municipalities, request.asset_hint)
     return {"evidence": evidence_item, "candidate": candidate, "shadow_mode": True}
 
 
-@router.post("/candidates/{candidate_id}/dispatch")
+@router.post("/candidates/{candidate_id}/dispatch", dependencies=WRITE_GUARD)
 def dispatch(candidate_id: str, idempotency_key: str = Header(alias="Idempotency-Key")) -> dict[str, Any]:
     try:
         return service.dispatch(candidate_id, idempotency_key)
@@ -99,7 +100,7 @@ def dispatch(candidate_id: str, idempotency_key: str = Header(alias="Idempotency
         raise HTTPException(status_code=404, detail="candidate_not_found") from exc
 
 
-@router.post("/outbox/{outbox_id}/deliver")
+@router.post("/outbox/{outbox_id}/deliver", dependencies=WRITE_GUARD)
 def deliver(outbox_id: str, request: DeliverRequest, idempotency_key: str = Header(alias="Idempotency-Key")) -> dict[str, Any]:
     envelope = service.store.by_key("delivery_outbox", "outbox_id", outbox_id)
     if not envelope:
@@ -122,7 +123,7 @@ def deliver(outbox_id: str, request: DeliverRequest, idempotency_key: str = Head
         raise HTTPException(status_code=502, detail=failure) from exc
 
 
-@router.post("/candidates/{candidate_id}/retract")
+@router.post("/candidates/{candidate_id}/retract", dependencies=WRITE_GUARD)
 def retract(candidate_id: str, request: RetractRequest, idempotency_key: str = Header(alias="Idempotency-Key")) -> dict[str, Any]:
     try:
         return service.retract(candidate_id, request.reason, idempotency_key)
