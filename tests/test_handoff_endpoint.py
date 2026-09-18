@@ -9,11 +9,13 @@ from starlette.testclient import TestClient
 
 from centinelas.classify.labels import DomainLabel
 from centinelas.models import ClassifiedItem
-from server.backend import main
+from server.backend import auth, main
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
+    monkeypatch.setattr(auth, "WRITE_TOKEN", "")
+    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "testclient")
     data = tmp_path / ".centinelas"
     classified = data / "classified"
     classified.mkdir(parents=True)
