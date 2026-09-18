@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0.0",
+  "receipt_id": "centinelas-production-ledger-refresh-20260905T205500Z",
+  "classification": "PROVISIONAL",
+  "scope": "Fresh RSS signal manifestation, Centinelas production export, and TheHub package validation",
+  "repository": {
+    "name": "jotaele44/centinelas-pr",
+    "base_branch": "main",
+    "base_commit": "caf086598a4f99e2eb0ca4aac6d51e2d9bd46321"
+  },
+  "acquisition": {
+    "command": "python3 scripts/build_signal_ledger.py --out <snapshot>/live_signals.jsonl",
+    "capture_started_at": "2026-09-05T20:55:25.009205+00:00",
+    "capture_completed_at": "2026-09-05T20:56:24.356917+00:00",
+    "configured_rss_urls": 52,
+    "manifested_source_ids": 36,
+    "configured_urls_without_manifested_rows": 16,
+    "per_source_zero_vs_failure_state": "UNRESOLVED",
+    "raw_feed_bytes_preserved": false,
+    "raw_feed_byte_identity_state": "UNRESOLVED",
+    "source_manifestation_path": "data/signals/live_signals.jsonl",
+    "source_manifestation_sha256": "a332c48d9a8618a74b2c250f2e0e28a7712de6bc8dddc37373d4b61c33246a73",
+    "source_config": [
+      {
+        "path": "src/centinelas/ingest/sources.yaml",
+        "sha256": "933d2dfe85f914f3e17372eb294d35c4f8e333108111cfabb5c04ac38dd84d28"
+      },
+      {
+        "path": "src/centinelas/ingest/just_security_sources.yaml",
+        "sha256": "96e3cc88ef82383a8211d0d6a150fbcfd10d7f71a40125b922ff7440a55a0cbd"
+      },
+      {
+        "path": "data/reference/source_registry.csv",
+        "sha256": "4eda9b03b92280b484022d9cc677891300ef596dd24ea58b8c4e9f5ca87b785f"
+      }
+    ]
+  },
+  "classifier": {
+    "configured_model": "claude-haiku-4-5-20251001",
+    "llm_authentication_state_during_run": "UNAVAILABLE",
+    "keyword_fallback_warning_observed": true,
+    "row_level_method_binding": "UNRESOLVED",
+    "confidence_score_profile": {
+      "30.0": 203,
+      "60.0": 182,
+      "85.0": 38
+    }
+  },
+  "ledger": {
+    "rows": 423,
+    "synthetic_rows": 0,
+    "duplicate_signal_ids": 0,
+    "duplicate_matter_ids": 0,
+    "missing_required_field_rows": 0,
+    "unregistered_source_ids": 0,
+    "empty_source_urls": 0,
+    "schema_validation": {
+      "schema": "schemas/signal.schema.json",
+      "rows_checked": 423,
+      "errors": 0
+    }
+  },
+  "previous_to_current_signal_id_sets": {
+    "intersection": 4,
+    "a_only": 96,
+    "b_only": 419,
+    "union": 519,
+    "symmetric_difference": 515,
+    "interpretation": "DISTINCT_SOURCE_MANIFESTATION"
+  },
+  "production_export": {
+    "package_id": "pkg_5e59d0963613b124ddcae06a4a3ede84",
+    "created_at": "2026-09-05T20:58:07Z",
+    "manifest_sha256": "fd1573460aac8f5ef409567045505fbfdf1b8000b6d173f23d1072864f064cf1",
+    "streams": {
+      "sources": {
+        "rows": 36,
+        "sha256": "c291771707ef223cf63d74e71749a8954371288e14637dc986d0d08434d91506"
+      },
+      "entities": {
+        "rows": 423,
+        "sha256": "4f770b322efb90138b60de0e138f49c8b4a48c20253dd6916bd5bce7c3b37f34"
+      },
+      "relationships": {
+        "rows": 0,
+        "artifact_emitted": false
+      },
+      "observations": {
+        "rows": 423,
+        "sha256": "ab0ac9000090734b9a4e5f829d9ad1e16a615b9ecef13d091e18b064e3580300"
+      }
+    }
+  },
+  "gates": [
+    {
+      "name": "centinelas_production_guard",
+      "state": "PASS"
+    },
+    {
+      "name": "signal_schema",
+      "state": "PASS"
+    },
+    {
+      "name": "thehub_validate_package",
+      "state": "PASS",
+      "validator_commit": "0436ff7c72e8664727f1283b422f549210454d1f"
+    }
+  ],
+  "residue": [
+    "Raw RSS response bytes were not retained, so upstream byte identity is unresolved.",
+    "The poller did not distinguish empty feeds from fetch or parse failures for 16 configured URLs.",
+    "Classifier fallback was observed, but row-level classifier reasoning is not present in the ledger.",
+    "Puerto Rico source-tranche completeness remains CEN-005 and is outside this receipt."
+  ]
+}

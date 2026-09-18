@@ -25,6 +25,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
+import re
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -40,6 +43,74 @@ PRODUCER_SCRIPT = "scripts/federation_export.py"
 DEFAULT_LEDGER = REPO_ROOT / "data/signals/example_signals.jsonl"
 DEFAULT_SOURCES = REPO_ROOT / "data/reference/source_registry.csv"
 DEFAULT_MAX_AGE_HOURS = 168.0
+ACCEPTABLE_CLASSIFICATION_METHODS = {
+    "keyword_fast_path",
+    "llm",
+    "model_assisted_adjudication",
+    "review_adjudication",
+}
+CLASSIFICATION_MODEL_REPOSITORY = "MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli"
+CLASSIFICATION_MODEL_REVISION = "0a71e92a985b6e1ad1828cf67ce9c459639c1dca"
+CLASSIFICATION_OVERLAY_GATES = {
+    "exact_base_ledger_binding",
+    "exact_base_receipt_binding",
+    "model_files_bound",
+    "complete_decision_coverage",
+    "unique_decision_ids",
+    "two_pass_score_determinism",
+    "row_conservation",
+    "immutable_fields_preserved",
+    "terminal_decisions",
+    "zero_unresolved_decisions",
+    "review_ledger_bound",
+    "review_exact_target_coverage",
+}
+CLASSIFICATION_MUTABLE_FIELDS = {
+    "beat",
+    "classification_method",
+    "classifier_reasoning",
+    "confidence_score",
+    "labels",
+    "signal_type",
+}
+CLASSIFICATION_LABELS = {
+    "ENVIRONMENTAL", "FINANCIAL", "POLITICAL", "GEO_GEOLOGY",
+    "ANOMALOUS", "MILITARY_AEROSPACE", "SAFETY_COMPLIANCE", "UNCLASSIFIED",
+}
+ACCEPTABLE_SOURCE_STATES = {
+    "SUCCESS_WITH_ROWS",
+    "SUCCESS_EMPTY",
+    "SUCCESS_FILTERED_EMPTY",
+}
+REQUIRED_RECEIPT_GATES = {
+    "nonempty_ledger",
+    "no_synthetic_rows",
+    "unique_signal_ids",
+    "full_polled_item_retention",
+    "repository_head_bound",
+    "source_config_stable",
+    "terminal_sources",
+    "source_conservation",
+    "unique_source_names",
+    "unique_source_urls",
+    "source_registry_ids_bound",
+    "unique_source_registry_ids",
+    "entry_conservation",
+    "raw_response_conservation",
+    "raw_hashes_bound",
+    "no_source_failures",
+    "no_classifier_fallback",
+    "source_scope_conservation",
+    "active_source_scope_matches_receipts",
+    "source_scope_registry_ids_unique",
+    "excluded_sources_adjudicated",
+}
+TERMINAL_EXCLUDED_SOURCE_STATES = {
+    "NONCANONICAL_ACCESS_BLOCKED",
+    "RETIRED_NO_EQUIVALENT_PUBLIC_FEED",
+    "RETIRED_NO_PUBLIC_FEED",
+    "SUPERSEDED",
+}
 
 STREAM_SCHEMA = {
     "sources": "federation_source.schema.json",
@@ -49,11 +120,12 @@ STREAM_SCHEMA = {
 }
 
 
-def _lineage(phase: str) -> dict[str, Any]:
+def _lineage(phase: str, source_inputs: list[str] | None = None) -> dict[str, Any]:
     return {
         "producer_script": PRODUCER_SCRIPT,
         "producer_phase": phase,
-        "source_inputs": ["data/signals/example_signals.jsonl", "data/reference/source_registry.csv"],
+        "source_inputs": source_inputs
+        or ["data/signals/example_signals.jsonl", "data/reference/source_registry.csv"],
         "extraction_method": "deterministic_signal_projection",
     }
 
@@ -112,10 +184,561 @@ def _production_input_errors(
     return []
 
 
+def _load_jsonl_objects(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise ValueError("JSONL row is not an object")
+            rows.append(value)
+    return rows
+
+
+def _bound_file_errors(
+    metadata: Any,
+    *,
+    name: str,
+) -> tuple[list[str], Path | None]:
+    if not isinstance(metadata, dict):
+        return [f"production classification overlay is missing {name} metadata"], None
+    raw_path = metadata.get("path")
+    path = Path(raw_path) if isinstance(raw_path, str) else None
+    if path is None or not path.is_file():
+        return [f"production classification overlay {name} file is unavailable"], path
+    errors: list[str] = []
+    if metadata.get("bytes") != path.stat().st_size:
+        errors.append(f"production classification overlay {name} byte count does not match")
+    if metadata.get("sha256") != _sha256(path):
+        errors.append(f"production classification overlay {name} SHA256 does not match")
+    return errors, path
+
+
+def _classification_overlay_errors(
+    receipt: dict[str, Any],
+    *,
+    signals: list[dict[str, Any]],
+) -> list[str]:
+    if receipt.get("schema_version") != "1.1.0":
+        return []
+    errors: list[str] = []
+    overlay = receipt.get("classification_overlay")
+    if not isinstance(overlay, dict):
+        return ["production classification receipt is missing overlay metadata"]
+
+    gates = receipt.get("gates")
+    if not isinstance(gates, dict):
+        errors.append("production classification overlay gates are missing")
+    else:
+        failed = sorted(
+            gate for gate in CLASSIFICATION_OVERLAY_GATES if gates.get(gate) is not True
+        )
+        if failed:
+            errors.append(f"production classification overlay has failed gates: {failed}")
+
+    classification_head = receipt.get("classification_repository_head")
+    if not isinstance(classification_head, str) or not re.fullmatch(
+        r"[0-9a-f]{40}", classification_head
+    ):
+        errors.append("production classification overlay lacks a full repository head SHA")
+
+    base_ledger_errors, base_ledger_path = _bound_file_errors(
+        overlay.get("base_ledger"), name="base ledger"
+    )
+    errors.extend(base_ledger_errors)
+    base_receipt_errors, _ = _bound_file_errors(
+        overlay.get("base_receipt"), name="base receipt"
+    )
+    errors.extend(base_receipt_errors)
+    source_registry_errors, _ = _bound_file_errors(
+        overlay.get("source_registry"), name="source registry"
+    )
+    errors.extend(source_registry_errors)
+
+    model = overlay.get("model")
+    if not isinstance(model, dict):
+        errors.append("production classification overlay is missing model metadata")
+    else:
+        if model.get("repository") != CLASSIFICATION_MODEL_REPOSITORY:
+            errors.append("production classification overlay names an unsupported model")
+        if model.get("revision") != CLASSIFICATION_MODEL_REVISION:
+            errors.append("production classification overlay model revision is not frozen")
+        model_files = model.get("files")
+        if not isinstance(model_files, list) or not model_files:
+            errors.append("production classification overlay has no model file manifest")
+        else:
+            names = [row.get("name") for row in model_files if isinstance(row, dict)]
+            if len(names) != len(model_files) or len(names) != len(set(names)):
+                errors.append("production classification model file names are invalid or duplicated")
+            for index, row in enumerate(model_files, start=1):
+                file_errors, _ = _bound_file_errors(row, name=f"model file {index}")
+                errors.extend(file_errors)
+
+    algorithm = overlay.get("algorithm")
+    if not isinstance(algorithm, dict):
+        errors.append("production classification overlay is missing algorithm metadata")
+    else:
+        claimed_hash = algorithm.get("sha256")
+        algorithm_payload = {key: value for key, value in algorithm.items() if key != "sha256"}
+        actual_hash = hashlib.sha256(
+            json.dumps(
+                algorithm_payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        if claimed_hash != actual_hash:
+            errors.append("production classification algorithm SHA256 does not match")
+        inference = algorithm.get("inference")
+        reused = isinstance(inference, dict) and inference.get("reused") is True
+        reused_inference = overlay.get("reused_inference")
+        if reused:
+            if not isinstance(reused_inference, dict):
+                errors.append("production classification reused-inference binding is missing")
+            else:
+                for key, label in (
+                    ("parent_receipt", "parent receipt"),
+                    ("parent_decisions", "parent decisions"),
+                ):
+                    reused_errors, _ = _bound_file_errors(
+                        reused_inference.get(key), name=label
+                    )
+                    errors.extend(reused_errors)
+        elif reused_inference is not None:
+            errors.append("production classification has an unexpected reused-inference binding")
+
+    decision_errors, decision_path = _bound_file_errors(
+        overlay.get("decisions"), name="decision ledger"
+    )
+    errors.extend(decision_errors)
+    decisions: list[dict[str, Any]] = []
+    if decision_path is not None and decision_path.is_file():
+        try:
+            decisions = _load_jsonl_objects(decision_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            errors.append("production classification decision ledger is invalid JSONL")
+
+    decision_meta = overlay.get("decisions")
+    if isinstance(decision_meta, dict):
+        if decision_meta.get("rows") != len(decisions):
+            errors.append("production classification decision row count does not match")
+        state_counts = dict(
+            sorted(Counter(str(row.get("state")) for row in decisions).items())
+        )
+        if decision_meta.get("state_counts") != state_counts:
+            errors.append("production classification decision states do not match")
+        if decision_meta.get("unresolved") != state_counts.get("UNRESOLVED", 0):
+            errors.append("production classification unresolved count does not match")
+    if any(row.get("state") != "TERMINAL" for row in decisions):
+        errors.append("production classification decision ledger has unresolved rows")
+
+    review_signal_ids = {
+        str(row.get("signal_id"))
+        for row in signals
+        if row.get("classification_method") == "review_adjudication"
+    }
+    review_rows: list[dict[str, Any]] = []
+    review_by_id: dict[str, dict[str, Any]] = {}
+    review_metadata = overlay.get("review_ledger")
+    if review_signal_ids:
+        review_errors, review_path = _bound_file_errors(
+            review_metadata, name="review ledger"
+        )
+        errors.extend(review_errors)
+        if review_path is not None and review_path.is_file():
+            try:
+                review_rows = _load_jsonl_objects(review_path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                errors.append("production classification review ledger is invalid JSONL")
+        review_ids = [str(row.get("signal_id")) for row in review_rows]
+        if (
+            len(review_ids) != len(set(review_ids))
+            or set(review_ids) != review_signal_ids
+            or not isinstance(review_metadata, dict)
+            or review_metadata.get("rows") != len(review_rows)
+        ):
+            errors.append("production classification review coverage does not match")
+        review_by_id = {str(row.get("signal_id")): row for row in review_rows}
+    elif review_metadata is not None:
+        errors.append("production classification has an unexpected review ledger")
+
+    signal_ids = [row.get("signal_id") for row in signals]
+    decision_ids = [row.get("signal_id") for row in decisions]
+    if signal_ids != decision_ids or len(decision_ids) != len(set(decision_ids)):
+        errors.append("production classification decisions do not exactly cover ledger IDs")
+    else:
+        for signal, decision in zip(signals, decisions, strict=True):
+            final = decision.get("final")
+            if not isinstance(final, dict) or any(
+                final.get(field) != signal.get(field)
+                for field in CLASSIFICATION_MUTABLE_FIELDS
+            ):
+                errors.append(
+                    "production classification decision does not match derived row: "
+                    f"{signal.get('signal_id')!r}"
+                )
+                break
+            if (
+                signal.get("classification_method") == "review_adjudication"
+                and decision.get("review_adjudication")
+                != review_by_id.get(str(signal.get("signal_id")))
+            ):
+                errors.append(
+                    "production classification decision review binding does not match: "
+                    f"{signal.get('signal_id')!r}"
+                )
+                break
+            nli_scores = decision.get("nli_scores")
+            if not isinstance(nli_scores, dict) or set(nli_scores) != CLASSIFICATION_LABELS:
+                errors.append("production classification decision has an incomplete NLI vector")
+                break
+            if any(
+                not isinstance(score, (int, float))
+                or isinstance(score, bool)
+                or not math.isfinite(float(score))
+                or not 0.0 <= float(score) <= 1.0
+                for score in nli_scores.values()
+            ):
+                errors.append("production classification decision has invalid NLI scores")
+                break
+            if not math.isclose(
+                sum(float(score) for score in nli_scores.values()), 1.0, abs_tol=1e-6
+            ):
+                errors.append("production classification decision NLI scores do not sum to 1")
+                break
+
+    if base_ledger_path is not None and base_ledger_path.is_file():
+        try:
+            base_rows = _load_jsonl_objects(base_ledger_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            errors.append("production classification base ledger is invalid JSONL")
+            base_rows = []
+        if len(base_rows) != len(signals):
+            errors.append("production classification base and derived row counts differ")
+        else:
+            for before, after in zip(base_rows, signals, strict=True):
+                changed = {
+                    key for key in before.keys() | after.keys()
+                    if before.get(key) != after.get(key)
+                }
+                if not changed.issubset(CLASSIFICATION_MUTABLE_FIELDS):
+                    errors.append(
+                        "production classification changed immutable fields: "
+                        f"{after.get('signal_id')!r}={sorted(changed)}"
+                    )
+                    break
+            base_by_id = {str(row.get("signal_id")): row for row in base_rows}
+            for signal_id, review in review_by_id.items():
+                before = base_by_id.get(signal_id)
+                title = str(before.get("title") or "") if before else ""
+                if (
+                    before is None
+                    or review.get("source_id") != before.get("source_id")
+                    or review.get("title_sha256")
+                    != hashlib.sha256(title.encode("utf-8")).hexdigest()
+                    or review.get("classification_basis") != "INFERENCE"
+                    or not isinstance(review.get("rationale"), str)
+                    or not review["rationale"].strip()
+                    or not isinstance(review.get("confidence_score"), (int, float))
+                    or isinstance(review.get("confidence_score"), bool)
+                    or not 0.0 <= float(review["confidence_score"]) <= 100.0
+                    or review.get("labels")
+                    != next(
+                        (
+                            row.get("labels")
+                            for row in signals
+                            if row.get("signal_id") == signal_id
+                        ),
+                        None,
+                    )
+                ):
+                    errors.append(
+                        "production classification review provenance does not match: "
+                        f"{signal_id!r}"
+                    )
+                    break
+
+    score_hashes = overlay.get("two_pass_score_vectors_sha256")
+    if (
+        not isinstance(score_hashes, list)
+        or len(score_hashes) != 2
+        or score_hashes[0] != score_hashes[1]
+        or any(not re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in score_hashes)
+    ):
+        errors.append("production classification two-pass score proof is invalid")
+
+    equivalence = overlay.get("original_to_derived_label_equivalence")
+    if not isinstance(equivalence, dict):
+        errors.append("production classification equivalence arithmetic is missing")
+    else:
+        values = [
+            equivalence.get(key)
+            for key in (
+                "intersection", "a_only", "b_only", "union", "symmetric_difference",
+            )
+        ]
+        if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in values):
+            errors.append("production classification equivalence arithmetic is invalid")
+        else:
+            intersection, a_only, b_only, union, symmetric_difference = values
+            if (
+                intersection + a_only + b_only != union
+                or a_only + b_only != symmetric_difference
+            ):
+                errors.append("production classification equivalence arithmetic does not close")
+    return errors
+
+
+def _production_receipt_errors(
+    receipt: dict[str, Any] | None,
+    *,
+    ledger_path: Path,
+    signals: list[dict[str, Any]],
+) -> list[str]:
+    if receipt is None:
+        return ["production export requires --receipt from build_signal_ledger.py"]
+
+    errors: list[str] = []
+    if receipt.get("schema_version") not in {"1.0.0", "1.1.0"}:
+        errors.append("production snapshot receipt has an unsupported schema version")
+    if receipt.get("repository") != "jotaele44/centinelas-pr":
+        errors.append("production snapshot receipt names the wrong repository")
+    if receipt.get("classification") != "PASS":
+        errors.append(
+            "production snapshot receipt is not PASS: "
+            f"classification={receipt.get('classification')!r}"
+        )
+
+    gates = receipt.get("gates")
+    if not isinstance(gates, dict):
+        failed = ["invalid_or_missing_gates"]
+    else:
+        missing = REQUIRED_RECEIPT_GATES - gates.keys()
+        failed = sorted(
+            {
+                *missing,
+                *(key for key in REQUIRED_RECEIPT_GATES if gates.get(key) is not True),
+            }
+        )
+    if failed:
+        errors.append(f"production snapshot receipt has failed gates: {failed}")
+
+    ledger = receipt.get("ledger")
+    if not isinstance(ledger, dict):
+        return [*errors, "production snapshot receipt is missing ledger metadata"]
+    actual_sha256 = _sha256(ledger_path)
+    if ledger.get("sha256") != actual_sha256:
+        errors.append("production ledger SHA256 does not match snapshot receipt")
+    if ledger.get("rows") != len(signals):
+        errors.append(
+            "production ledger row count does not match snapshot receipt: "
+            f"receipt={ledger.get('rows')!r}, actual={len(signals)}"
+        )
+    if ledger.get("polled_items_before_limit") != len(signals):
+        errors.append("production receipt does not retain every polled item")
+    actual_synthetic_rows = sum(bool(row.get("is_synthetic")) for row in signals)
+    if ledger.get("synthetic_rows") != actual_synthetic_rows:
+        errors.append("production receipt synthetic-row count does not match ledger")
+    actual_duplicate_ids = len(signals) - len(
+        {row.get("signal_id") for row in signals}
+    )
+    if ledger.get("duplicate_signal_ids") != actual_duplicate_ids:
+        errors.append("production receipt duplicate-ID count does not match ledger")
+    method_counts = dict(
+        sorted(Counter(str(row.get("classification_method")) for row in signals).items())
+    )
+    if ledger.get("classification_method_counts") != method_counts:
+        errors.append("production receipt classification-method counts do not match ledger")
+    invalid_methods = sorted(
+        {
+            str(row.get("classification_method"))
+            for row in signals
+            if row.get("classification_method") not in ACCEPTABLE_CLASSIFICATION_METHODS
+        }
+    )
+    if invalid_methods:
+        errors.append(f"production ledger has non-accepted classification methods: {invalid_methods}")
+    if any(not str(row.get("classifier_reasoning") or "").strip() for row in signals):
+        errors.append("production ledger has rows without classifier reasoning")
+
+    sources = receipt.get("sources")
+    if not isinstance(sources, dict) or not isinstance(sources.get("rows"), list):
+        errors.append("production snapshot receipt is missing source rows")
+    else:
+        source_rows = sources["rows"]
+        if not all(isinstance(row, dict) for row in source_rows):
+            errors.append("production snapshot receipt contains invalid source rows")
+            source_rows = [row for row in source_rows if isinstance(row, dict)]
+        if not (
+            sources.get("configured")
+            == sources.get("receipts")
+            == len(source_rows)
+        ):
+            errors.append("production source receipt arithmetic does not close")
+        status_counts = dict(
+            sorted(Counter(str(row.get("status")) for row in source_rows).items())
+        )
+        if sources.get("status_counts") != status_counts:
+            errors.append("production source status counts do not match source rows")
+        if any(row.get("status") not in ACCEPTABLE_SOURCE_STATES for row in source_rows):
+            errors.append("production source receipt contains a non-success status")
+        if sources.get("source_failure_count") != 0:
+            errors.append("production source receipt has a nonzero failure count")
+        count_fields = (
+            "entries_seen",
+            "entries_filtered",
+            "entries_without_link",
+            "accepted_entries",
+            "duplicates_suppressed",
+            "emitted_items",
+        )
+        count_fields_valid = all(
+            isinstance(row.get(field), int)
+            and not isinstance(row.get(field), bool)
+            and row[field] >= 0
+            for row in source_rows
+            for field in count_fields
+        )
+        if not count_fields_valid:
+            errors.append("production source receipt contains invalid entry counts")
+        else:
+            if any(
+                row["entries_seen"]
+                != row["entries_filtered"]
+                + row["entries_without_link"]
+                + row["accepted_entries"]
+                or row["accepted_entries"]
+                != row["duplicates_suppressed"] + row["emitted_items"]
+                for row in source_rows
+            ):
+                errors.append("production source entry arithmetic does not close")
+            if sum(row["emitted_items"] for row in source_rows) != len(signals):
+                errors.append("production source emitted-item total does not match ledger rows")
+        names = [row.get("name") for row in source_rows]
+        urls = [row.get("url") for row in source_rows]
+        registry_ids = [row.get("source_registry_id") for row in source_rows]
+        identities = names + urls + registry_ids
+        if any(not isinstance(value, str) or not value for value in identities):
+            errors.append("production source receipt has missing source identity fields")
+        elif any(len(values) != len(set(values)) for values in (names, urls, registry_ids)):
+            errors.append("production source receipt has source identity collisions")
+
+        raw_directory = sources.get("raw_directory")
+        raw_dir = Path(raw_directory) if isinstance(raw_directory, str) else None
+        referenced_raw_files: set[str] = set()
+        if raw_dir is None or not raw_dir.is_dir():
+            errors.append("production source raw directory is unavailable")
+        else:
+            for row in source_rows:
+                relative = row.get("raw_content_path")
+                expected_hash = row.get("response_content_sha256")
+                expected_bytes = row.get("response_content_bytes")
+                if (
+                    not isinstance(relative, str)
+                    or Path(relative).name != relative
+                    or not re.fullmatch(r"[0-9a-f]{64}", str(expected_hash or ""))
+                ):
+                    errors.append(
+                        f"production source raw binding is invalid for {row.get('name')!r}"
+                    )
+                    continue
+                referenced_raw_files.add(relative)
+                raw_path = raw_dir / relative
+                if not raw_path.is_file():
+                    errors.append(f"production source raw file is missing: {relative}")
+                    continue
+                if raw_path.stat().st_size != expected_bytes or _sha256(raw_path) != expected_hash:
+                    errors.append(f"production source raw file does not match receipt: {relative}")
+            actual_raw_files = {path.name for path in raw_dir.iterdir() if path.is_file()}
+            if actual_raw_files != referenced_raw_files:
+                errors.append("production raw directory contains unbound or missing files")
+
+    source_config = receipt.get("source_config")
+    if (
+        not isinstance(source_config, dict)
+        or source_config.get("stable") is not True
+        or not isinstance(source_config.get("before"), list)
+        or not source_config.get("before")
+        or source_config.get("before") != source_config.get("after")
+    ):
+        errors.append("production source configuration binding is incomplete or unstable")
+
+    source_scope = receipt.get("source_scope")
+    if not isinstance(source_scope, dict) or not isinstance(
+        source_scope.get("rows"), list
+    ):
+        errors.append("production snapshot receipt is missing source scope rows")
+    else:
+        scope_rows = source_scope["rows"]
+        if not all(isinstance(row, dict) for row in scope_rows):
+            errors.append("production snapshot receipt contains invalid source scope rows")
+            scope_rows = [row for row in scope_rows if isinstance(row, dict)]
+        active_scope = [row for row in scope_rows if row.get("active") is True]
+        excluded_scope = [row for row in scope_rows if row.get("active") is False]
+        inventory_count = source_scope.get("inventory")
+        active_count = source_scope.get("active")
+        excluded_count = source_scope.get("excluded")
+        scope_counts_valid = all(
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and value >= 0
+            for value in (inventory_count, active_count, excluded_count)
+        )
+        if (
+            not scope_counts_valid
+            or not isinstance(inventory_count, int)
+            or not isinstance(active_count, int)
+            or not isinstance(excluded_count, int)
+            or not (
+                inventory_count == len(scope_rows)
+                and inventory_count == active_count + excluded_count
+                and active_count == len(active_scope)
+                and excluded_count == len(excluded_scope)
+            )
+        ):
+            errors.append("production source scope arithmetic does not close")
+        scope_ids = [row.get("source_registry_id") for row in scope_rows]
+        if any(not isinstance(value, str) or not value for value in scope_ids):
+            errors.append("production source scope has missing registry IDs")
+        elif len(scope_ids) != len(set(scope_ids)):
+            errors.append("production source scope has registry ID collisions")
+        if isinstance(sources, dict) and isinstance(sources.get("rows"), list):
+            receipt_ids = {
+                row.get("source_registry_id")
+                for row in sources["rows"]
+                if isinstance(row, dict)
+            }
+            active_scope_ids = {
+                row.get("source_registry_id") for row in active_scope
+            }
+            if receipt_ids != active_scope_ids:
+                errors.append("production active source scope does not match source receipts")
+        if any(
+            row.get("lifecycle_state") not in TERMINAL_EXCLUDED_SOURCE_STATES
+            or not str(row.get("retired_at") or "").strip()
+            or not str(row.get("retirement_reason") or "").strip()
+            or not str(row.get("adjudication_ref") or "").strip()
+            for row in excluded_scope
+        ):
+            errors.append("production excluded source scope is not fully adjudicated")
+
+    repository_head = receipt.get("repository_head")
+    if not isinstance(repository_head, str) or not re.fullmatch(
+        r"[0-9a-f]{40}", repository_head
+    ):
+        errors.append("production snapshot receipt lacks a full repository head SHA")
+    errors.extend(_classification_overlay_errors(receipt, signals=signals))
+    return errors
+
+
 def build_streams(
     signals: list[dict[str, Any]],
     registry: dict[str, dict[str, str]],
     now: str,
+    source_inputs: list[str] | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     sources: dict[str, dict[str, Any]] = {}
     entities: dict[str, dict[str, Any]] = {}
@@ -127,7 +750,7 @@ def build_streams(
         created = sig.get("captured_at") or now
         confidence = round(float(sig.get("confidence_score", 0)) / 100.0, 3)
         reg_id = sig.get("source_id")
-        reg = registry.get(reg_id, {})
+        reg = registry.get(reg_id, {}) if isinstance(reg_id, str) else {}
 
         # --- source (source family) ---
         source_id = _fid("src", reg_id or "unknown")
@@ -138,7 +761,7 @@ def build_streams(
                 "source_name": reg.get("name") or reg_id or "unknown",
                 "source_ref": reg_id or "unknown",
                 "confidence": confidence,
-                "lineage": _lineage("SOURCE_REGISTRY"),
+                "lineage": _lineage("SOURCE_REGISTRY", source_inputs),
                 "synthetic": synthetic,
                 "created_at": created,
                 "extracted_at": now,
@@ -155,7 +778,7 @@ def build_streams(
             "entity_type": "public_matter",
             "jurisdiction": "PR",
             "confidence": confidence,
-            "lineage": _lineage("MATTER_ENTITY"),
+            "lineage": _lineage("MATTER_ENTITY", source_inputs),
             "synthetic": synthetic,
             "created_at": created,
             "extracted_at": now,
@@ -172,7 +795,7 @@ def build_streams(
                 "entity_type": "agency",
                 "jurisdiction": "PR",
                 "confidence": confidence,
-                "lineage": _lineage("AGENCY_ENTITY"),
+                "lineage": _lineage("AGENCY_ENTITY", source_inputs),
                 "synthetic": synthetic,
                 "created_at": created,
                 "extracted_at": now,
@@ -180,7 +803,7 @@ def build_streams(
             rel_id = _fid("rel", matter_ent, "involves_agency", agency_ent)
             relationships.setdefault(rel_id, _relationship(
                 rel_id, source_id, matter_ent, agency_ent, "involves_agency",
-                confidence, synthetic, created, now))
+                confidence, synthetic, created, now, source_inputs))
 
         # --- municipality entities + located_in ---
         for muni in sig.get("municipalities", []) or []:
@@ -193,7 +816,7 @@ def build_streams(
                 "entity_type": "municipality",
                 "jurisdiction": "PR",
                 "confidence": 0.95,
-                "lineage": _lineage("MUNICIPALITY_ENTITY"),
+                "lineage": _lineage("MUNICIPALITY_ENTITY", source_inputs),
                 "synthetic": synthetic,
                 "created_at": created,
                 "extracted_at": now,
@@ -201,7 +824,7 @@ def build_streams(
             rel_id = _fid("rel", matter_ent, "located_in", muni_ent)
             relationships.setdefault(rel_id, _relationship(
                 rel_id, source_id, matter_ent, muni_ent, "located_in",
-                confidence, synthetic, created, now))
+                confidence, synthetic, created, now, source_inputs))
 
         # --- observation (the signal itself) ---
         obs_id = _fid("obs", "signal", sig.get("signal_id"))
@@ -222,9 +845,11 @@ def build_streams(
                 "handoff_status": sig.get("handoff_status"),
                 "deadline_date": sig.get("deadline_date"),
                 "source_url": sig.get("source_url"),
+                "classification_method": sig.get("classification_method"),
+                "classifier_reasoning": sig.get("classifier_reasoning"),
             },
             "confidence": confidence,
-            "lineage": _lineage("OBSERVATION"),
+            "lineage": _lineage("OBSERVATION", source_inputs),
             "synthetic": synthetic,
             "created_at": created,
             "extracted_at": now,
@@ -238,7 +863,18 @@ def build_streams(
     }
 
 
-def _relationship(rel_id, source_id, src_ent, tgt_ent, rtype, confidence, synthetic, created, now):
+def _relationship(
+    rel_id,
+    source_id,
+    src_ent,
+    tgt_ent,
+    rtype,
+    confidence,
+    synthetic,
+    created,
+    now,
+    source_inputs,
+):
     return {
         "relationship_id": rel_id,
         "source_id": source_id,
@@ -247,14 +883,20 @@ def _relationship(rel_id, source_id, src_ent, tgt_ent, rtype, confidence, synthe
         "relationship_type": rtype,
         "evidence_source_id": source_id,
         "confidence": confidence,
-        "lineage": _lineage("RELATIONSHIP"),
+        "lineage": _lineage("RELATIONSHIP", source_inputs),
         "synthetic": synthetic,
         "created_at": created,
         "extracted_at": now,
     }
 
 
-def write_package(streams: dict[str, list[dict[str, Any]]], out_dir: Path, mode: str, now: str) -> Path:
+def write_package(
+    streams: dict[str, list[dict[str, Any]]],
+    out_dir: Path,
+    mode: str,
+    now: str,
+    input_provenance: dict[str, Any] | None = None,
+) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     files = []
     for stream in ("sources", "entities", "relationships", "observations"):
@@ -283,6 +925,8 @@ def write_package(streams: dict[str, list[dict[str, Any]]], out_dir: Path, mode:
         "federation": {"producer_repo": PRODUCER, "hub_parent": "thehub-pr"},
         "files": files,
     }
+    if input_provenance is not None:
+        manifest["input_provenance"] = input_provenance
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
     return out_dir / "manifest.json"
 
@@ -290,6 +934,7 @@ def write_package(streams: dict[str, list[dict[str, Any]]], out_dir: Path, mode:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Export Centinelas signals as PRII canonical streams.")
     ap.add_argument("--ledger", default=str(DEFAULT_LEDGER))
+    ap.add_argument("--receipt")
     ap.add_argument("--sources", default=str(DEFAULT_SOURCES))
     ap.add_argument("--out", default=str(REPO_ROOT / "exports/federation"))
     ap.add_argument("--mode", default="test", choices=["test", "production"])
@@ -301,8 +946,21 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    signals = [json.loads(line) for line in Path(args.ledger).read_text().splitlines() if line.strip()]
+    ledger_path = Path(args.ledger)
+    signals = [json.loads(line) for line in ledger_path.read_text().splitlines() if line.strip()]
     registry = _load_source_registry(Path(args.sources))
+    receipt_path = Path(args.receipt) if args.receipt else None
+    receipt: dict[str, Any] | None = None
+    receipt_parse_error: str | None = None
+    if receipt_path is not None:
+        try:
+            loaded_receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_receipt, dict):
+                receipt = loaded_receipt
+            else:
+                receipt_parse_error = "snapshot receipt must contain a JSON object"
+        except (OSError, json.JSONDecodeError) as exc:
+            receipt_parse_error = f"could not read snapshot receipt: {exc}"
     now_dt = datetime.now(timezone.utc)
     now = now_dt.replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -312,11 +970,24 @@ def main() -> int:
             now=now_dt,
             max_age_hours=args.max_age_hours,
         )
+        if receipt_parse_error:
+            input_errors.append(receipt_parse_error)
+        else:
+            input_errors.extend(
+                _production_receipt_errors(
+                    receipt,
+                    ledger_path=ledger_path,
+                    signals=signals,
+                )
+            )
         if input_errors:
             print("FAIL — " + "; ".join(input_errors))
             return 1
 
-    streams = build_streams(signals, registry, now)
+    source_inputs = [str(ledger_path), str(Path(args.sources))]
+    if receipt_path is not None:
+        source_inputs.append(str(receipt_path))
+    streams = build_streams(signals, registry, now, source_inputs)
 
     if args.mode == "production":
         synthetic = [r for s in streams.values() for r in s if r.get("synthetic")]
@@ -326,7 +997,24 @@ def main() -> int:
             )
             return 1
 
-    manifest_path = write_package(streams, Path(args.out), args.mode, now)
+    input_provenance = None
+    if receipt is not None and receipt_path is not None:
+        input_provenance = {
+            "ledger_path": str(ledger_path),
+            "ledger_sha256": _sha256(ledger_path),
+            "ledger_rows": len(signals),
+            "receipt_path": str(receipt_path),
+            "receipt_sha256": _sha256(receipt_path),
+            "receipt_classification": receipt.get("classification"),
+            "repository_head": receipt.get("repository_head"),
+        }
+    manifest_path = write_package(
+        streams,
+        Path(args.out),
+        args.mode,
+        now,
+        input_provenance,
+    )
     counts = {k: len(v) for k, v in streams.items()}
     print(f"wrote {manifest_path} — {counts}")
     return 0

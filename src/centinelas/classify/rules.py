@@ -54,7 +54,7 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
          "calidad del aire", "inyeccion subterranea", "revision publica",
          "npdes", "drna", "recursos naturales", "junta de calidad ambiental",
          "section 404", "clean water act", "corps of engineers", "dredge",
-         "antilles",
+         "antilles", "environmental",
          # Permit hearings. Scraped OGPe/JP hearing entries are titled with a
          # bare case number ("2025-663228-PU-438754") or a short code
          # ("VP - Poblado Castañer"), so the hearing vocabulary is the only thing
@@ -76,7 +76,7 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
          "missile", "drone strike", "fighter jet", "aircraft carrier", "satellite launch",
          "space force", "rocket", "aerospace", "lockheed", "boeing defense", "raytheon",
          "northrop", "general dynamics", "hypersonic", "stealth", "warplane", "combat",
-         "aviation", "faa", "airspace", "flight test"],
+         "aviation", "airline", "aircraft", "faa", "airspace", "flight test"],
         DomainLabel.MILITARY_AEROSPACE,
     ),
     (
@@ -100,7 +100,8 @@ _RULES: list[tuple[list[str], DomainLabel]] = [
         ["election", "congress", "senate", "legislation", "bill passed", "executive order",
          "president", "prime minister", "parliament", "geopolitics", "diplomacy",
          "sanctions", "war", "conflict", "protest", "coup", "treaty", "summit",
-         "government", "policy", "regulation"],
+         "government", "policy", "regulation", "territorial sovereignty",
+         "territorial acquisition", "trump administration"],
         DomainLabel.POLITICAL,
     ),
     (
@@ -133,19 +134,27 @@ _COMPILED_RULES: list[tuple[list[re.Pattern[str]], DomainLabel]] = [
     ([_compile(kw) for kw in keywords], label) for keywords, label in _RULES
 ]
 
+def keyword_evidence(text: str) -> dict[DomainLabel, list[str]]:
+    """Return every matched keyword grouped by label in taxonomy order."""
+    lower = _fold(text)
+    evidence: dict[DomainLabel, list[str]] = {}
+    for (keywords, label), (patterns, compiled_label) in zip(
+        _RULES, _COMPILED_RULES, strict=True
+    ):
+        if label != compiled_label:
+            raise RuntimeError("keyword rule compilation order drifted")
+        matches = [
+            keyword for keyword, pattern in zip(keywords, patterns, strict=True)
+            if pattern.search(lower)
+        ]
+        if matches:
+            evidence[label] = matches
+    return evidence
+
 
 def keyword_classify(text: str) -> list[DomainLabel]:
     """Return matched labels from keyword rules. May return multiple labels."""
-    lower = _fold(text)
-    matched: list[DomainLabel] = []
-    seen: set[DomainLabel] = set()
-    for patterns, label in _COMPILED_RULES:
-        if label in seen:
-            continue
-        if any(pat.search(lower) for pat in patterns):
-            matched.append(label)
-            seen.add(label)
-    return matched
+    return list(keyword_evidence(text))
 
 
 # ── Water/utility sub-taxonomy ────────────────────────────────────────────────
