@@ -1,4 +1,4 @@
-"""Tests for the router — label→repo mapping and thehub guarantee."""
+"""Tests for label routing, target payloads, and replay-stable identity inputs."""
 
 import json
 from datetime import datetime, timezone
@@ -6,7 +6,7 @@ from pathlib import Path
 
 from centinelas.classify.labels import HUB_REPO, DomainLabel
 from centinelas.models import ClassifiedItem
-from centinelas.route.router import resolve_targets, route
+from centinelas.route.router import build_payload, resolve_targets, route
 
 FIXTURES = json.loads(
     (Path(__file__).parent / "fixtures" / "sample_items.json").read_text()
@@ -19,39 +19,32 @@ def _make_classified(item_dict: dict) -> ClassifiedItem:
 
 def test_military_aerospace_routes_to_skywatcher():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "aero001"))
-    targets = resolve_targets(item)
-    assert "skywatcher-pr" in targets
+    assert "skywatcher-pr" in resolve_targets(item)
 
 
 def test_environmental_routes_to_aguayluz():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "env001"))
-    targets = resolve_targets(item)
-    assert "aguayluz-pr" in targets
+    assert "aguayluz-pr" in resolve_targets(item)
 
 
 def test_geo_routes_to_spiderweb():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "geo001"))
-    targets = resolve_targets(item)
-    assert "spiderweb-pr" in targets
+    assert "spiderweb-pr" in resolve_targets(item)
 
 
 def test_financial_routes_to_moneysweep():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "fin001"))
-    targets = resolve_targets(item)
-    assert "moneysweep-pr" in targets
+    assert "moneysweep-pr" in resolve_targets(item)
 
 
 def test_political_routes_to_moneysweep():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "pol001"))
-    targets = resolve_targets(item)
-    assert "moneysweep-pr" in targets
+    assert "moneysweep-pr" in resolve_targets(item)
 
 
 def test_anomalous_routes_to_ovnis():
-    item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "uap001")
-    )
-    targets = resolve_targets(item)
-    assert "ovnis-pr" in targets
+    item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "uap001"))
+    assert "ovnis-pr" in resolve_targets(item)
 
 
 def test_multi_label_routes_to_multiple_repos():
@@ -64,29 +57,54 @@ def test_multi_label_routes_to_multiple_repos():
 def test_thehub_always_receives_every_item():
     for fixture in FIXTURES:
         item = _make_classified(fixture)
-        payloads = route(item)
-        assert HUB_REPO in payloads, f"thehub missing for item {fixture['item_id']}"
+        assert HUB_REPO in route(item), f"thehub missing for item {fixture['item_id']}"
 
 
 def test_unclassified_only_routes_to_thehub():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "unc001"))
-    payloads = route(item)
-    repos = list(payloads.keys())
-    assert repos == [HUB_REPO]
+    assert list(route(item)) == [HUB_REPO]
 
 
 def test_payload_contains_required_fields():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "aero001"))
-    payloads = route(item)
-    for repo, payload in payloads.items():
-        for field in ("item_id", "source_url", "title", "labels", "captured_at", "routed_to"):
-            assert field in payload, f"Missing field '{field}' in payload for {repo}"
+    for repo, payload in route(item).items():
+        for field in (
+            "item_id",
+            "source_url",
+            "title",
+            "labels",
+            "captured_at",
+            "routed_to",
+            "routed_at",
+        ):
+            assert field in payload, f"Missing field {field!r} in payload for {repo}"
+
+
+def test_payload_is_byte_stable_across_replays():
+    item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "fin001"))
+    first = json.dumps(route(item), sort_keys=True, separators=(",", ":"))
+    second = json.dumps(route(item), sort_keys=True, separators=(",", ":"))
+    assert first == second
+
+
+def test_routed_at_binds_to_capture_observation_in_utc():
+    item = ClassifiedItem(
+        item_id="time001",
+        source_url="https://example.com/time001",
+        source_name="Test",
+        title="Financial filing",
+        body_text="The SEC filed charges.",
+        published_at=datetime(2026, 1, 1, 8, 0, tzinfo=timezone.utc),
+        captured_at=datetime(2026, 1, 2, 9, 30, tzinfo=timezone.utc),
+        labels=[DomainLabel.FINANCIAL],
+        confidence=0.9,
+        classifier_reasoning="fixture",
+    )
+    payload = build_payload(item, "moneysweep-pr")
+    assert payload["routed_at"] == "2026-01-02T09:30:00+00:00"
 
 
 def test_moneysweep_payload_carries_finance_enrichment():
-    # A FINANCIAL item with pre-official finance/location enrichment must
-    # forward those fields to the MoneySweep anchor (and the Hub), while the
-    # lean base payload keeps them off other targets.
     item = ClassifiedItem(
         item_id="finenrich001",
         source_url="https://example.com/rfp",
@@ -106,15 +124,13 @@ def test_moneysweep_payload_carries_finance_enrichment():
         beat="contracts",
     )
     payloads = route(item)
-    ms = payloads["moneysweep-pr"]
-    assert ms["municipalities"] == ["Ponce"]
-    assert ms["recipients"] == ["Acme Construction Corp"]
-    assert ms["agencies"] == ["Autoridad de Acueductos y Alcantarillados"]
-    assert ms["estimated_value"] == 1500000.0
-    assert ms["signal_stage"] == "rfp_open"
-    assert ms["beat"] == "contracts"
-    # Only the MoneySweep anchor carries the enrichment; every other target —
-    # including the Hub — stays on the base contract shape.
+    moneysweep = payloads["moneysweep-pr"]
+    assert moneysweep["municipalities"] == ["Ponce"]
+    assert moneysweep["recipients"] == ["Acme Construction Corp"]
+    assert moneysweep["agencies"] == ["Autoridad de Acueductos y Alcantarillados"]
+    assert moneysweep["estimated_value"] == 1500000.0
+    assert moneysweep["signal_stage"] == "rfp_open"
+    assert moneysweep["beat"] == "contracts"
     assert "estimated_value" not in payloads[HUB_REPO]
     assert "recipients" not in payloads[HUB_REPO]
     assert "estimated_value" not in payloads["spiderweb-pr"]
@@ -122,18 +138,14 @@ def test_moneysweep_payload_carries_finance_enrichment():
 
 def test_finance_enrichment_defaults_empty_when_absent():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "fin001"))
-    payloads = route(item)
-    ms = payloads["moneysweep-pr"]
-    assert ms["municipalities"] == []
-    assert ms["recipients"] == []
-    assert ms["agencies"] == []
-    assert ms["estimated_value"] is None
+    moneysweep = route(item)["moneysweep-pr"]
+    assert moneysweep["municipalities"] == []
+    assert moneysweep["recipients"] == []
+    assert moneysweep["agencies"] == []
+    assert moneysweep["estimated_value"] is None
 
 
 def test_ovnis_payload_carries_municipalities():
-    # An ANOMALOUS item with resolved municipalities must forward them to the
-    # OVNIS anchor so its intake can set a case location_name. The Hub and other
-    # targets stay on the base payload shape (no municipalities key).
     item = ClassifiedItem(
         item_id="uapenrich001",
         source_url="https://example.com/uap",
@@ -149,18 +161,15 @@ def test_ovnis_payload_carries_municipalities():
     )
     payloads = route(item)
     assert payloads["ovnis-pr"]["municipalities"] == ["Cabo Rojo"]
-    # The Hub (and any other target) stays on the base contract — no municipalities.
     assert "municipalities" not in payloads[HUB_REPO]
 
 
 def test_ovnis_municipalities_defaults_empty_when_absent():
     item = _make_classified(next(i for i in FIXTURES if i["item_id"] == "uap001"))
-    payloads = route(item)
-    assert payloads["ovnis-pr"]["municipalities"] == []
+    assert route(item)["ovnis-pr"]["municipalities"] == []
 
 
 def test_no_duplicate_repos_in_targets():
-    # FINANCIAL and POLITICAL both map to moneysweep — should only appear once
     item = ClassifiedItem(
         item_id="dedup001",
         source_url="https://example.com/test",
@@ -173,5 +182,4 @@ def test_no_duplicate_repos_in_targets():
         confidence=0.9,
         classifier_reasoning="test",
     )
-    targets = resolve_targets(item)
-    assert targets.count("moneysweep-pr") == 1
+    assert resolve_targets(item).count("moneysweep-pr") == 1

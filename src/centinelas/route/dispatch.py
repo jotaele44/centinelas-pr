@@ -1,4 +1,9 @@
-"""Writes dispatch payloads to each repo's intake/ folder."""
+"""Local-first Centinelas routing and operator handoff.
+
+The canonical operation is an immutable local artifact emission. Hosted delivery
+is implemented separately as an optional exact-byte mirror of that committed
+file; this module performs no network access and requires no hosted credential.
+"""
 
 from __future__ import annotations
 
@@ -6,100 +11,127 @@ import hashlib
 import json
 import logging
 import os
-import urllib.error
-import urllib.request
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from jsonschema import ValidationError, validate
+from jsonschema import ValidationError as SchemaValidationError
+from jsonschema import validate
+from prii_export_utils import ArtifactTransportError, canonical_json_bytes, emit_message
 
 from centinelas.models import ClassifiedItem, DispatchRecord
 from centinelas.route.router import route
 
 log = logging.getLogger(__name__)
 
-_REPOS_BASE = Path(os.environ.get("CENTINELAS_REPOS_DIR", str(Path.home() / "Developer")))
 _DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas"))
-
-# Minimum classifier confidence for an item to be routed/exported. Below this the
-# item is skipped (not dispatched to any repo) — the gate that keeps low-confidence
-# noise out of the downstream MoneySweep/Hub event pipeline. Env-overridable to mirror
-# the repo's existing env-var config style (see CENTINELAS_REPOS_DIR above).
 _DEFAULT_ROUTE_MIN_CONFIDENCE = 0.55
 HANDOFF_TARGETS = frozenset(
     {"spiderweb-pr", "aguayluz-pr", "moneysweep-pr", "skywatcher-pr"}
 )
 _CONTRACT_DIR = Path(__file__).parent / "contracts"
-_GITHUB_API = "https://api.github.com"
-
-
-def _idempotency_key(item_id: str, target: str, payload: dict) -> str:
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    digest = hashlib.sha256(f"{item_id}\0{target}\0{canonical}".encode()).hexdigest()
-    return f"centinelas:{item_id}:{target}:{digest[:20]}"
-
-
-def _repository_dispatch(target: str, body: dict, token: str) -> int:
-    owner = os.environ.get("CENTINELAS_GITHUB_OWNER", "jotaele44")
-    request = urllib.request.Request(
-        f"{_GITHUB_API}/repos/{owner}/{target}/dispatches",
-        data=json.dumps(body).encode(),
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "Content-Type": "application/json",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=15) as response:
-        return response.status
+_SOURCE = "centinelas-pr"
+_KIND = "centinelas-signal"
 
 
 def _route_min_confidence() -> float:
-    """Read the route confidence gate at call time so tests/CI can override via env."""
+    """Read the route gate at call time so tests and operators can override it."""
+
     try:
         return float(
-            os.environ.get("CENTINELAS_ROUTE_MIN_CONFIDENCE", _DEFAULT_ROUTE_MIN_CONFIDENCE)
+            os.environ.get(
+                "CENTINELAS_ROUTE_MIN_CONFIDENCE", _DEFAULT_ROUTE_MIN_CONFIDENCE
+            )
         )
     except ValueError:
         return _DEFAULT_ROUTE_MIN_CONFIDENCE
 
 
-def _repo_intake_dir(repo_name: str) -> Path:
-    """Directory the item payload is written to for a target repo.
+def _exchange_root() -> Path:
+    configured = os.environ.get("CENTINELAS_EXCHANGE_ROOT")
+    return Path(configured) if configured else _DATA_DIR / "exchange"
 
-    Default: the sibling checkout's ``intake/`` folder (local dev, repos side by side).
-    When ``CENTINELAS_OUTBOUND_DIR`` is set (CI / event-driven mode), payloads are staged
-    under ``<outbound>/<repo>/`` instead — no sibling checkout needed — for a downstream
-    emitter (scripts/emit_dispatches.py) to POST as GitHub repository_dispatch events.
-    """
-    outbound = os.environ.get("CENTINELAS_OUTBOUND_DIR")
-    if outbound:
-        return Path(outbound) / repo_name
-    return _REPOS_BASE / repo_name / "intake"
+
+def _idempotency_key(item_id: str, target: str, payload: dict) -> str:
+    """Derive one bounded key from the full deterministic logical payload."""
+
+    digest = hashlib.sha256(
+        item_id.encode("utf-8")
+        + b"\0"
+        + target.encode("utf-8")
+        + b"\0"
+        + canonical_json_bytes(payload)
+    ).hexdigest()
+    return f"centinelas-{digest}"
+
+
+def _stage_payload(item_id: str, target: str, payload: dict):
+    """Validate target bindings and atomically emit one canonical envelope."""
+
+    if payload.get("item_id") != item_id:
+        raise ValueError("payload item_id does not match dispatch identity")
+    if payload.get("routed_to") != target:
+        raise ValueError("payload routed_to does not match dispatch target")
+    key = _idempotency_key(item_id, target, payload)
+    result = emit_message(
+        _exchange_root(),
+        source=_SOURCE,
+        target=target,
+        kind=_KIND,
+        idempotency_key=key,
+        payload=payload,
+    )
+    return result, key
 
 
 def _dispatched_record_path(item_id: str) -> Path:
     return _DATA_DIR / "dispatched" / f"{item_id}.json"
 
 
-def _persist_dispatch_record(record: DispatchRecord) -> None:
-    """Write the DispatchRecord to local Centinelas bookkeeping — always, even under dry_run.
+def _fsync_directory(path: Path) -> None:
+    """Best-effort directory durability after an atomic replace."""
 
-    This is Centinelas's own local state, not a write into a sibling repo, so it's
-    unaffected by dry_run (which only guards cross-repo intake/ writes below).
-    """
+    try:
+        directory_fd = os.open(path, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(directory_fd)
+    except OSError:
+        pass
+    finally:
+        os.close(directory_fd)
+
+
+def _persist_dispatch_record(record: DispatchRecord) -> None:
+    """Atomically persist local bookkeeping, including dry runs and failures."""
+
     path = _dispatched_record_path(record.item_id)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(record.model_dump_json(indent=2))
+    payload = (record.model_dump_json(indent=2) + "\n").encode("utf-8")
+    file_descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(file_descriptor, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def dispatch(item: ClassifiedItem, dry_run: bool = False) -> DispatchRecord:
+    """Route an item and commit each target envelope to the local outbox.
+
+    `dry_run` reports the complete target plan without creating cross-repository
+    artifacts. A successful non-dry result means local authority exists; it says
+    nothing about optional hosted mirror delivery or downstream consumption.
     """
-    Write item payloads to each target repo's intake/ folder.
-    Always writes to thehub-pr. Returns a DispatchRecord.
-    """
+
     threshold = _route_min_confidence()
     if item.confidence < threshold:
         log.info(
@@ -122,39 +154,39 @@ def dispatch(item: ClassifiedItem, dry_run: bool = False) -> DispatchRecord:
     dispatched_to: list[str] = []
     errors: list[str] = []
 
-    for repo, payload in payloads.items():
-        intake_dir = _repo_intake_dir(repo)
-        out_path = intake_dir / f"{item.item_id}.json"
-
+    for target, payload in payloads.items():
         if dry_run:
-            log.info("[dry-run] would write %s → %s", item.item_id, out_path)
-            dispatched_to.append(repo)
+            log.info("[dry-run] would stage %s -> %s", item.item_id, target)
+            dispatched_to.append(target)
             continue
-
         try:
-            intake_dir.mkdir(parents=True, exist_ok=True)
-            with open(out_path, "w") as f:
-                json.dump(payload, f, indent=2)
-            dispatched_to.append(repo)
-            log.info("Dispatched %s → %s", item.item_id, repo)
-        except Exception as exc:
-            log.error("Dispatch failed for %s → %s: %s", item.item_id, repo, exc)
-            errors.append(f"{repo}: {exc}")
-
-    status = "failed" if errors and not dispatched_to or errors else "ok"
+            result, _key = _stage_payload(item.item_id, target, payload)
+            dispatched_to.append(target)
+            log.info(
+                "Local artifact %s for %s -> %s (%s)",
+                result.message_id,
+                item.item_id,
+                target,
+                result.status,
+            )
+        except (ArtifactTransportError, OSError, ValueError) as exc:
+            log.error("Local artifact failed for %s -> %s: %s", item.item_id, target, exc)
+            errors.append(f"{target}: {exc}")
 
     record = DispatchRecord(
         item_id=item.item_id,
         dispatched_to=dispatched_to,
         dispatched_at=datetime.now(timezone.utc),
-        status=status,  # type: ignore[arg-type]
+        status="failed" if errors else "ok",
         error="; ".join(errors) if errors else None,
     )
     _persist_dispatch_record(record)
     return record
 
 
-def dispatch_many(items: list[ClassifiedItem], dry_run: bool = False) -> list[DispatchRecord]:
+def dispatch_many(
+    items: list[ClassifiedItem], dry_run: bool = False
+) -> list[DispatchRecord]:
     return [dispatch(item, dry_run=dry_run) for item in items]
 
 
@@ -164,14 +196,13 @@ def dispatch_to_targets(
     *,
     dry_run: bool = False,
 ) -> dict:
-    """Manually hand one classified item to explicit federation destinations.
+    """Stage an operator-selected handoff into the canonical local outbox.
 
-    Unlike :func:`dispatch`, this operator action is not restricted to targets
-    inferred from classifier labels. Payload construction still goes through
-    ``build_payload`` so every destination receives its canonical contract.
-    A receipt is returned for each target, allowing the UI to show partial
-    success and retry only failed destinations.
+    Each target payload is contract-validated before emission. Hosted delivery is
+    deliberately absent; `scripts/emit_dispatches.py` can optionally mirror the
+    exact committed envelope later.
     """
+
     from centinelas.route.router import build_payload
 
     requested = list(dict.fromkeys(targets))
@@ -183,14 +214,13 @@ def dispatch_to_targets(
 
     attempts: list[dict] = []
     for target in requested:
-        out_path = _repo_intake_dir(target) / f"{item.item_id}.json"
         attempted_at = datetime.now(timezone.utc).isoformat()
         payload = build_payload(item, target)
         contract_path = _CONTRACT_DIR / f"{target.removesuffix('-pr')}.schema.json"
         try:
             contract = json.loads(contract_path.read_text(encoding="utf-8"))
             validate(instance=payload, schema=contract)
-        except (OSError, json.JSONDecodeError, ValidationError) as exc:
+        except (OSError, json.JSONDecodeError, SchemaValidationError) as exc:
             attempts.append(
                 {
                     "target": target,
@@ -200,63 +230,55 @@ def dispatch_to_targets(
                 }
             )
             continue
-        idempotency_key = _idempotency_key(item.item_id, target, payload)
+
+        key = _idempotency_key(item.item_id, target, payload)
         if dry_run:
             attempts.append(
                 {
                     "target": target,
                     "status": "dry_run",
                     "attempted_at": attempted_at,
-                    "output_path": str(out_path),
-                    "idempotency_key": idempotency_key,
+                    "idempotency_key": key,
                 }
             )
             continue
+
         try:
-            token = os.environ.get("FEDERATION_DISPATCH_TOKEN") or os.environ.get(
-                "CENTINELAS_GITHUB_TOKEN"
-            )
-            if not token:
-                raise RuntimeError(
-                    "FEDERATION_DISPATCH_TOKEN or CENTINELAS_GITHUB_TOKEN is required"
-                )
-            status = _repository_dispatch(
-                target,
-                {
-                    "event_type": "centinelas-handoff",
-                    "client_payload": {
-                        "item_id": item.item_id,
-                        "target": target,
-                        "idempotency_key": idempotency_key,
-                        "signal": payload,
-                    },
-                },
-                token,
-            )
+            result, observed_key = _stage_payload(item.item_id, target, payload)
             attempts.append(
                 {
                     "target": target,
-                    "status": "pending_ack",
+                    "status": "staged_local",
                     "attempted_at": attempted_at,
-                    "dispatch_http_status": status,
-                    "idempotency_key": idempotency_key,
+                    "transport_status": result.status,
+                    "message_id": result.message_id,
+                    "output_path": str(result.path),
+                    "idempotency_key": observed_key,
                 }
             )
-        except Exception as exc:
-            log.exception("Manual handoff failed for %s → %s", item.item_id, target)
+        except (ArtifactTransportError, OSError, ValueError) as exc:
+            log.exception("Local handoff failed for %s -> %s", item.item_id, target)
             attempts.append(
                 {
                     "target": target,
                     "status": "failed",
                     "attempted_at": attempted_at,
                     "error": str(exc),
+                    "idempotency_key": key,
                 }
             )
 
-    succeeded = sum(attempt["status"] in {"pending_ack", "dry_run"} for attempt in attempts)
+    succeeded = sum(
+        attempt["status"] in {"staged_local", "dry_run"} for attempt in attempts
+    )
+    complete_state = "dry_run" if dry_run else "staged_local"
     return {
         "item_id": item.item_id,
-        "status": "pending_ack" if succeeded == len(attempts) else ("partial" if succeeded else "failed"),
+        "status": (
+            complete_state
+            if succeeded == len(attempts)
+            else ("partial" if succeeded else "failed")
+        ),
         "dry_run": dry_run,
         "attempts": attempts,
     }
