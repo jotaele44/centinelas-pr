@@ -43,7 +43,7 @@ jobs:
           unzip -q /tmp/centinelas.zip -d recovered
       - name: Restore dependencies
         working-directory: recovered
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund
       - name: Build frontend
         working-directory: recovered
         run: npx vite build
