@@ -27,8 +27,8 @@ jobs:
     env:
       FLOOT_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/centinelas
       CENTINELAS_GITHUB_TOKEN: ${{ secrets.CENTINELAS_GITHUB_TOKEN }}
-      RECOVERY_ZIP_URL: https://25976845-0c8b-412f-bbc7-7f417025ec73.sandbox.floot.app/_cdn/static/4f2a7dda-5a06-4951-bf85-253f2ed72273-centinelas-local-recovered.zip
-      RECOVERY_ZIP_SHA256: 80f178d1839ae05933d81b9bdd2003a1bebafaafd9c9e8bc7c980eafa77fb8e6
+      RECOVERY_ZIP_URL: https://25976845-0c8b-412f-bbc7-7f417025ec73.sandbox.floot.app/_cdn/static/cdf8b5ad-8116-4fdf-8b97-5d5a93dc343b-centinelas-local-recovered-auto.zip
+      RECOVERY_ZIP_SHA256: 154d38b0c7e0f1ef3e074e5d698c3344655857500b38e25f55c6e91e8afb70d8
       FROZEN_COMMIT: caf086598a4f99e2eb0ca4aac6d51e2d9bd46321
     steps:
       - uses: actions/checkout@v4
