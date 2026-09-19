@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from centinelas.ingest.rss import _load_sources
+from server.backend.auth import WRITE_GUARD
 from server.backend.water_disruption_api import router as water_disruption_router
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -144,7 +145,7 @@ def handoffs(limit: int = Query(default=500, ge=1, le=5000)) -> JSONResponse:
     return JSONResponse(rows[:limit])
 
 
-@app.post("/handoffs/{item_id}")
+@app.post("/handoffs/{item_id}", dependencies=WRITE_GUARD)
 def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
     from datetime import datetime, timezone
 
@@ -175,7 +176,7 @@ def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
     return JSONResponse(receipt)
 
 
-@app.post("/run")
+@app.post("/run", dependencies=WRITE_GUARD)
 def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
     from centinelas.classify.classifier import classify as do_classify
     from centinelas.ingest.federal_register import poll_federal_register

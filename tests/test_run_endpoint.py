@@ -1,10 +1,7 @@
 """Tests for the POST /run pipeline-trigger endpoint (server.backend.main).
 
 Exercises the endpoint end-to-end through the FastAPI TestClient using only the
-keyword classifier tier — no ANTHROPIC_API_KEY and no network. poll_all is
-monkeypatched to return a hand-built RawItem whose text carries two distinct
-domain keywords, so the classifier takes its multi-hit keyword fast path and
-never reaches the Claude Haiku tier. Skipped when fastapi/httpx aren't installed.
+keyword classifier tier — no ANTHROPIC_API_KEY and no network.
 """
 
 from datetime import datetime, timezone
@@ -16,14 +13,13 @@ pytest.importorskip("httpx")
 
 from starlette.testclient import TestClient  # noqa: E402
 
+import server.backend.auth as auth  # noqa: E402
 import server.backend.main as main  # noqa: E402
 from centinelas.models import RawItem  # noqa: E402
 
 
 def _raw_item(item_id: str) -> RawItem:
     now = datetime.now(timezone.utc)
-    # "earthquake" (GEO_GEOLOGY) + "military" (MILITARY_AEROSPACE) → 2 keyword
-    # hits → the classifier's high-confidence keyword fast path (no LLM call).
     return RawItem(
         item_id=item_id,
         source_url=f"https://example.com/{item_id}",
@@ -37,14 +33,14 @@ def _raw_item(item_id: str) -> RawItem:
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    """A TestClient whose data dirs and cwd are redirected under tmp_path.
-
-    Redirecting cwd keeps the dispatch module's relative `.centinelas/dispatched`
-    bookkeeping inside the temp dir, and pointing the server's CLASSIFIED_DIR at
-    tmp keeps the run's classified output isolated from the repo.
-    """
+    """Explicitly establish the local-write principal used by these pipeline tests."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(auth, "WRITE_TOKEN", "")
+    # Starlette/httpx TestClient host labels are implementation details and have
+    # changed across releases. Bind this fixture to the intended local principal
+    # rather than silently inheriting a pseudo-host such as "testclient".
+    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "testclient")
 
     data_dir = tmp_path / ".centinelas"
     monkeypatch.setattr(main, "DATA_DIR", data_dir)
@@ -53,8 +49,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "DISPATCHED_DIR", data_dir / "dispatched")
 
     monkeypatch.setattr("centinelas.ingest.rss.poll_all", lambda: [_raw_item("run-ep-001")])
-    monkeypatch.setattr(
-        "centinelas.ingest.federal_register.poll_federal_register", list)
+    monkeypatch.setattr("centinelas.ingest.federal_register.poll_federal_register", list)
     monkeypatch.setattr("centinelas.ingest.web.poll_scrape_sources", list)
 
     with TestClient(main.app) as c:
@@ -69,27 +64,22 @@ def test_run_dry_run_returns_summary(client):
     assert body["dry_run"] is True
     assert body["ingested"] == 1
     assert body["classified"] == 1
-    # Two keyword hits → confidence 0.85 ≥ route gate → dispatched ok even in dry-run.
     assert body["dispatched"] == 1
     assert body["dispatch_breakdown"].get("ok") == 1
 
 
 def test_run_persists_classified_and_items_endpoint_reflects_it(client):
     client.post("/run", json={"dry_run": True})
-
-    # The run wrote the classified item where the read endpoints look for it.
-    written = list((main.CLASSIFIED_DIR).glob("*.json"))
+    written = list(main.CLASSIFIED_DIR.glob("*.json"))
     assert [p.name for p in written] == ["run-ep-001.json"]
-
     items = client.get("/items").json()
     assert any(it["item_id"] == "run-ep-001" for it in items)
 
 
 def test_run_dispatch_records_land_in_server_data_dir(tmp_path, monkeypatch):
-    # Simulate launch from a NON-repo cwd (e.g. the desktop wrapper): the dispatch
-    # module's relative-".centinelas" default would otherwise write records outside
-    # DISPATCHED_DIR, leaving /items and /status showing the run as pending forever.
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(auth, "WRITE_TOKEN", "")
+    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "testclient")
     cwd = tmp_path / "elsewhere"
     cwd.mkdir()
     monkeypatch.chdir(cwd)
@@ -99,24 +89,38 @@ def test_run_dispatch_records_land_in_server_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(main, "CLASSIFIED_DIR", data_dir / "classified")
     monkeypatch.setattr(main, "DISPATCHED_DIR", data_dir / "dispatched")
     monkeypatch.setattr("centinelas.ingest.rss.poll_all", lambda: [_raw_item("run-ep-002")])
-    monkeypatch.setattr(
-        "centinelas.ingest.federal_register.poll_federal_register", list)
+    monkeypatch.setattr("centinelas.ingest.federal_register.poll_federal_register", list)
     monkeypatch.setattr("centinelas.ingest.web.poll_scrape_sources", list)
 
     with TestClient(main.app) as c:
-        c.post("/run", json={"dry_run": True})
-        # Dispatch record lands under the server's DISPATCHED_DIR, not cwd/.centinelas.
+        r = c.post("/run", json={"dry_run": True})
+        assert r.status_code == 200, r.text
         assert (data_dir / "dispatched" / "run-ep-002.json").exists()
         assert not (cwd / ".centinelas").exists()
-        # ...so the read endpoints see it as dispatched, not pending.
         item = next(it for it in c.get("/items").json() if it["item_id"] == "run-ep-002")
         assert item["dispatch"] is not None
 
 
 def test_run_empty_body_defaults_to_full_run(client):
-    # No body → RunRequest defaults (dry_run False, limit 0). Dispatch is dry via
-    # sibling-repo absence being irrelevant here: with dry_run False it would write
-    # to intake dirs, so we assert only the pipeline shape, not filesystem writes.
     r = client.post("/run", json={"dry_run": True, "limit": 5})
     assert r.status_code == 200, r.text
     assert r.json()["ingested"] == 1
+
+
+def test_run_rejects_nonlocal_client_without_token(tmp_path, monkeypatch):
+    monkeypatch.setattr(auth, "WRITE_TOKEN", "")
+    monkeypatch.setattr(auth, "_is_local_network", lambda host: False)
+    with TestClient(main.app) as c:
+        r = c.post("/run", json={"dry_run": True})
+    assert r.status_code == 403
+
+
+def test_run_rejects_bad_bearer_when_token_mode_enabled(monkeypatch):
+    monkeypatch.setattr(auth, "WRITE_TOKEN", "expected-token")
+    with TestClient(main.app) as c:
+        r = c.post(
+            "/run",
+            json={"dry_run": True},
+            headers={"Authorization": "Bearer wrong-token"},
+        )
+    assert r.status_code == 401
