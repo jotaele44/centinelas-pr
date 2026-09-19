@@ -8,6 +8,7 @@ the vendored copy of thehub-pr's ``federation_export_manifest`` schema
 that alters any of these breaks this test before it can silently break the
 hub's consumer.
 """
+
 from __future__ import annotations
 
 import json
@@ -24,14 +25,27 @@ import federation_export as fx  # noqa: E402
 LEDGER = REPO_ROOT / "data/signals/example_signals.jsonl"
 SOURCES = REPO_ROOT / "data/reference/source_registry.csv"
 SCHEMA_PATH = REPO_ROOT / "schemas/federation_export_manifest.schema.json"
+COMPATIBILITY_RECEIPT = REPO_ROOT / "governance/federation_compatibility.json"
 
 FIXED_NOW = "2026-01-01T00:00:00Z"
 MODE = "test"
 
 EXPECTED_MANIFEST_KEYS = {
-    "package_id", "producer", "export_contract_version", "mode",
-    "created_at", "extracted_at", "federation", "files",
+    "package_id",
+    "producer",
+    "export_contract_version",
+    "mode",
+    "created_at",
+    "extracted_at",
+    "federation",
+    "files",
 }
+
+
+def test_spatial_attestation_preserves_repository_compatibility():
+    receipt = json.loads(COMPATIBILITY_RECEIPT.read_text())
+    assert receipt["disposition"] == "COMPATIBLE"
+    assert receipt["spatial_disposition"] == "ATTESTED"
 
 
 def _manifest(tmp_path):
