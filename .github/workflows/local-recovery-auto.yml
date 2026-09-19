@@ -127,11 +127,14 @@ jobs:
           node --import tsx --input-type=module <<'JS'
           import {db} from './helpers/db.tsx';
           import {loadRuntimeItem,stageRuntimeItem} from './helpers/centinelasServerRuntime.tsx';
-          const row=await db.selectFrom('pipelineItems').select('itemId').where('labels','@>',JSON.stringify(['FINANCIAL'])).executeTakeFirst()
-            ?? await db.selectFrom('pipelineItems').select('itemId').executeTakeFirstOrThrow();
-          const item=await loadRuntimeItem(row.itemId); if(!item) throw new Error('seed runtime item missing');
+          const itemId='CENT-SIG-7666a971f7032f8c';
+          const item=await loadRuntimeItem(itemId); if(!item) throw new Error('seed MoneySweep item missing');
           const staged=await stageRuntimeItem(item,false);
-          console.log(JSON.stringify({itemId:row.itemId,staged}));
+          if(!staged.targets.includes('moneysweep-pr')) throw new Error('frozen candidate did not route to MoneySweep');
+          const row=await db.selectFrom('dispatchPayloads').select(['payload','payloadHash','status']).where('itemId','=',itemId).where('targetRepo','=','moneysweep-pr').executeTakeFirstOrThrow();
+          const fs=await import('node:fs'); fs.mkdirSync('recovery/runtime-receipts',{recursive:true});
+          fs.writeFileSync('recovery/runtime-receipts/moneysweep-payload.json',JSON.stringify({itemId,target:'moneysweep-pr',payloadHash:row.payloadHash,status:row.status,payload:row.payload},null,2));
+          console.log(JSON.stringify({itemId,staged,payloadHash:row.payloadHash,status:row.status}));
           await db.destroy();
           JS
       - name: Start local Hono runtime
