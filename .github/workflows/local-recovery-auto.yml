@@ -35,7 +35,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
       - name: Fetch exact recovered application
         run: |
           curl -fsSL "$RECOVERY_ZIP_URL" -o /tmp/centinelas.zip
@@ -167,16 +166,16 @@ jobs:
           echo "state=emitted" >> "$GITHUB_OUTPUT"
       - name: Write recovery receipt
         if: always()
-        working-directory: recovered
         run: |
+          mkdir -p recovered/recovery/runtime-receipts
           python - <<'PY'
           import json,glob,hashlib,os
           receipts={}
-          for p in glob.glob("recovery/runtime-receipts/*.json"):
+          for p in glob.glob("recovered/recovery/runtime-receipts/*.json"):
             try: receipts[os.path.basename(p)]=json.load(open(p))
             except Exception: receipts[os.path.basename(p)]={"unparsed":open(p).read()[:1000]}
           out={"schema":"centinelas-auto-recovery-ci/v1","frozen_commit":os.environ["FROZEN_COMMIT"],"zip_sha256":os.environ["RECOVERY_ZIP_SHA256"],"receipts":receipts}
-          open("recovery/ci-recovery-receipt.json","w").write(json.dumps(out,indent=2))
+          open("recovered/recovery/ci-recovery-receipt.json","w").write(json.dumps(out,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
