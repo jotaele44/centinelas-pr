@@ -539,6 +539,28 @@
           "tests/test_server_smoke.py"
         ]
       }
+    },
+    {
+      "id": "write-authorization-boundary",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Write authorization is a non-disableable security boundary. It protects mutating API operations and is intentionally not exposed as a GUI capability or user toggle.",
+      "backend": {
+        "files": [
+          "server/backend/auth.py"
+        ],
+        "symbols": [
+          "server/backend/auth.py:require_write_access"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_gui_parity.py",
+          "tests/test_run_endpoint.py",
+          "tests/test_handoff_endpoint.py"
+        ]
+      }
     }
   ],
   "exceptions": []
