@@ -1,0 +1,190 @@
+name: Centinelas local recovery auto
+
+on:
+  push:
+    branches: [chatgpt/centinelas-local-recovery-20260918]
+    paths: [.github/workflows/local-recovery-auto.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: centinelas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d centinelas"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      FLOOT_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/centinelas
+      CENTINELAS_GITHUB_TOKEN: ${{ secrets.CENTINELAS_GITHUB_TOKEN }}
+      RECOVERY_ZIP_URL: https://25976845-0c8b-412f-bbc7-7f417025ec73.sandbox.floot.app/_cdn/static/4f2a7dda-5a06-4951-bf85-253f2ed72273-centinelas-local-recovered.zip
+      RECOVERY_ZIP_SHA256: 80f178d1839ae05933d81b9bdd2003a1bebafaafd9c9e8bc7c980eafa77fb8e6
+      FROZEN_COMMIT: caf086598a4f99e2eb0ca4aac6d51e2d9bd46321
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Fetch exact recovered application
+        run: |
+          curl -fsSL "$RECOVERY_ZIP_URL" -o /tmp/centinelas.zip
+          echo "$RECOVERY_ZIP_SHA256  /tmp/centinelas.zip" | sha256sum -c -
+          mkdir recovered
+          unzip -q /tmp/centinelas.zip -d recovered
+      - name: Restore dependencies
+        working-directory: recovered
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Build frontend
+        working-directory: recovered
+        run: npx vite build
+      - name: Reconstruct PostgreSQL schema
+        working-directory: recovered
+        run: psql "$FLOOT_DATABASE_URL" -v ON_ERROR_STOP=1 -f recovery/postgres_schema.sql
+      - name: Fetch frozen authoritative seed bytes and prove denominator
+        working-directory: recovered
+        run: node scripts/reconstruct_seed.mjs --out recovery/seed_data.json
+      - name: Load frozen authoritative seed and runtime prerequisites
+        working-directory: recovered
+        run: |
+          python -m pip install --quiet "psycopg[binary]"
+          python - <<'PY'
+          import json, hashlib, urllib.request, psycopg
+          from pathlib import Path
+          db="postgresql://postgres:postgres@127.0.0.1:5432/centinelas"
+          frozen="caf086598a4f99e2eb0ca4aac6d51e2d9bd46321"
+          seed=json.load(open("recovery/seed_data.json"))
+          by_source={r["source_id"]:r for r in seed["sources"]}
+          def j(v): return json.dumps(v,ensure_ascii=False)
+          with psycopg.connect(db) as conn:
+            with conn.cursor() as cur:
+              for r in seed["sources"]:
+                cur.execute("""insert into sources(source_id,name,language,source_family,reliability_default,scrape_method,status,notes)
+                  values(%s,%s,%s,%s,%s,%s,%s,%s) on conflict(source_id) do nothing""",
+                  (r["source_id"],r["name"],r.get("language") or None,r.get("source_family") or None,r.get("reliability_default") or None,r.get("scrape_method") or None,r.get("active") or "active",r.get("notes") or None))
+              for m in seed["matters"]:
+                cur.execute("""insert into matters(matter_id,title,status_lifecycle,first_seen_at,source_count,agencies,municipalities,centinelas_signal_ids)
+                  values(%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb) on conflict(matter_id) do nothing""",
+                  (m["matter_id"],m["title"],m["status_lifecycle"],m["first_seen_at"],m["source_count"],j(m["agencies"]),j(m["municipalities"]),j(m["centinelas_signal_ids"])))
+              for s in seed["signals"]:
+                cur.execute("""insert into signals(signal_id,matter_id,source_id,signal_type,title,summary,source_url,captured_at,published_at,signal_stage,beat,municipalities,agencies,entities,estimated_value,deadline_date,urgency_score,confidence_score,evidence_tier,handoff_status,is_synthetic,labels)
+                  values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,%s,%s,%s,%s,%s,%s,%s,%s::jsonb) on conflict(signal_id) do nothing""",
+                  (s["signal_id"],s["matter_id"],s["source_id"],s["signal_type"],s["title"],s.get("summary"),s.get("source_url"),s.get("captured_at"),s.get("published_at"),s["signal_stage"],s["beat"],j(s.get("municipalities",[])),j(s.get("agencies",[])),j(s.get("entities",[])),s.get("estimated_value"),s.get("deadline_date"),s.get("urgency_score"),s.get("confidence_score"),s.get("evidence_tier"),s.get("handoff_status","raw"),bool(s.get("is_synthetic")),j(s.get("labels",[]))))
+              # Seed one pipeline item per frozen signal for local runtime inspection; values remain derived from exact frozen rows.
+              for s in seed["signals"]:
+                src=by_source[s["source_id"]]
+                confidence=float(s.get("confidence_score") or 0)/100.0
+                cur.execute("""insert into pipeline_items(item_id,source_url,source_name,source_id,title,body_text,published_at,captured_at,evidence_tier,labels,confidence,classifier_reasoning,agencies,municipalities,recipients,estimated_value,signal_stage,beat,runtime_origin,source_binding_status,source_binding_basis,classification_engine)
+                  values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s::jsonb,%s::jsonb,'[]'::jsonb,%s,%s,%s,'recovered_frozen_seed','BOUND',%s,'frozen_signal_import') on conflict(item_id) do nothing""",
+                  (s["signal_id"],s.get("source_url") or "",src["name"],s["source_id"],s["title"],s.get("summary") or "",s.get("published_at") or s["captured_at"],s["captured_at"],s.get("evidence_tier") or "T1",j(s.get("labels",[])),confidence,"Recovered from frozen signal ledger",j(s.get("agencies",[])),j(s.get("municipalities",[])),s.get("estimated_value"),s.get("signal_stage"),s.get("beat"),f"stable_id:{s['source_id']}"))
+              required=[
+                "src/centinelas/ingest/sources.yaml",
+                "src/centinelas/ingest/just_security_sources.yaml",
+                "src/centinelas/classify/rules.py",
+                "src/centinelas/route/contracts/moneysweep.schema.json",
+                "src/centinelas/route/contracts/aguayluz.schema.json",
+                "src/centinelas/route/contracts/spiderweb.schema.json",
+                "src/centinelas/route/contracts/skywatcher.schema.json",
+                "src/centinelas/route/contracts/ovnis.schema.json",
+                "src/centinelas/route/contracts/thehub.schema.json",
+              ]
+              for path in required:
+                url=f"https://raw.githubusercontent.com/jotaele44/centinelas-pr/{frozen}/{path}"
+                raw=urllib.request.urlopen(url,timeout=30).read()
+                sha=hashlib.sha256(raw).hexdigest(); sid="recovery:"+hashlib.sha256(path.encode()).hexdigest()[:24]
+                cur.execute("""insert into provenance_snapshots(snapshot_id,repository,commit_sha,source_path,source_kind,source_manifestation_url,import_scope,source_row_count,imported_row_count,retrieval_utc,sha256,byte_size,raw_bytes_frozen)
+                  values(%s,'jotaele44/centinelas-pr',%s,%s,'GITHUB_FROZEN_SOURCE',%s,'LOCAL_RUNTIME_RECOVERY',null,0,now(),%s,%s,true) on conflict(snapshot_id) do nothing""",(sid,frozen,path,url,sha,len(raw)))
+                cur.execute("""insert into source_snapshot_bytes(snapshot_id,raw_bytes,sha256,byte_size) values(%s,%s,%s,%s) on conflict(snapshot_id) do nothing""",(sid,raw,sha,len(raw)))
+            conn.commit()
+          PY
+      - name: Prove reconstructed database invariants
+        working-directory: recovered
+        run: |
+          psql "$FLOOT_DATABASE_URL" -v ON_ERROR_STOP=1 -At <<'SQL' | tee recovery/db-invariants.txt
+          select 'signals='||count(*)||',distinct='||count(distinct signal_id)||',synthetic='||count(*) filter(where is_synthetic) from signals;
+          select 'matters='||count(*)||',distinct='||count(distinct matter_id) from matters;
+          select 'sources='||count(*)||',distinct='||count(distinct source_id) from sources;
+          select 'orphan_signal_matter='||count(*) from signals s left join matters m on m.matter_id=s.matter_id where m.matter_id is null;
+          select 'orphan_signal_source='||count(*) from signals s left join sources r on r.source_id=s.source_id where r.source_id is null;
+          SQL
+          grep -qx 'signals=100,distinct=100,synthetic=0' recovery/db-invariants.txt
+          grep -qx 'matters=100,distinct=100' recovery/db-invariants.txt
+          grep -qx 'sources=87,distinct=87' recovery/db-invariants.txt
+          grep -qx 'orphan_signal_matter=0' recovery/db-invariants.txt
+          grep -qx 'orphan_signal_source=0' recovery/db-invariants.txt
+      - name: Stage one real frozen MoneySweep signal
+        working-directory: recovered
+        run: |
+          node --import tsx --input-type=module <<'JS'
+          import {db} from './helpers/db.tsx';
+          import {loadRuntimeItem,stageRuntimeItem} from './helpers/centinelasServerRuntime.tsx';
+          const row=await db.selectFrom('pipelineItems').select('itemId').where('labels','@>',JSON.stringify(['FINANCIAL'])).executeTakeFirst()
+            ?? await db.selectFrom('pipelineItems').select('itemId').executeTakeFirstOrThrow();
+          const item=await loadRuntimeItem(row.itemId); if(!item) throw new Error('seed runtime item missing');
+          const staged=await stageRuntimeItem(item,false);
+          console.log(JSON.stringify({itemId:row.itemId,staged}));
+          await db.destroy();
+          JS
+      - name: Start local Hono runtime
+        working-directory: recovered
+        run: |
+          nohup node --import tsx server.ts > /tmp/centinelas-hono.log 2>&1 &
+          echo $! > /tmp/centinelas-hono.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:3333/_api/runtime-status >/dev/null && exit 0; sleep 1; done
+          cat /tmp/centinelas-hono.log
+          exit 1
+      - name: Endpoint and runtime regressions
+        working-directory: recovered
+        run: |
+          mkdir -p recovery/runtime-receipts
+          curl -fsS http://127.0.0.1:3333/_api/runtime-status | tee recovery/runtime-receipts/runtime-status.json
+          curl -fsS http://127.0.0.1:3333/_api/pipeline | tee recovery/runtime-receipts/pipeline.json
+          curl -fsS http://127.0.0.1:3333/_api/diagnostics | tee recovery/runtime-receipts/diagnostics.json
+          code=$(curl -sS -o recovery/runtime-receipts/missing-handoff.json -w '%{http_code}' -X POST -H 'content-type: application/json' --data '{"json":{"itemId":"missing","targets":["moneysweep-pr"],"dryRun":true}}' http://127.0.0.1:3333/_api/handoff)
+          test "$code" = 404
+          curl -fsS -X POST -H 'content-type: application/json' --data '{"json":{"dryRun":true,"onlyRepo":"moneysweep-pr","limit":1}}' http://127.0.0.1:3333/_api/emit-dispatches | tee recovery/runtime-receipts/moneysweep-dry-run.json
+      - name: Live Centinelas to MoneySweep dispatch
+        id: live_dispatch
+        working-directory: recovered
+        run: |
+          if [ -z "$CENTINELAS_GITHUB_TOKEN" ]; then
+            echo '{"state":"BLOCKED_CREDENTIAL","reason":"CENTINELAS_GITHUB_TOKEN secret unavailable"}' | tee recovery/runtime-receipts/live-dispatch.json
+            echo "state=blocked" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl -fsS -X POST -H 'content-type: application/json' --data '{"json":{"dryRun":false,"onlyRepo":"moneysweep-pr","limit":1}}' http://127.0.0.1:3333/_api/emit-dispatches | tee recovery/runtime-receipts/live-dispatch.json
+          grep -q 'emitted_pending_consumer' recovery/runtime-receipts/live-dispatch.json
+          echo "state=emitted" >> "$GITHUB_OUTPUT"
+      - name: Write recovery receipt
+        if: always()
+        working-directory: recovered
+        run: |
+          python - <<'PY'
+          import json,glob,hashlib,os
+          receipts={}
+          for p in glob.glob("recovery/runtime-receipts/*.json"):
+            try: receipts[os.path.basename(p)]=json.load(open(p))
+            except Exception: receipts[os.path.basename(p)]={"unparsed":open(p).read()[:1000]}
+          out={"schema":"centinelas-auto-recovery-ci/v1","frozen_commit":os.environ["FROZEN_COMMIT"],"zip_sha256":os.environ["RECOVERY_ZIP_SHA256"],"receipts":receipts}
+          open("recovery/ci-recovery-receipt.json","w").write(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: centinelas-local-recovery-receipts
+          path: |
+            recovered/recovery/ci-recovery-receipt.json
+            recovered/recovery/db-invariants.txt
+            recovered/recovery/runtime-receipts
+            /tmp/centinelas-hono.log
+          if-no-files-found: warn
