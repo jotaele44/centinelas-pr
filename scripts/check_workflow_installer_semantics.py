@@ -9,8 +9,8 @@ from pathlib import Path
 
 try:
     import tomllib
-except ModuleNotFoundError:  # Python 3.10 compatibility
-    import tomli as tomllib
+except ModuleNotFoundError:  # pragma: no cover - exercised by Python 3.10 CI
+    tomllib = None
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
@@ -24,7 +24,10 @@ def uv_sources(package_root: Path) -> bool:
     pyproject = package_root / "pyproject.toml"
     if not pyproject.is_file():
         return False
-    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    text = pyproject.read_text(encoding="utf-8")
+    if tomllib is None:
+        return bool(re.search(r"^\\[tool\\.uv\\.sources\\]\\s*$", text, re.MULTILINE))
+    data = tomllib.loads(text)
     return bool(data.get("tool", {}).get("uv", {}).get("sources", {}))
 
 
