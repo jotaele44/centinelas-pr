@@ -561,6 +561,22 @@
           "tests/test_handoff_endpoint.py"
         ]
       }
+    },
+    {
+      "id": "workflow-installer-certification",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "CI-only dependency-resolution certification. It checks that editable workflow installs use an installer compatible with the exact PACKAGE_ROOT dependency-source semantics and has no operator-facing workflow.",
+      "candidate_ids": [
+        "analysis_module:scripts/check_workflow_installer_semantics.py"
+      ],
+      "tests": {
+        "contract": [
+          "tests/test_workflow_installer_semantics.py",
+          "tests/test_gui_parity.py"
+        ]
+      }
     }
   ],
   "exceptions": []
