@@ -15,8 +15,8 @@ except ModuleNotFoundError:  # pragma: no cover - exercised by Python 3.10 CI
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 
-WORKING_DIR_RE = re.compile(r'''^\\s*working-directory:\\s*["']?([^"'#]+)''', re.MULTILINE)
-EDITABLE_RE = re.compile(r'''(?:python\\s+-m\\s+)?pip\\s+install\\b[^\\n]*\\s-e\\s+(["']?)([^\\s"']+)\\1''')
+WORKING_DIR_RE = re.compile(r'''^\s*working-directory:\s*["']?([^"'#]+)''', re.MULTILINE)
+EDITABLE_RE = re.compile(r'''(?:python\s+-m\s+)?pip\s+install\b[^\n]*\s-e\s+(["']?)([^\s"']+)\1''')
 UV_EDITABLE_RE = re.compile(r"uv\s+pip\s+install\b[^\n]*\s-e\s+")
 
 
@@ -26,7 +26,7 @@ def uv_sources(package_root: Path) -> bool:
         return False
     text = pyproject.read_text(encoding="utf-8")
     if tomllib is None:
-        return bool(re.search(r"^\\[tool\\.uv\\.sources\\]\\s*$", text, re.MULTILINE))
+        return bool(re.search(r"^\[tool\.uv\.sources\]\s*$", text, re.MULTILINE))
     data = tomllib.loads(text)
     return bool(data.get("tool", {}).get("uv", {}).get("sources", {}))
 
