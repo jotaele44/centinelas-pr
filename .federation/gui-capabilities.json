@@ -569,7 +569,10 @@
       "requires_terminal": false,
       "rationale": "CI-only dependency-resolution certification. It checks that editable workflow installs use an installer compatible with the exact PACKAGE_ROOT dependency-source semantics and has no operator-facing workflow.",
       "candidate_ids": [
-        "analysis_module:scripts/check_workflow_installer_semantics.py"
+        "analysis_module:scripts/check_workflow_installer_semantics.py",
+        "analysis_symbol:scripts/check_workflow_installer_semantics.py:candidate_roots",
+        "analysis_symbol:scripts/check_workflow_installer_semantics.py:main",
+        "analysis_symbol:scripts/check_workflow_installer_semantics.py:uv_sources"
       ],
       "tests": {
         "contract": [
