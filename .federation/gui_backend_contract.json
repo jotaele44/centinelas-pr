@@ -1,7 +1,7 @@
 {
   "schema_version": "federation.gui-backend-contract/1.0",
   "repository": "Jotaele44/centinelas-pr",
-  "source_commit": "de635303f57903be4e04bb203a0fa37757287344",
+  "source_commit": "7019fe9d87381a97c90de1bee9f2b48a4d45c1a1",
   "policy": {
     "require_zero_material_residue": true,
     "dimensions": [
@@ -67,7 +67,8 @@
     "frontend_evidence_files": [
       "frontend/src/App.jsx",
       "frontend/src/components/Header.jsx"
-    ]
+    ],
+    "audited_source_semantics": "source_commit identifies the last audited watched-source snapshot; contract/workflow manifestation commits are separate provenance and do not self-bind"
   },
   "devices": {
     "desktop": true,
