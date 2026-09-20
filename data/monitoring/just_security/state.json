@@ -1,0 +1,53 @@
+{
+  "items": {},
+  "listings": {
+    "PUERTO_RICO_LITERAL_SEARCH": {
+      "certification": "BLOCKED",
+      "declared_count": null,
+      "manifestation": "PUERTO_RICO_LITERAL_SEARCH",
+      "pages_checked": 1,
+      "parsed_count": 0,
+      "receipts": [
+        {
+          "byte_count": 5495,
+          "content_sha256": "f2de32e7cdfb0a61e3c6d600b440a62b84a49e6dbc0312630c832fb722ef7ba8",
+          "content_type": "text/html; charset=UTF-8",
+          "error": "HTTP 403",
+          "http_status": 403,
+          "retrieved_at": "2026-09-20T16:13:20Z",
+          "state": "BLOCKED",
+          "url": "https://www.justsecurity.org/?s=puerto%20rico"
+        }
+      ],
+      "residue": "pagination_loop:https://www.justsecurity.org/?s=puerto%20rico",
+      "result_records": [],
+      "result_urls": [],
+      "url": "https://www.justsecurity.org/?s=puerto%20rico"
+    },
+    "PUERTO_RICO_TAG_ARCHIVE": {
+      "certification": "BLOCKED",
+      "declared_count": null,
+      "manifestation": "PUERTO_RICO_TAG_ARCHIVE",
+      "pages_checked": 1,
+      "parsed_count": 0,
+      "receipts": [
+        {
+          "byte_count": 5480,
+          "content_sha256": "5798d9ab414d273054ec9277363d5d77247510162a5fad81c35580a0a6e996d7",
+          "content_type": "text/html; charset=UTF-8",
+          "error": "HTTP 403",
+          "http_status": 403,
+          "retrieved_at": "2026-09-20T16:13:20Z",
+          "state": "BLOCKED",
+          "url": "https://www.justsecurity.org/tag/puerto-rico/"
+        }
+      ],
+      "residue": "pagination_loop:https://www.justsecurity.org/tag/puerto-rico/",
+      "result_records": [],
+      "result_urls": [],
+      "url": "https://www.justsecurity.org/tag/puerto-rico/"
+    }
+  },
+  "living": {},
+  "schema_version": "just_security_monitor_state.v0.1"
+}
