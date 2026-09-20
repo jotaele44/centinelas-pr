@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 
 WORKING_DIR_RE = re.compile(r'''^\s*working-directory:\s*["']?([^"'#]+)''', re.MULTILINE)
-EDITABLE_RE = re.compile(r'''(?:python\s+-m\s+)?pip\s+install\b[^\n]*\s-e\s+(["']?)([^\s"']+)\1''')
+EDITABLE_RE = re.compile(r'''(?<!uv )(?<!uv  )(?:python\s+-m\s+)?pip\s+install\b[^\n]*\s-e\s+(["']?)([^\s"']+)\1''')
 UV_EDITABLE_RE = re.compile(r"uv\s+pip\s+install\b[^\n]*\s-e\s+")
 
 
