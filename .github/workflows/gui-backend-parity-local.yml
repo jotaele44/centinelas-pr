@@ -39,7 +39,7 @@ jobs:
           changed=subprocess.check_output(['git','diff','--name-only',source+'..HEAD'],text=True).splitlines()
           def covered(name):
               return any(name==raw.rstrip('/') or name.startswith(raw.rstrip('/')+'/') for raw in watched)
-          stale=sorted(name for name in changed if covered(name))
+          # The contract manifestation is provenance metadata, not audited implementation.\n          # Only paths declared by discovery participate in source staleness.\n          stale=sorted(name for name in changed if covered(name))
           if stale: raise SystemExit('gui_backend_contract source_commit predates audited source changes: '+', '.join(stale))
           assert set(data['runtime_evidence'])=={'data','identity','geometry','device'}
           print('local contract boundary: PASS')
