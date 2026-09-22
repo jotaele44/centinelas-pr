@@ -3,10 +3,18 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Database, Newspaper, RadioTower, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MatterTimeline from "@/components/lifecycle/MatterTimeline";
+import ProgramTimeline from "@/components/ProgramTimeline";
 import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Home() {
   const { t } = useLanguage();
+  const programTimeline = [
+    { id:"cent-signals", phase:"NOW", title:t("Señales públicas"), detail:t("Capturar, normalizar y preservar anuncios, agendas, RFP, vistas, comunicados, avisos y minutas con procedencia verificable."), category:t("Ingesta"), href:"/signals" },
+    { id:"cent-triage", phase:"NEXT", title:t("Triage y clasificación"), detail:t("Clasificar dominio, confianza, evidencia y Matter ID sin promover coincidencias heurísticas a identidad."), category:t("Pipeline"), href:"/pipeline" },
+    { id:"cent-matters", phase:"NEXT", title:t("Ciclo de Matter"), detail:t("Reconciliar señales relacionadas y mantener continuidad desde señal pública hasta oficialización."), category:t("Investigación"), href:"/matters" },
+    { id:"cent-handoff", phase:"QUEUED", title:t("Handoff a MoneySweep y TheHub"), detail:t("Emitir contextos y recibos con IDs estables, hashes de manifestación y semántica de acknowledgement."), category:t("Federación"), href:"/handoff" },
+    { id:"cent-cert", phase:"BLOCKED", title:t("Cierre de producción"), detail:t("La certificación final espera credenciales de transporte, frescura del productor, QA renderizado y receipts LOCKSTEP."), category:t("Certificación"), href:"/monitor" },
+  ];
   return (
     <div>
       <section className="border-b bg-gradient-to-b from-primary/10 to-background">
@@ -49,6 +57,7 @@ export default function Home() {
             <CardContent className="text-sm text-muted-foreground">{t("El Matter ID une señales, evidencia, leads editoriales y registros oficiales en una línea de vida verificable.")}</CardContent>
           </Card>
         </div>
+        <ProgramTimeline items={programTimeline} />
         <MatterTimeline currentStage="pending_officialization" />
       </section>
     </div>
