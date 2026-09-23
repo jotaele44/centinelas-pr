@@ -1638,12 +1638,12 @@
       "symbol": "DurableOutbox"
     },
     {
-      "id": "python_symbol:src/centinelas/foia_disposition.py:EvidenceTier",
+      "id": "python_symbol:src/centinelas/foia_disposition.py:FoiaEvidenceTier",
       "kind": "python_symbol",
       "line": 16,
       "path": "src/centinelas/foia_disposition.py",
       "signal": "BACKEND_NOT_GUI_SURFACED",
-      "symbol": "EvidenceTier"
+      "symbol": "FoiaEvidenceTier"
     },
     {
       "id": "python_symbol:src/centinelas/foia_disposition.py:ExportReceipt",
