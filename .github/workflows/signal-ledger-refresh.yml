@@ -1,0 +1,57 @@
+name: Signal ledger refresh
+
+# Keeps data/signals/live_signals.jsonl inside the production export's
+# freshness window (scripts/federation_export.py DEFAULT_MAX_AGE_HOURS = 168h).
+# Without a scheduled refresh the ledger ages out and export_canonical fails
+# closed while federation.json still declares ready_for_hub_live_execution.
+# The ledger is committed only after the production export accepts it.
+
+on:
+  schedule:
+    - cron: "41 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: signal-ledger-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install Centinelas
+        run: |
+          command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+          uv pip install --system -e ".[dev]" -r server/backend/requirements.txt
+      - name: Poll live feeds into the signal ledger
+        env:
+          # Optional: without it the classifier falls back to keyword rules.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/build_signal_ledger.py --limit 100
+      - name: Gate on the production export
+        run: >-
+          python scripts/federation_export.py
+          --ledger data/signals/live_signals.jsonl
+          --mode production
+          --out "$RUNNER_TEMP/centinelas-export"
+      - name: Persist refreshed ledger
+        run: |
+          git config user.name "centinelas-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/signals/live_signals.jsonl
+          if git diff --cached --quiet; then
+            echo "No signal ledger changes to persist."
+          else
+            git commit -m "data: refresh live signal ledger [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

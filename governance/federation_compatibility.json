@@ -15,5 +15,13 @@
     "cell_profile@1"
   ],
   "spatial_generation": "federation-spatial-index/1",
-  "spatial_note": "Compatible with the federation spatial index generation. This repository consumes the canonical Cell_ID address space and publishes no geometry of its own; its CELL_PROFILE index lands in a later wave."
+  "spatial_note": "Compatible with the federation spatial index generation. This repository consumes the canonical Cell_ID address space and publishes no geometry of its own; its CELL_PROFILE index lands in a later wave.",
+  "drift_reconciliation": {
+    "cause": "thehub-pr docs/FEDERATION_MAX_AUDIT_2026-09-24.md findings F3 and F7",
+    "cause_change": "hub_callable_commands.setup now also installs httpx and server/backend/requirements.txt (the declared test_suite failed collection without fastapi); federation_readiness_gate.resolved_conditions records the 2026-09-24 ledger refresh and the scheduled signal-ledger-refresh workflow",
+    "reviewed_at": "2026-09-24",
+    "reviewed_head": "e4508291e092b0a43802eedd1f300d899127864e",
+    "finding": "COMPATIBLE",
+    "rationale": "hub-callable command and readiness-note metadata only; export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; all seven attested contracts remain valid"
+  }
 }
