@@ -86,7 +86,8 @@
           "frontend/src/pages/MatterDetail.jsx",
           "frontend/src/pages/Sources.jsx",
           "frontend/src/pages/Entities.jsx",
-          "frontend/src/pages/EntityDetail.jsx"
+          "frontend/src/pages/EntityDetail.jsx",
+          "frontend/src/components/ProgramTimeline.jsx"
         ],
         "discoverability": [
           "frontend/src/components/Header.jsx",
