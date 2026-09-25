@@ -376,3 +376,13 @@ app (ADR 0001).
 ## Architecture sentence
 
 Centinelas detects intent. MoneySweep verifies execution. The shared matter lifecycle is the connective tissue.
+
+<!-- PROJECT-OPERATING-CONTRACT:START -->
+## Current development and certification contract
+
+Centinelas remains the federation's pre-officialization signal producer. It detects emerging public matters; it must not silently convert announcements, agendas, RFPs, hearings, reporting, or social statements into finalized facts. Officialization remains a downstream evidence event, commonly handed to MoneySweep.
+
+**Operating rules:** every signal keeps source identity, capture/publication time, evidence tier, lifecycle stage, confidence language, matter linkage, and provenance. Source-search failure or vocabulary omission is not proof of absence. Preserve zero-result, blocked, stale, manual, and deprecated source states. Entity identity cannot be proved by name-only, normalization, nearest/proximity, count equality, or source absence.
+
+**Release discipline:** source coverage, freshness, lineage, lifecycle handoff, duplicate/cardinality controls, negative regressions, and current UI/runtime evidence must close within a declared scope before certification. The producer dashboard remains diagnostic; federation-wide product authority remains with TheHub.
+<!-- PROJECT-OPERATING-CONTRACT:END -->
