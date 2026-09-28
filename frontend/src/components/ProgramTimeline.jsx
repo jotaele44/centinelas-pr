@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpDown, CalendarClock, CircleDot, Search } from "lucide-react";
+import { mergeProgramActivity, readLiveProgramActivity } from "./programActivityEvent";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const PHASE_RANK = { NOW: 0, NEXT: 1, QUEUED: 2, BLOCKED: 3 };
+const PHASE_RANK = { NOW: 0, NEXT: 1, QUEUED: 2, BLOCKED: 3, UNRESOLVED: 4, CONTRADICTED: 4, COMPLETED: 5, SUPERSEDED: 6 };
 
 function PhaseBadge({ phase }) {
   const tone = {
@@ -15,19 +16,20 @@ function PhaseBadge({ phase }) {
   return <span className={`inline-flex min-w-16 justify-center rounded-full border px-2 py-1 text-[10px] font-bold tracking-wide ${tone}`}>{phase}</span>;
 }
 
-export default function ProgramTimeline({ items }) {
+export default function ProgramTimeline({ items, producerId }) {
+  const mergedItems = useMemo(() => mergeProgramActivity(producerId, items, readLiveProgramActivity(producerId)), [producerId, items]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [sort, setSort] = useState("priority");
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return [...items]
+    return [...mergedItems]
       .filter((item) => (filter === "ALL" || item.phase === filter) && (!q || [item.title, item.detail, item.category, item.phase].some((value) => value.toLowerCase().includes(q))))
       .sort((a, b) => sort === "priority" ? PHASE_RANK[a.phase] - PHASE_RANK[b.phase] || a.title.localeCompare(b.title) : a.title.localeCompare(b.title));
-  }, [items, query, filter, sort]);
+  }, [mergedItems, query, filter, sort]);
 
-  const upcoming = items.filter((item) => ["NEXT", "QUEUED", "BLOCKED"].includes(item.phase)).slice(0, 5);
+  const upcoming = mergedItems.filter((item) => ["NEXT", "QUEUED", "BLOCKED"].includes(item.phase)).slice(0, 5);
 
   return (
     <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,.8fr)]" aria-label="Program timeline and upcoming work">
@@ -60,7 +62,7 @@ export default function ProgramTimeline({ items }) {
           </div>
           <div className="px-4 pb-2">
             {visible.length ? visible.map((item) => (
-              <div key={item.id} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-b py-4 last:border-b-0">
+              <div key={item.eventId || item.id} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-b py-4 last:border-b-0">
                 <PhaseBadge phase={item.phase} />
                 <div>
                   <strong className="text-sm">{item.href ? <Link className="hover:text-primary" to={item.href}>{item.title}</Link> : item.title}</strong>
@@ -85,7 +87,7 @@ export default function ProgramTimeline({ items }) {
         </CardHeader>
         <CardContent className="px-4 py-2">
           {upcoming.map((item) => (
-            <div key={item.id} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-b py-4 last:border-b-0">
+            <div key={item.eventId || item.id} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-b py-4 last:border-b-0">
               <PhaseBadge phase={item.phase} />
               <div>
                 <strong className="text-sm">{item.href ? <Link className="hover:text-primary" to={item.href}>{item.title}</Link> : item.title}</strong>
