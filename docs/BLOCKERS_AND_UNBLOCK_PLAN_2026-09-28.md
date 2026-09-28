@@ -2,6 +2,8 @@
 
 **Audit date:** 2026-09-28 · **`main` at audit:** `e055ae2` (not branch-protected) · **Production status:** `PRODUCTION`. The live signal ledger has been refreshed daily since #160.
 
+**Post-audit update (2026-09-28 20:35Z):** the record_cell_binding v0.2 series was pushed straight to `main` after the audit. The Cell_Set PR #161 now conflicts with `main` and is superseded (X-05). The same series left `ruff check .` red on `main` (X-10); this PR carries the one-line fix.
+
 This document lists every blocker that the repository, its CI, and its GitHub issues and pull requests recorded as of the audit date, then gives an ordered plan to clear them. It changes no code, gate, ledger, or status file.
 
 Cross-repository blockers (IDs `X-nn`) are described in full in
@@ -53,7 +55,7 @@ Each blocker is counted once, under its primary type.
 
 | PR | State | Action |
 |---|---|---|
-| #161 Cell_Set uncertainty contract | Head checks green | Merge together with the other five repos (X-05) |
+| #161 Cell_Set uncertainty contract | Conflicts with `main` since the post-audit v0.2 series, which already carries the contract in `federation/spatial/registry_version.json` | Confirm v0.2 covers it, then close as superseded (X-05) |
 | #148 package-root installer gate (draft) | RED: validate 3.10/3.11/3.12 and lint; no merge commit (conflict); overlaps 2 paths | Rebase and fix, or close |
 | #155 actions minor/patch group | RED: Federation template drift | Land the bump via thehub `federation-templates`, re-render, close this PR |
 | #154 vitest 5, #152 lucide-react 1.47, #151 @types/node 26, #150 eslint-plugin-react-hooks 7 | Green heads, but all majors. Earlier dependabot majors were closed unmerged on 2026-09-19 and re-opened. | Migrate and merge, or add a dependabot `ignore` in the thehub baseline template (X-02) |
@@ -101,8 +103,9 @@ Each blocker is counted once, under its primary type.
 - X-02: dependabot backlog and template drift.
 - X-03: `main` is unprotected.
 - X-04: the hub receipt re-pin after #160.
-- X-05: the Cell_Set PR set.
+- X-05: the Cell_Set PR set, now superseded by v0.2 on `main`.
 - X-07: stale ledgers.
+- X-10: `main` lint is red since the v0.2 series; this PR carries the fix.
 
 See the thehub document for details.
 
