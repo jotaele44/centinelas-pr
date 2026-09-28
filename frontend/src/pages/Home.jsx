@@ -57,7 +57,7 @@ export default function Home() {
             <CardContent className="text-sm text-muted-foreground">{t("El Matter ID une señales, evidencia, leads editoriales y registros oficiales en una línea de vida verificable.")}</CardContent>
           </Card>
         </div>
-        <ProgramTimeline items={programTimeline} />
+        <ProgramTimeline producerId="centinelas-pr" items={programTimeline} />
         <MatterTimeline currentStage="pending_officialization" />
       </section>
     </div>
