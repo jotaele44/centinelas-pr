@@ -190,3 +190,5 @@ jobs:
             recovered/recovery/runtime-receipts
             /tmp/centinelas-hono.log
           if-no-files-found: warn
+
+# credential recheck trigger 2026-09-28
