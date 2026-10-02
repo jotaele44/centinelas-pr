@@ -1,13 +1,6 @@
 import { Outlet } from "react-router-dom";
-import Header from "./Header";
+import { AppShell } from "../zip-design/AppShell";
 import Footer from "./Footer";
-
 export default function Layout() {
-  return (
-    <div className="bg-background text-foreground min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1"><Outlet /></main>
-      <Footer />
-    </div>
-  );
+  return <AppShell><Outlet /><Footer /></AppShell>;
 }

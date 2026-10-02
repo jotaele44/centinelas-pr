@@ -20,3 +20,10 @@ def test_outbox_reports_notifications_disabled():
     payload = client.get('/water-disruption/outbox').json()
     assert payload['shadow_mode'] is True
     assert payload['notifications_enabled'] is False
+
+
+def test_water_disruption_rejects_reserved_nonlocal_client():
+    with TestClient(app, client=("203.0.113.10", 50000)) as remote_client:
+        response = remote_client.get('/water-disruption/sources')
+
+    assert response.status_code == 403

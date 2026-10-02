@@ -1,6 +1,7 @@
 """FastAPI surface for the Centinelas shadow water-disruption producer."""
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import urllib.error
@@ -9,14 +10,44 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from centinelas.water_disruption import SourceRecord, WaterDisruptionProducer, stable_id
 from server.backend.auth import WRITE_GUARD
 
-router = APIRouter(prefix="/water-disruption", tags=["water-disruption"])
+_LOCAL_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in (
+        "127.0.0.0/8",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16",
+        "::1/128",
+        "fc00::/7",
+        "fe80::/10",
+    )
+)
+
+
+def _require_local_request(request: Request) -> None:
+    host = request.client.host if request.client else ""
+    try:
+        ip = ipaddress.ip_address(host)
+        allowed = any(network.version == ip.version and ip in network for network in _LOCAL_NETWORKS)
+    except ValueError:
+        allowed = host in {"localhost", "testclient"}
+    if not allowed:
+        raise HTTPException(status_code=403, detail="water-disruption writes are local-only")
+
+
+router = APIRouter(
+    prefix="/water-disruption",
+    tags=["water-disruption"],
+    dependencies=[Depends(_require_local_request)],
+)
 _ROOT = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas")) / "water-disruption"
 _SOURCES = [
     SourceRecord("prasa", "PRASA", "utility", "T1", "Puerto Rico public water service", (), ()),
