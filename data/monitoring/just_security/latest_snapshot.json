@@ -15,21 +15,21 @@
     "receipts": [
       {
         "byte_count": 5447,
-        "content_sha256": "9f542117e3a289a6945efff8a0ee3f8f01a7b800b2636871ce87b63aac5fa7e6",
+        "content_sha256": "ba6269d206718da3a0389b379859001a19065881ac5ac70db6d0f95b22e51ecd",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-10-03T05:25:08Z",
+        "retrieved_at": "2026-10-03T11:46:54Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/feed/"
       },
       {
         "byte_count": 5516,
-        "content_sha256": "b425a3f42c46139dddaed9ac3ca3796a78c18a4a247ecd393b7942e2cc2ba7a4",
+        "content_sha256": "baff725d0a821b982cfd9cb607b788dfe308cbf106964854742c7410018f13f8",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-10-03T05:25:08Z",
+        "retrieved_at": "2026-10-03T11:46:54Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/tag/puerto-rico/feed/"
       }
@@ -49,12 +49,12 @@
     "parsed_count": 0,
     "receipts": [
       {
-        "byte_count": 5495,
-        "content_sha256": "328a4dd341fb847e30ce2dab1f890287ee6aed46fd4e90d6230b308428d7aa61",
+        "byte_count": 5516,
+        "content_sha256": "0296f8295d8be4222c03ca93763a30bc189137e5acd38f6f24dff8371edb0c84",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-10-03T05:25:08Z",
+        "retrieved_at": "2026-10-03T11:46:54Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/?s=puerto%20rico"
       }
@@ -67,48 +67,48 @@
   "living_page_failures": 4,
   "living_page_receipts": [
     {
-      "byte_count": 5480,
-      "content_sha256": "7c24e3c249b262f6964eaed44bd4adbfe0c53dcd623b489ce5bd43021db99eb9",
+      "byte_count": 5501,
+      "content_sha256": "9f0bbc8e4a7be70d5d665911c0a6c0307129e057763e36a8d610ccb16d19ca1c",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-10-03T05:25:08Z",
+      "retrieved_at": "2026-10-03T11:46:54Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/tag/puerto-rico/"
     },
     {
-      "byte_count": 5495,
-      "content_sha256": "dd4a29de90ee8ac513d06168eb96cae15bfc109624eada91f7637e144c854b53",
+      "byte_count": 5516,
+      "content_sha256": "03e1708c4e6fe12fb46e13e9707872d4d5cbe8c8fac7935bf1099c3426bae1e4",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-10-03T05:25:08Z",
+      "retrieved_at": "2026-10-03T11:46:54Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/?s=puerto%20rico"
     },
     {
-      "byte_count": 5615,
-      "content_sha256": "9c32dcbc88cf398b93e57d513bf2db452bfa8d0d1eb791941ecc0a798eb1881a",
+      "byte_count": 5637,
+      "content_sha256": "11e1e65ec281c0e0dae4ad19238ff37b9d01493f96063086aafdaee1684462c9",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-10-03T05:25:08Z",
+      "retrieved_at": "2026-10-03T11:46:54Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/124002/timeline-vessel-strikes-related-actions/"
     },
     {
-      "byte_count": 5688,
-      "content_sha256": "74d772803f98ddbaea40cd51fe6df2b836be423087ccabec04a7a3cafc104e7c",
+      "byte_count": 5709,
+      "content_sha256": "92ed0c62afb4678e44a11794bd6ac71dbd7b9616a4142c9df54a14d8fa4c6908",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-10-03T05:25:08Z",
+      "retrieved_at": "2026-10-03T11:46:54Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/107087/tracker-litigation-legal-challenges-trump-administration/"
     }
   ],
-  "recorded_at": "2026-10-03T05:25:08Z",
-  "run_id": "JUSTSEC-20261003T052508417379Z",
+  "recorded_at": "2026-10-03T11:46:54Z",
+  "run_id": "JUSTSEC-20261003T114654499601Z",
   "schema_version": "just_security_snapshot.v0.1",
   "source_id": "CENT-SRC-RSS-JUST-SECURITY",
   "tag_archive": {
@@ -119,12 +119,12 @@
     "parsed_count": 0,
     "receipts": [
       {
-        "byte_count": 5480,
-        "content_sha256": "d6c37742105e09875533b637abba4e9588436b7dd64261e27c1f5717652512af",
+        "byte_count": 5501,
+        "content_sha256": "3be9b503eb9951d3375e6560f34bfa09e0f75a77491ae4c57058bd22a7a2fe45",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-10-03T05:25:08Z",
+        "retrieved_at": "2026-10-03T11:46:54Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/tag/puerto-rico/"
       }
