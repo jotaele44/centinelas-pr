@@ -10,11 +10,11 @@
       "receipts": [
         {
           "byte_count": 5495,
-          "content_sha256": "3ca195c75c07dc7778afac5535104acc89f8b1c736ecd590e9cc4344bc65b366",
+          "content_sha256": "c9a8e9744d6bac8a62acd2778bcdc34b64b003c74b4430ff250604b67b656b91",
           "content_type": "text/html; charset=UTF-8",
           "error": "HTTP 403",
           "http_status": 403,
-          "retrieved_at": "2026-10-03T21:24:09Z",
+          "retrieved_at": "2026-10-04T06:00:51Z",
           "state": "BLOCKED",
           "url": "https://www.justsecurity.org/?s=puerto%20rico"
         }
@@ -33,11 +33,11 @@
       "receipts": [
         {
           "byte_count": 5480,
-          "content_sha256": "63fa8e8c4b4904518416c87dadc3bb1a055e024b12f49f8cdfcedebb0ca9f5a0",
+          "content_sha256": "ffcd36f05e51f63165008b03237df0271f32bc30b5b8a64c79cc752e4c0bd958",
           "content_type": "text/html; charset=UTF-8",
           "error": "HTTP 403",
           "http_status": 403,
-          "retrieved_at": "2026-10-03T21:24:09Z",
+          "retrieved_at": "2026-10-04T06:00:51Z",
           "state": "BLOCKED",
           "url": "https://www.justsecurity.org/tag/puerto-rico/"
         }
