@@ -1,0 +1,149 @@
+name: Centinelas recovery successor v2 — mobile containment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [recovery/floot-baseline-2026-09-30]
+    paths:
+      - ".recovery/centinelas-successor-v2/**"
+      - ".github/workflows/recovery-centinelas-successor-v2.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  successor-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+      - name: Reproduce exact recovered baseline
+        shell: bash
+        run: bash .recovery/centinelas-exact/run.sh
+      - name: Apply successor v1 and v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/recovered"
+          cp .recovery/centinelas-successor-v1/centinelasRecoveryInvariants.tsx "$ROOT/helpers/centinelasRecoveryInvariants.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasRecoveryInvariants.spec.tsx "$ROOT/helpers/centinelasRecoveryInvariants.spec.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasOperationGuard.tsx "$ROOT/helpers/centinelasOperationGuard.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasOperationGuard.spec.tsx "$ROOT/helpers/centinelasOperationGuard.spec.tsx"
+          cat .recovery/centinelas-successor-v2/mobile-contained-nav.css >> "$ROOT/components/AppShell.module.css"
+          cp .recovery/centinelas-successor-v2/centinelasResponsiveContainment.spec.tsx "$ROOT/helpers/centinelasResponsiveContainment.spec.tsx"
+          cd "$ROOT"
+          sha256sum components/AppShell.module.css helpers/centinelasResponsiveContainment.spec.tsx > successor-v2-overlay-hashes.txt
+      - name: Execute successor v2 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/recovered"
+          mapfile -t exec_specs < <(awk -F '\t' '$2=="EXECUTABLE"{print $1}' recovery-spec-classification.tsv)
+          exec_specs+=(helpers/centinelasRecoveryInvariants.spec.tsx helpers/centinelasOperationGuard.spec.tsx helpers/centinelasResponsiveContainment.spec.tsx)
+          set +e
+          npx vitest run --config recovery.vitest.config.mts --reporter=verbose "${exec_specs[@]}" 2>&1 | tee successor-v2-vitest.log
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "$status" > successor-v2-test-exit.txt
+          test "$status" = "0"
+          grep -q "35 passed" successor-v2-vitest.log
+      - name: Build and install browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/recovered"
+          npx vite build 2>&1 | tee successor-v2-build.log
+          NPM_CONFIG_LEGACY_PEER_DEPS=true npm install --save-dev --no-audit --no-fund --ignore-scripts playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Render desktop and narrow iPhone
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/recovered"
+          npx vite preview --host 127.0.0.1 --port 4173 > successor-v2-preview.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            sleep 1
+          done
+          cat > successor-v2-rendered-qa.mjs <<'EOF'
+          import { chromium } from "playwright";
+          import fs from "node:fs";
+          const targets = [
+            { name: "desktop-1440", width: 1440, height: 1000 },
+            { name: "iphone-393", width: 393, height: 852 },
+            { name: "iphone-430", width: 430, height: 932 },
+          ];
+          const browser = await chromium.launch({ headless: true });
+          const results = [];
+          for (const target of targets) {
+            const page = await browser.newPage({ viewport: { width: target.width, height: target.height } });
+            const consoleErrors = [];
+            page.on("console", msg => { if (msg.type() === "error") consoleErrors.push(msg.text()); });
+            page.on("pageerror", error => consoleErrors.push(String(error)));
+            const response = await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+            const metrics = await page.evaluate(() => ({
+              bodyTextLength: document.body.innerText.trim().length,
+              documentClientWidth: document.documentElement.clientWidth,
+              documentScrollWidth: document.documentElement.scrollWidth,
+              bodyClientWidth: document.body.clientWidth,
+              bodyScrollWidth: document.body.scrollWidth,
+            }));
+            const horizontalOverflow =
+              metrics.documentScrollWidth > metrics.documentClientWidth ||
+              metrics.bodyScrollWidth > metrics.bodyClientWidth;
+            await page.screenshot({ path: `successor-v2-${target.name}.png`, fullPage: true });
+            results.push({
+              ...target,
+              status: response?.status() ?? null,
+              finalUrl: page.url(),
+              bodyTextLength: metrics.bodyTextLength,
+              horizontalOverflow,
+              metrics,
+              consoleErrors,
+            });
+            await page.close();
+          }
+          await browser.close();
+          fs.writeFileSync("successor-v2-rendered-qa.json", JSON.stringify(results, null, 2));
+          const failed = results.some(r => r.status !== 200 || r.bodyTextLength < 50 || r.horizontalOverflow || r.consoleErrors.length);
+          if (failed) process.exit(1);
+          EOF
+          node successor-v2-rendered-qa.mjs
+          sha256sum successor-v2-rendered-qa.json successor-v2-desktop-1440.png successor-v2-iphone-393.png successor-v2-iphone-430.png > successor-v2-rendered-hashes.txt
+      - name: Freeze successor v2 receipt
+        if: always()
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/recovered"
+          {
+            echo "schema=centinelas-recovery-successor/v2"
+            echo "baseline_tests=21"
+            echo "successor_v1_tests=33"
+            echo "successor_v2_tests=35"
+            echo "mobile_nav=INTERNAL_HORIZONTAL_SCROLL_CONTAINED"
+            echo "document_horizontal_overflow=DENY"
+            echo "historical_database=UNAVAILABLE_NO_DUMP"
+            echo "state=PASS_IF_TEST_BUILD_RENDER_CLOSE"
+          } > successor-v2-receipt.txt
+      - name: Upload successor v2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: centinelas-recovery-successor-v2
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/recovered/successor-v2-overlay-hashes.txt
+            ${{ runner.temp }}/recovered/successor-v2-vitest.log
+            ${{ runner.temp }}/recovered/successor-v2-test-exit.txt
+            ${{ runner.temp }}/recovered/successor-v2-build.log
+            ${{ runner.temp }}/recovered/successor-v2-rendered-qa.json
+            ${{ runner.temp }}/recovered/successor-v2-rendered-hashes.txt
+            ${{ runner.temp }}/recovered/successor-v2-desktop-1440.png
+            ${{ runner.temp }}/recovered/successor-v2-iphone-393.png
+            ${{ runner.temp }}/recovered/successor-v2-iphone-430.png
+            ${{ runner.temp }}/recovered/successor-v2-receipt.txt
