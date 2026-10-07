@@ -25,10 +25,10 @@ jobs:
           set -euo pipefail
           bash .recovery/centinelas-exact/run.sh
           ROOT="$RUNNER_TEMP/recovered"
-cp .recovery/centinelas-successor-v1/centinelasRecoveryInvariants.tsx "$ROOT/helpers/centinelasRecoveryInvariants.tsx"
-cp .recovery/centinelas-successor-v1/centinelasRecoveryInvariants.spec.tsx "$ROOT/helpers/centinelasRecoveryInvariants.spec.tsx"
-cp .recovery/centinelas-successor-v1/centinelasOperationGuard.tsx "$ROOT/helpers/centinelasOperationGuard.tsx"
-cp .recovery/centinelas-successor-v1/centinelasOperationGuard.spec.tsx "$ROOT/helpers/centinelasOperationGuard.spec.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasRecoveryInvariants.tsx "$ROOT/helpers/centinelasRecoveryInvariants.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasRecoveryInvariants.spec.tsx "$ROOT/helpers/centinelasRecoveryInvariants.spec.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasOperationGuard.tsx "$ROOT/helpers/centinelasOperationGuard.tsx"
+          cp .recovery/centinelas-successor-v1/centinelasOperationGuard.spec.tsx "$ROOT/helpers/centinelasOperationGuard.spec.tsx"
           cd "$RUNNER_TEMP/recovered"
           npx vite build
           NPM_CONFIG_LEGACY_PEER_DEPS=true npm install --save-dev --no-audit --no-fund --ignore-scripts playwright@1.55.0
