@@ -1,0 +1,42 @@
+name: Centinelas recovered responsive source inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [recovery/floot-baseline-2026-09-30]
+    paths:
+      - ".github/workflows/recovery-centinelas-responsive-inventory.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  responsive-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+      - name: Reconstruct exact recovered tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash .recovery/centinelas-exact/run.sh
+      - name: Freeze responsive source evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/recovered"
+          mkdir -p "$RUNNER_TEMP/responsive-evidence"
+          cp "$ROOT/components/AppShell.module.css" "$RUNNER_TEMP/responsive-evidence/AppShell.module.css"
+          cp "$ROOT/components/AppShell.tsx" "$RUNNER_TEMP/responsive-evidence/AppShell.tsx"
+          cp "$ROOT/pages/_index.module.css" "$RUNNER_TEMP/responsive-evidence/index.module.css"
+          cp "$ROOT/pages/_index.tsx" "$RUNNER_TEMP/responsive-evidence/index.tsx"
+          sha256sum "$ROOT/components/AppShell.module.css" "$ROOT/components/AppShell.tsx" "$ROOT/pages/_index.module.css" "$ROOT/pages/_index.tsx" > "$RUNNER_TEMP/responsive-evidence/source-sha256.txt"
+      - name: Upload responsive source evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: centinelas-recovered-responsive-source
+          path: ${{ runner.temp }}/responsive-evidence
