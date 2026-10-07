@@ -77,10 +77,24 @@ def _load_dir(directory: Path) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     for path in sorted(directory.glob("*.json")):
         try:
-            items.append(json.loads(path.read_text(encoding="utf-8")))
+            if not path.resolve().is_relative_to(directory.resolve()):
+                continue
+            value = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(value, dict):
+                items.append(value)
         except (json.JSONDecodeError, OSError):
             continue
     return items
+
+
+def _record_path(directory: Path, record_id: str) -> Path:
+    """Keep ledger lookups inside their directory, including symlink targets."""
+    if not record_id or record_id in {".", ".."} or any(char in record_id for char in ("/", "\\", "\x00")):
+        raise HTTPException(status_code=422, detail="invalid_record_id")
+    path = directory / f"{record_id}.json"
+    if not path.resolve().is_relative_to(directory.resolve()):
+        raise HTTPException(status_code=422, detail="invalid_record_id")
+    return path
 
 
 def _dispatch_index() -> dict[str, dict[str, Any]]:
@@ -119,10 +133,10 @@ def items(domain: str | None = Query(default=None), dispatch_status: str | None 
 
 @app.get("/items/{item_id}")
 def item_detail(item_id: str) -> JSONResponse:
-    item = _load_json(CLASSIFIED_DIR / f"{item_id}.json")
+    item = _load_json(_record_path(CLASSIFIED_DIR, item_id))
     if item is None:
         raise HTTPException(status_code=404, detail=f"Item not found: {item_id}")
-    return JSONResponse({**item, "dispatch": _load_json(DISPATCHED_DIR / f"{item_id}.json")})
+    return JSONResponse({**item, "dispatch": _load_json(_record_path(DISPATCHED_DIR, item_id))})
 
 
 @app.get("/queue")
@@ -180,12 +194,12 @@ def create_handoff(item_id: str, req: HandoffRequest, request: Request) -> JSONR
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch_to_targets
-    raw = _load_json(CLASSIFIED_DIR / f"{item_id}.json")
+    raw = _load_json(_record_path(CLASSIFIED_DIR, item_id))
     if raw is None:
         raise HTTPException(status_code=404, detail=f"Item not found: {item_id}")
     targets = req.targets
     if req.retry_receipt_id:
-        previous = _load_json(HANDOFF_DIR / f"{req.retry_receipt_id}.json")
+        previous = _load_json(_record_path(HANDOFF_DIR, req.retry_receipt_id))
         if previous is None or previous.get("item_id") != item_id:
             raise HTTPException(status_code=404, detail="Retry receipt not found")
         failed = {attempt["target"] for attempt in previous.get("attempts", []) if attempt.get("status") == "failed"}
@@ -228,7 +242,7 @@ def run_pipeline(request: Request, req: RunRequest | None = None) -> JSONRespons
         labels, confidence, reasoning = do_classify(raw)
         item = ClassifiedItem(**raw.model_dump(), labels=labels, confidence=confidence, classifier_reasoning=reasoning)
         classified.append(item)
-        (CLASSIFIED_DIR / f"{item.item_id}.json").write_text(item.model_dump_json(indent=2))
+        _record_path(CLASSIFIED_DIR, item.item_id).write_text(item.model_dump_json(indent=2))
     breakdown: dict[str, int] = {}
     for item in classified:
         record = dispatch(item, dry_run=req.dry_run)

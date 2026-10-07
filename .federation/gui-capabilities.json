@@ -65,7 +65,8 @@
           "/sources",
           "/tabla",
           "/entidades",
-          "/entidad/:slug"
+          "/entidad/:slug",
+          "/dashboard"
         ],
         "e2e_routes": [
           "/",
@@ -87,7 +88,8 @@
           "frontend/src/pages/Sources.jsx",
           "frontend/src/pages/Entities.jsx",
           "frontend/src/pages/EntityDetail.jsx",
-          "frontend/src/components/ProgramTimeline.jsx"
+          "frontend/src/components/ProgramTimeline.jsx",
+          "frontend/src/pages/Dashboard.jsx"
         ],
         "discoverability": [
           "frontend/src/pages/Signals.jsx",
@@ -125,6 +127,9 @@
           "GET /handoffs",
           "POST /handoffs/{item_id}",
           "POST /run"
+        ],
+        "symbols": [
+          "server/backend/main.py:_record_path"
         ]
       },
       "frontend": {
@@ -154,7 +159,8 @@
           "tests/test_handoff_endpoint.py"
         ],
         "contract": [
-          "tests/test_gui_parity.py"
+          "tests/test_gui_parity.py",
+          "tests/test_review_ledger_boundaries.py"
         ],
         "e2e": [
           "frontend/tests/gui-parity.spec.mjs",

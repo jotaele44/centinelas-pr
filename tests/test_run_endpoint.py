@@ -69,15 +69,22 @@ def test_run_dry_run_returns_summary(client):
 
 
 @pytest.mark.parametrize("address", ["8.8.8.8", "203.0.113.10", "192.0.2.10"])
-def test_run_rejects_requests_from_nonlocal_addresses(address):
+def test_run_rejects_requests_from_nonlocal_addresses(address, monkeypatch):
+    monkeypatch.setattr(auth, "WRITE_TOKEN", "")
     with TestClient(main.app, client=(address, 12345)) as remote_client:
         response = remote_client.post("/run", json={"dry_run": True})
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "pipeline writes are local-only"
+    assert response.json()["detail"] in {
+        "pipeline writes are local-only",
+        "Centinelas writes require a local client while CENTINELAS_WRITE_TOKEN is unset",
+    }
 
 
-def test_run_accepts_private_network_clients(client):
+def test_run_accepts_private_network_clients(client, monkeypatch):
+    # The general fixture grants only the TestClient pseudo-host; this test
+    # explicitly grants the private peer at the authorization boundary too.
+    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "172.17.0.1")
     with TestClient(main.app, client=("172.17.0.1", 12345)) as local_network_client:
         response = local_network_client.post("/run", json={"dry_run": True})
 

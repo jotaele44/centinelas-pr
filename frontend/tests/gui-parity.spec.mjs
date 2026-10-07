@@ -94,11 +94,12 @@ test("water disruption console is reachable through the app route", async ({ pag
   await expect(consoleFrame.getByText("Shadow mode")).toBeVisible();
 });
 
-test("home program timeline filter, sort, and search controls work", async ({ page }) => {
+test("dashboard program timeline filter, sort, and search controls work", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.locator('a[href="/dashboard"]').first().click();
   const timeline = page.getByRole("region", { name: "Program timeline and upcoming work" });
   await expect(timeline).toBeVisible();
 
@@ -125,4 +126,12 @@ test("home program timeline filter, sort, and search controls work", async ({ pa
   await expect(empty).toBeHidden();
 
   expect(pageErrors).toEqual([]);
+});
+
+test("pipeline ledger lookup rejects path separators", async ({ page, request }) => {
+  await page.goto("/pipeline", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#root")).toBeVisible();
+  const response = await request.get("http://127.0.0.1:8000/items/..%5Coutside");
+  expect(response.status()).toBe(422);
+  expect((await response.json()).detail).toBe("invalid_record_id");
 });
