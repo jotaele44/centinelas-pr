@@ -1,0 +1,19 @@
+/* Centinelas recovery successor v2 — contain mobile horizontal navigation.
+   This augments the immutable recovered AppShell CSS; it does not replace the baseline. */
+.sidebar {
+  min-width: 0;
+}
+
+@media (max-width: 820px) {
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .nav {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
