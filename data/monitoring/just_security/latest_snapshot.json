@@ -1,0 +1,237 @@
+{
+  "certification": "PROVISIONAL",
+  "claim_boundary": "No search/tag manifestation is asserted to equal the complete Puerto Rico-relevant publisher universe.",
+  "expanded_searches": [],
+  "feed": {
+    "certification": "PROVISIONAL",
+    "counts": {
+      "detail_failures": 10,
+      "duplicate": 0,
+      "excluded": 0,
+      "relevant": 0,
+      "seen": 10,
+      "unresolved": 10
+    },
+    "receipts": [
+      {
+        "byte_count": 429048,
+        "content_sha256": "e3ce2e7d68deefeea7adbb34941005a3061a253cb34290310dc26e12b8d268c4",
+        "content_type": "application/rss+xml; charset=UTF-8",
+        "error": null,
+        "http_status": 200,
+        "retrieved_at": "2026-10-07T23:10:02Z",
+        "state": "PASS",
+        "url": "https://www.justsecurity.org/feed/"
+      },
+      {
+        "byte_count": 5600,
+        "content_sha256": "ae559dfa7e5d125ebdd8abe22643f1e68253a15f5afd957146ec53baad9dbb05",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:03Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159762/darfur-arms-embargo-united-nations/"
+      },
+      {
+        "byte_count": 5667,
+        "content_sha256": "b48783d567853ce84f1c5013d41d6453ceacfbd96486effec8e613578ba69e39",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:03Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159880/climate-liability-suncor-v-boulder-oral-arguments/"
+      },
+      {
+        "byte_count": 5615,
+        "content_sha256": "a4aa428bbbcb4f40fed002f26b19b1187405ea4758db8c9085ba96ba8bbbd84e",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:03Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159578/global-population-aging-us-preparedness/"
+      },
+      {
+        "byte_count": 5615,
+        "content_sha256": "72a14d1cbd16876a7b2bd039c6e8e0ec027f04ef62ef33ab7fccd11e5e30643f",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:03Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159538/no-emergency-exception-ban-troops-polls/"
+      },
+      {
+        "byte_count": 5582,
+        "content_sha256": "c15a8593f0abbac633c7ab02b7f4876530705c406068137a07b30058fcf0b7da",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:03Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159929/early-edition-october-7-2026/"
+      },
+      {
+        "byte_count": 5585,
+        "content_sha256": "1b45debf5d20fb566842204de82f4d917b40f5566c39279911d01ad8d8e70f58",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:03Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/84303/just-securitys-climate-archive/"
+      },
+      {
+        "byte_count": 5618,
+        "content_sha256": "d4256e40901e8cfb3f59a414b81082ce38b8b9d2235e720c5778003f6ca5cb56",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/82513/just-securitys-russia-ukraine-war-archive/"
+      },
+      {
+        "byte_count": 5661,
+        "content_sha256": "2f799bd8a74860bf3f4ed4b77bd1ba5bd312feab8b76b36b83926e32765980c6",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159740/another-confession-ruled-inadmissible-9-11-case/"
+      },
+      {
+        "byte_count": 5618,
+        "content_sha256": "38bfbed5f5561320fdcac2054e7e7a1ba04249cc0eaf5809b86e5d30a4016238",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159607/fear-of-chinas-ai-is-the-new-missile-gap/"
+      },
+      {
+        "byte_count": 5655,
+        "content_sha256": "95e4732e96f0e16a77121a60a89ac352fb185d0a41b400b34ea36a6b66db6d0e",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/159557/un-declaration-sea-level-rise-legal-certainty/"
+      },
+      {
+        "byte_count": 5516,
+        "content_sha256": "6079678999846a02a3be12eb8cba5c2d9d9890b8e6d3ab3d93b9c3ee229be3dd",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/tag/puerto-rico/feed/"
+      }
+    ],
+    "source_states": {
+      "MAIN_FEED": "PASS",
+      "PR_TAG_FEED": "BLOCKED"
+    }
+  },
+  "listing_article_failures": 0,
+  "listing_article_receipts": [],
+  "literal_search": {
+    "certification": "BLOCKED",
+    "declared_count": null,
+    "manifestation": "PUERTO_RICO_LITERAL_SEARCH",
+    "pages_checked": 1,
+    "parsed_count": 0,
+    "receipts": [
+      {
+        "byte_count": 5495,
+        "content_sha256": "1d583e4055ea421c6e44cadb859ac2071ed103ae3d9f7c97333f544a0803d443",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/?s=puerto%20rico"
+      }
+    ],
+    "residue": "pagination_loop:https://www.justsecurity.org/?s=puerto%20rico",
+    "result_records": [],
+    "result_urls": [],
+    "url": "https://www.justsecurity.org/?s=puerto%20rico"
+  },
+  "living_page_failures": 4,
+  "living_page_receipts": [
+    {
+      "byte_count": 5480,
+      "content_sha256": "e6b89a613cfd17658dea6159c2c2167084a2067b7b71f676ac4ffc6137cb21bf",
+      "content_type": "text/html; charset=UTF-8",
+      "error": "HTTP 403",
+      "http_status": 403,
+      "retrieved_at": "2026-10-07T23:10:04Z",
+      "state": "BLOCKED",
+      "url": "https://www.justsecurity.org/tag/puerto-rico/"
+    },
+    {
+      "byte_count": 5495,
+      "content_sha256": "0d17cb50900c6cd5c2faed4f9e249778a15d2937aca660fa087ded66d66b38c7",
+      "content_type": "text/html; charset=UTF-8",
+      "error": "HTTP 403",
+      "http_status": 403,
+      "retrieved_at": "2026-10-07T23:10:04Z",
+      "state": "BLOCKED",
+      "url": "https://www.justsecurity.org/?s=puerto%20rico"
+    },
+    {
+      "byte_count": 5615,
+      "content_sha256": "e19ea8f7c4445adcad2934a8ba3f1cb9045eb98a7f02afc116adad74bafa4c54",
+      "content_type": "text/html; charset=UTF-8",
+      "error": "HTTP 403",
+      "http_status": 403,
+      "retrieved_at": "2026-10-07T23:10:04Z",
+      "state": "BLOCKED",
+      "url": "https://www.justsecurity.org/124002/timeline-vessel-strikes-related-actions/"
+    },
+    {
+      "byte_count": 5688,
+      "content_sha256": "003519dfc6f7a7f79f681e2b2175fe9660964f1b55f4a030d8b3bbd74fc9eb78",
+      "content_type": "text/html; charset=UTF-8",
+      "error": "HTTP 403",
+      "http_status": 403,
+      "retrieved_at": "2026-10-07T23:10:04Z",
+      "state": "BLOCKED",
+      "url": "https://www.justsecurity.org/107087/tracker-litigation-legal-challenges-trump-administration/"
+    }
+  ],
+  "recorded_at": "2026-10-07T23:10:04Z",
+  "run_id": "JUSTSEC-20261007T231002737550Z",
+  "schema_version": "just_security_snapshot.v0.1",
+  "source_id": "CENT-SRC-RSS-JUST-SECURITY",
+  "tag_archive": {
+    "certification": "BLOCKED",
+    "declared_count": null,
+    "manifestation": "PUERTO_RICO_TAG_ARCHIVE",
+    "pages_checked": 1,
+    "parsed_count": 0,
+    "receipts": [
+      {
+        "byte_count": 5480,
+        "content_sha256": "8ac7bc0b965ac4809b78d9279206d8fb22c66cc53dd23b698aaf8f5d72dbbdea",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-10-07T23:10:04Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/tag/puerto-rico/"
+      }
+    ],
+    "residue": "pagination_loop:https://www.justsecurity.org/tag/puerto-rico/",
+    "result_records": [],
+    "result_urls": [],
+    "url": "https://www.justsecurity.org/tag/puerto-rico/"
+  }
+}

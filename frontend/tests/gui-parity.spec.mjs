@@ -93,3 +93,36 @@ test("water disruption console is reachable through the app route", async ({ pag
   ).toBeVisible();
   await expect(consoleFrame.getByText("Shadow mode")).toBeVisible();
 });
+
+test("home program timeline filter, sort, and search controls work", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const timeline = page.getByRole("region", { name: "Program timeline and upcoming work" });
+  await expect(timeline).toBeVisible();
+
+  const all = timeline.getByRole("button", { name: "ALL", exact: true });
+  const blocked = timeline.getByRole("button", { name: "BLOCKED", exact: true });
+  await expect(all).toHaveClass(/bg-primary\/10/);
+  await blocked.click();
+  await expect(blocked).toHaveClass(/bg-primary\/10/);
+  await expect(all).not.toHaveClass(/bg-primary\/10/);
+  await all.click();
+  await expect(all).toHaveClass(/bg-primary\/10/);
+
+  const sort = timeline.getByRole("button", { name: /Priority|Name/ });
+  await expect(sort).toHaveText(/Priority/);
+  await sort.click();
+  await expect(sort).toHaveText(/Name/);
+
+  const search = timeline.getByPlaceholder("Search activity, function, or state");
+  const empty = timeline.getByText("No timeline items match this filter.");
+  await expect(empty).toBeHidden();
+  await search.fill("zzz-no-such-timeline-item-zzz");
+  await expect(empty).toBeVisible();
+  await search.fill("");
+  await expect(empty).toBeHidden();
+
+  expect(pageErrors).toEqual([]);
+});

@@ -13,7 +13,7 @@ from typing import Any
 from pydantic import BaseModel, Field, model_validator
 
 
-class EvidenceTier(str, Enum):
+class FoiaEvidenceTier(str, Enum):
     T1 = "T1"
     T2 = "T2"
     T3 = "T3"
@@ -92,7 +92,7 @@ class FOIAFinding(BaseModel):
     places: list[str] = Field(default_factory=list)
     event_dates: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
-    evidence_tier: EvidenceTier
+    evidence_tier: FoiaEvidenceTier
     extraction_confidence: float = Field(ge=0, le=1)
     sensitive: bool = False
     entity_collision: bool = False

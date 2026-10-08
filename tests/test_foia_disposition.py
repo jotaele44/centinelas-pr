@@ -4,8 +4,8 @@ from centinelas.foia_disposition import (
     Destination,
     Disposition,
     DurableOutbox,
-    EvidenceTier,
     FOIADispositionEngine,
+    FoiaEvidenceTier,
     FOIAFinding,
     PageCitation,
     ReceiptStatus,
@@ -23,7 +23,7 @@ def finding(**overrides):
         "summary": "FAA aircraft surveillance contract records an unidentified object near Puerto Rico.",
         "citations": [PageCitation(document_id="document-1", page=4, excerpt="Relevant text")],
         "keywords": ["aircraft", "contract", "unidentified", "Puerto Rico"],
-        "evidence_tier": EvidenceTier.T1,
+        "evidence_tier": FoiaEvidenceTier.T1,
         "extraction_confidence": 0.95,
     }
     data.update(overrides)

@@ -33,7 +33,7 @@
       "frontend/src/App.jsx"
     ],
     "navigation_files": [
-      "frontend/src/components/Header.jsx"
+      "frontend/src/zip-design/AppShell.jsx"
     ],
     "implicit_routes": [
       {
@@ -77,6 +77,7 @@
         ],
         "components": [
           "frontend/src/api/appClient.js",
+          "frontend/src/components/ProgramTimeline.jsx",
           "frontend/src/pages/Home.jsx",
           "frontend/src/pages/Monitor.jsx",
           "frontend/src/pages/Signals.jsx",
@@ -85,13 +86,14 @@
           "frontend/src/pages/MatterDetail.jsx",
           "frontend/src/pages/Sources.jsx",
           "frontend/src/pages/Entities.jsx",
-          "frontend/src/pages/EntityDetail.jsx"
+          "frontend/src/pages/EntityDetail.jsx",
+          "frontend/src/components/ProgramTimeline.jsx"
         ],
         "discoverability": [
-          "frontend/src/components/Header.jsx",
           "frontend/src/pages/Signals.jsx",
           "frontend/src/pages/Matters.jsx",
-          "frontend/src/pages/Entities.jsx"
+          "frontend/src/pages/Entities.jsx",
+          "frontend/src/zip-design/AppShell.jsx"
         ]
       },
       "tests": {
@@ -100,7 +102,8 @@
           "frontend/src/lib/lifecycle.test.js"
         ],
         "e2e": [
-          "frontend/tests/gui-parity.spec.mjs"
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },
@@ -141,8 +144,8 @@
           "frontend/src/pages/Handoff.jsx"
         ],
         "discoverability": [
-          "frontend/src/components/Header.jsx",
-          "frontend/src/pages/Pipeline.jsx"
+          "frontend/src/pages/Pipeline.jsx",
+          "frontend/src/zip-design/AppShell.jsx"
         ]
       },
       "tests": {
@@ -154,7 +157,8 @@
           "tests/test_gui_parity.py"
         ],
         "e2e": [
-          "frontend/tests/gui-parity.spec.mjs"
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },
@@ -219,7 +223,7 @@
           "frontend/src/pages/WaterDisruption.jsx"
         ],
         "discoverability": [
-          "frontend/src/components/Header.jsx"
+          "frontend/src/zip-design/AppShell.jsx"
         ]
       },
       "tests": {
@@ -232,7 +236,8 @@
           "tests/test_water_disruption_api.py"
         ],
         "e2e": [
-          "frontend/tests/gui-parity.spec.mjs"
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },
@@ -559,6 +564,35 @@
           "tests/test_gui_parity.py",
           "tests/test_run_endpoint.py",
           "tests/test_handoff_endpoint.py"
+        ]
+      }
+    },
+    {
+      "id": "archive-design-navigation-preferences",
+      "classification": "client_only",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Theme and language are existing local preferences, now reachable through the archive-derived shell. No backend authority or data mutation.",
+      "frontend": {
+        "routes": [
+          "/"
+        ],
+        "e2e_routes": [
+          "/"
+        ],
+        "components": [
+          "frontend/src/zip-design/AppShell.jsx",
+          "frontend/src/lib/ThemeContext.jsx",
+          "frontend/src/lib/LanguageContext.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/zip-design/AppShell.jsx"
+        ]
+      },
+      "tests": {
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },

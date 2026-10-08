@@ -229,6 +229,15 @@ def build_streams(
             "created_at": created,
             "extracted_at": now,
         }
+        # The Hub's correlate_observations() joins observations to sibling
+        # entities on row["location"]["municipality"] (thehub-pr's
+        # src/hub/correlate.py); without this nested key the municipality
+        # co-location join never fires for these rows. Centinelas signals
+        # carry no lat/lon, so only municipality is populated here (the
+        # first, if a signal names more than one).
+        obs_municipalities = sig.get("municipalities") or []
+        if obs_municipalities:
+            observations[obs_id]["location"] = {"municipality": obs_municipalities[0]}
 
     return {
         "sources": list(sources.values()),

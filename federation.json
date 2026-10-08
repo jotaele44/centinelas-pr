@@ -35,7 +35,7 @@
     "SAFETY_COMPLIANCE": "aguayluz-pr"
   },
   "hub_callable_commands": {
-    "setup": "python -m pip install uv && uv pip install --system -e .[dev]",
+    "setup": "python -m pip install uv && uv pip install --system -e .[dev] httpx -r server/backend/requirements.txt",
     "validate_grid": "python3 scripts/validate_pr_grid.py --require-sha",
     "test_suite": "python -m pytest -q",
     "export_canonical": "python3 scripts/federation_export.py --ledger data/signals/live_signals.jsonl --mode production",
@@ -67,7 +67,8 @@
       "universal intake engine (src/centinelas) merged: ingest/classify/route across six domains with hub_parent logging",
       "real (non-synthetic) signal intake and canonical production export are implemented",
       "production export rejects synthetic, empty, malformed, future-dated, and stale ledgers",
-      "2026-08-25 live RSS refresh wrote 100 real non-synthetic signals; production export passed and thehub-pr validate-package returned VALID (classifier ran in keyword fallback mode because ANTHROPIC_API_KEY was unavailable)"
+      "2026-08-25 live RSS refresh wrote 100 real non-synthetic signals; production export passed and thehub-pr validate-package returned VALID (classifier ran in keyword fallback mode because ANTHROPIC_API_KEY was unavailable)",
+      "2026-09-24 the 2026-08-25 ledger had aged past the 168h production freshness window (699.9h), so export_canonical failed closed; ledger refreshed (100 real non-synthetic signals, production export passed, thehub-pr validate-package VALID) and .github/workflows/signal-ledger-refresh.yml now re-polls daily and commits only after the production export accepts the ledger"
     ],
     "blocking_conditions": []
   },

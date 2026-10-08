@@ -7,12 +7,13 @@ pipeline runs.
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -31,11 +32,37 @@ HANDOFF_DIR = DATA_DIR / "handoffs"
 app = FastAPI(title="Centinelas-PR Intake API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",
+        *[origin.strip() for origin in os.environ.get("ALLOWED_ORIGINS", "").split(",") if origin.strip()]],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 app.include_router(water_disruption_router)
+
+_LOCAL_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in (
+        "127.0.0.0/8",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16",
+        "::1/128",
+        "fc00::/7",
+        "fe80::/10",
+    )
+)
+
+
+def _require_local_request(request: Request) -> None:
+    host = request.client.host if request.client else ""
+    try:
+        ip = ipaddress.ip_address(host)
+        allowed = any(network.version == ip.version and ip in network for network in _LOCAL_NETWORKS)
+    except ValueError:
+        allowed = host in {"localhost", "testclient"}
+    if not allowed:
+        raise HTTPException(status_code=403, detail="pipeline writes are local-only")
 
 
 def _load_json(path: Path, default: Any = None) -> Any:
@@ -146,7 +173,8 @@ def handoffs(limit: int = Query(default=500, ge=1, le=5000)) -> JSONResponse:
 
 
 @app.post("/handoffs/{item_id}", dependencies=WRITE_GUARD)
-def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
+def create_handoff(item_id: str, req: HandoffRequest, request: Request) -> JSONResponse:
+    _require_local_request(request)
     from datetime import datetime, timezone
 
     from centinelas.models import ClassifiedItem
@@ -177,7 +205,8 @@ def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
 
 
 @app.post("/run", dependencies=WRITE_GUARD)
-def run_pipeline(req: RunRequest | None = None) -> JSONResponse:
+def run_pipeline(request: Request, req: RunRequest | None = None) -> JSONResponse:
+    _require_local_request(request)
     from centinelas.classify.classifier import classify as do_classify
     from centinelas.ingest.federal_register import poll_federal_register
     from centinelas.ingest.rss import poll_all
