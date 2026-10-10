@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 import Monitor from './pages/Monitor';
 import Signals from './pages/Signals';
 import Matters from './pages/Matters';
@@ -27,6 +28,7 @@ const AppRoutes = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/monitor" element={<Monitor />} />
         <Route path="/signals" element={<Signals />} />
         <Route path="/matters" element={<Matters />} />

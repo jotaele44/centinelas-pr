@@ -1,0 +1,46 @@
+/* Shared interaction safeguards for the archive-derived surfaces. */
+.zip-surface { background: var(--zip-background); color: var(--zip-foreground); }
+.zip-surface :is(a,button,input,select):focus-visible { outline: 2px solid var(--zip-primary); outline-offset: 3px; }
+.zip-surface { min-width: 0; }
+.zip-surface main { min-width: 0; }
+@media (prefers-reduced-motion: reduce) { .zip-surface *, .zip-surface *::before, .zip-surface *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; } }
+
+/* Explicit conversion from ZIP full colors to the existing HSL-channel contract. */
+:root {
+ --background: 42  24%  96%;
+ --foreground: 214  38%  13%;
+ --card: 42  34%  98%;
+ --card-foreground: 214  38%  13%;
+ --primary: 214  44%  18%;
+ --primary-foreground: 42  24%  96%;
+ --secondary: 211  18%  87%;
+ --secondary-foreground: 214  38%  16%;
+ --muted: 40  15%  89%;
+ --muted-foreground: 214  14%  42%;
+ --accent: 35  92%  48%;
+ --accent-foreground: 214  45%  12%;
+ --border: 214  16%  77%;
+ --popover: 42  34%  99%;
+ --popover-foreground: 214  38%  13%;
+ --input: 214  16%  77%;
+ --ring: 214  44%  18%;
+}
+:root.dark, :root[data-theme="dark"] {
+ --background: 216  38%  8%;
+ --foreground: 42  22%  92%;
+ --card: 216  28%  12%;
+ --card-foreground: 42  22%  92%;
+ --primary: 42  24%  92%;
+ --primary-foreground: 216  42%  9%;
+ --secondary: 215  20%  18%;
+ --secondary-foreground: 42  22%  92%;
+ --muted: 215  18%  16%;
+ --muted-foreground: 213  12%  65%;
+ --accent: 35  92%  55%;
+ --accent-foreground: 216  45%  9%;
+ --border: 214  16%  25%;
+ --popover: 216  26%  13%;
+ --popover-foreground: 42  22%  92%;
+ --input: 214  16%  25%;
+ --ring: 42  24%  92%;
+}

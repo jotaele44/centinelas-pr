@@ -52,7 +52,8 @@
       "WRITE_GUARD",
       "_WRITE_GUARD",
       "_require_key",
-      "dependencies\\s*="
+      "dependencies\\s*=",
+      "_require_local_request"
     ],
     "explicit_public_mutations": []
   },
