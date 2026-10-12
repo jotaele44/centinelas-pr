@@ -37,11 +37,6 @@ def client(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setattr(auth, "WRITE_TOKEN", "")
-    # Starlette/httpx TestClient host labels are implementation details and have
-    # changed across releases. Bind this fixture to the intended local principal
-    # rather than silently inheriting a pseudo-host such as "testclient".
-    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "testclient")
-
     data_dir = tmp_path / ".centinelas"
     monkeypatch.setattr(main, "DATA_DIR", data_dir)
     monkeypatch.setattr(main, "QUEUE_DIR", data_dir / "queue")
@@ -52,7 +47,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr("centinelas.ingest.federal_register.poll_federal_register", list)
     monkeypatch.setattr("centinelas.ingest.web.poll_scrape_sources", list)
 
-    with TestClient(main.app) as c:
+    with TestClient(main.app, client=("127.0.0.1", 12345)) as c:
         yield c
 
 
@@ -74,7 +69,7 @@ def test_run_rejects_requests_from_nonlocal_addresses(address):
         response = remote_client.post("/run", json={"dry_run": True})
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "pipeline writes are local-only"
+    assert response.json()["detail"] == auth.LOCAL_WRITE_REQUIRED_DETAIL
 
 
 def test_run_accepts_private_network_clients(client):
@@ -95,7 +90,6 @@ def test_run_persists_classified_and_items_endpoint_reflects_it(client):
 def test_run_dispatch_records_land_in_server_data_dir(tmp_path, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setattr(auth, "WRITE_TOKEN", "")
-    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "testclient")
     cwd = tmp_path / "elsewhere"
     cwd.mkdir()
     monkeypatch.chdir(cwd)
@@ -108,7 +102,7 @@ def test_run_dispatch_records_land_in_server_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr("centinelas.ingest.federal_register.poll_federal_register", list)
     monkeypatch.setattr("centinelas.ingest.web.poll_scrape_sources", list)
 
-    with TestClient(main.app) as c:
+    with TestClient(main.app, client=("127.0.0.1", 12345)) as c:
         r = c.post("/run", json={"dry_run": True})
         assert r.status_code == 200, r.text
         assert (data_dir / "dispatched" / "run-ep-002.json").exists()

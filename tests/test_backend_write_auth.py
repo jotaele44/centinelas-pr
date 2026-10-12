@@ -26,21 +26,39 @@ def _request(host: str, authorization: str | None = None) -> Request:
     )
 
 
-def test_unconfigured_write_guard_allows_loopback(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    "address",
+    [
+        "localhost",
+        "127.0.0.1",
+        "10.42.0.5",
+        "172.17.0.1",
+        "192.168.10.5",
+        "169.254.10.5",
+        "::1",
+        "fc00::1",
+        "fe80::1",
+    ],
+)
+def test_unconfigured_write_guard_allows_explicit_local_networks(
+    monkeypatch: pytest.MonkeyPatch, address: str
+) -> None:
     monkeypatch.setattr(auth, "WRITE_TOKEN", "")
-    auth.require_write_access(_request("127.0.0.1"))
+    auth.require_write_access(_request(address))
 
 
-def test_unconfigured_write_guard_allows_private_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(auth, "WRITE_TOKEN", "")
-    auth.require_write_access(_request("192.168.10.5"))
-
-
-def test_unconfigured_write_guard_refuses_public_address(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    "address",
+    ["", "testclient", "example.com", "8.8.8.8", "192.0.2.10", "198.51.100.10", "203.0.113.10"],
+)
+def test_unconfigured_write_guard_refuses_nonlocal_addresses(
+    monkeypatch: pytest.MonkeyPatch, address: str
+) -> None:
     monkeypatch.setattr(auth, "WRITE_TOKEN", "")
     with pytest.raises(HTTPException) as exc:
-        auth.require_write_access(_request("8.8.8.8"))
+        auth.require_write_access(_request(address))
     assert exc.value.status_code == 403
+    assert exc.value.detail == auth.LOCAL_WRITE_REQUIRED_DETAIL
 
 
 def test_configured_write_guard_requires_exact_bearer(monkeypatch: pytest.MonkeyPatch) -> None:
