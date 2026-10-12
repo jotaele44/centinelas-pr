@@ -134,3 +134,19 @@ def test_run_rejects_bad_bearer_when_token_mode_enabled(monkeypatch):
             headers={"Authorization": "Bearer wrong-token"},
         )
     assert r.status_code == 401
+
+
+def test_item_route_id_cannot_escape_record_directory(tmp_path, monkeypatch):
+    data_dir = tmp_path / ".centinelas"
+    classified_dir = data_dir / "classified"
+    classified_dir.mkdir(parents=True)
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"item_id":"outside"}', encoding="utf-8")
+    monkeypatch.setattr(main, "CLASSIFIED_DIR", classified_dir)
+    monkeypatch.setattr(main, "DISPATCHED_DIR", data_dir / "dispatched")
+
+    with TestClient(main.app, client=("127.0.0.1", 12345)) as test_client:
+        response = test_client.get("/items/..%5Coutside")
+
+    assert response.status_code == 404
+    assert outside.read_text(encoding="utf-8") == '{"item_id":"outside"}'

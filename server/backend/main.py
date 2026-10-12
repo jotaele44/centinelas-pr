@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -44,11 +45,24 @@ def _load_json(path: Path, default: Any = None) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _load_record(directory: Path, record_id: str, default: Any = None) -> Any:
+    if not directory.exists():
+        return default
+    root = directory.resolve()
+    for path in directory.glob("*.json"):
+        if path.stem == record_id and path.resolve().parent == root:
+            return _load_json(path, default)
+    return default
+
+
 def _load_dir(directory: Path) -> list[dict[str, Any]]:
     if not directory.exists():
         return []
     items: list[dict[str, Any]] = []
+    root = directory.resolve()
     for path in sorted(directory.glob("*.json")):
+        if path.resolve().parent != root:
+            continue
         try:
             items.append(json.loads(path.read_text(encoding="utf-8")))
         except (json.JSONDecodeError, OSError):
@@ -92,10 +106,10 @@ def items(domain: str | None = Query(default=None), dispatch_status: str | None 
 
 @app.get("/items/{item_id}")
 def item_detail(item_id: str) -> JSONResponse:
-    item = _load_json(CLASSIFIED_DIR / f"{item_id}.json")
+    item = _load_record(CLASSIFIED_DIR, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail=f"Item not found: {item_id}")
-    return JSONResponse({**item, "dispatch": _load_json(DISPATCHED_DIR / f"{item_id}.json")})
+    return JSONResponse({**item, "dispatch": _load_record(DISPATCHED_DIR, item_id)})
 
 
 @app.get("/queue")
@@ -152,12 +166,12 @@ def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
     from centinelas.models import ClassifiedItem
     from centinelas.route import dispatch as dispatch_mod
     from centinelas.route.dispatch import dispatch_to_targets
-    raw = _load_json(CLASSIFIED_DIR / f"{item_id}.json")
+    raw = _load_record(CLASSIFIED_DIR, item_id)
     if raw is None:
         raise HTTPException(status_code=404, detail=f"Item not found: {item_id}")
     targets = req.targets
     if req.retry_receipt_id:
-        previous = _load_json(HANDOFF_DIR / f"{req.retry_receipt_id}.json")
+        previous = _load_record(HANDOFF_DIR, req.retry_receipt_id)
         if previous is None or previous.get("item_id") != item_id:
             raise HTTPException(status_code=404, detail="Retry receipt not found")
         failed = {attempt["target"] for attempt in previous.get("attempts", []) if attempt.get("status") == "failed"}
@@ -169,7 +183,7 @@ def create_handoff(item_id: str, req: HandoffRequest) -> JSONResponse:
         receipt = dispatch_to_targets(ClassifiedItem.model_validate(raw), targets, dry_run=req.dry_run)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    receipt["receipt_id"] = f"{item_id}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}"
+    receipt["receipt_id"] = f"handoff-{uuid.uuid4().hex}"
     receipt["created_at"] = datetime.now(timezone.utc).isoformat()
     HANDOFF_DIR.mkdir(parents=True, exist_ok=True)
     (HANDOFF_DIR / f"{receipt['receipt_id']}.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
