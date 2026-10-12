@@ -62,9 +62,9 @@ python3 scripts/federation_export.py --ledger data/signals/live_signals.jsonl --
 pytest -q                                            # tests
 ```
 
-`ruff` is configured in `pyproject.toml` and installed via the `dev` extra, but
-`validate.yml` does not currently gate on it — run `ruff check .` locally if you
-want lint feedback, just don't expect it to block CI.
+`ruff` is configured in `pyproject.toml` and installed via the `dev` extra, and
+the `lint` job in `validate.yml` gates on `ruff check .` — run it locally before
+you push.
 
 The `centinelas` CLI (`ingest`, `classify`, `route`, `run`, `status`) drives the
 live pipeline; live RSS intake needs internet and LLM classification needs an

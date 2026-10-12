@@ -87,6 +87,7 @@
       "frontend": {
         "routes": [
           "/",
+          "/dashboard",
           "/monitor",
           "/signals",
           "/matters",
@@ -98,6 +99,7 @@
         ],
         "e2e_routes": [
           "/",
+          "/dashboard",
           "/monitor",
           "/signals",
           "/matters",
@@ -108,6 +110,7 @@
           "frontend/src/api/appClient.js",
           "frontend/src/components/ProgramTimeline.jsx",
           "frontend/src/pages/Home.jsx",
+          "frontend/src/pages/Dashboard.jsx",
           "frontend/src/pages/Monitor.jsx",
           "frontend/src/pages/Signals.jsx",
           "frontend/src/pages/SignalsTable.jsx",
