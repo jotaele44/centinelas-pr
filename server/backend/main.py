@@ -20,8 +20,8 @@ from pydantic import BaseModel
 
 from centinelas.ingest.rss import _load_sources
 from server.backend.auth import WRITE_GUARD
-from server.backend.water_disruption_api import router as water_disruption_router
 from server.backend.grid_v2_api import router as grid_v2_router
+from server.backend.water_disruption_api import router as water_disruption_router
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", str(REPO_ROOT / ".centinelas")))
