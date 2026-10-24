@@ -627,6 +627,33 @@
           "frontend/tests/zip-design.spec.mjs"
         ]
       }
+    },
+    {
+      "id": "offline-app-shell-v1",
+      "classification": "client_only",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Production build precaches only shipped assets; passive shell status in existing layout. Data and sync readiness remain independent. No server mutations cached or queued.",
+      "frontend": {
+        "files": [
+          "frontend/src/zip-design/AppShell.jsx",
+          "frontend/offline/offline-client.js"
+        ],
+        "routes": [
+          "/"
+        ],
+        "components": [
+          "frontend/src/zip-design/AppShell.jsx"
+        ],
+        "e2e_routes": [
+          "/"
+        ]
+      },
+      "tests": {
+        "e2e": [
+          "frontend/offline/test-offline.mjs"
+        ]
+      }
     }
   ],
   "exceptions": []
