@@ -80,6 +80,7 @@ export const AppShell = ({ children }) => {
             <button type="button" className={styles.languageToggle} onClick={toggleTheme} aria-label={t("Change theme", "Cambiar tema")}>{theme === "dark" ? "☀" : "☾"}</button>
           </div>
         </header>
+        <div data-offline-status-host style={{ padding: "2px 12px", flexShrink: 0 }} />
         <main className={styles.main}>{children}</main>
       </div>
     </div>
