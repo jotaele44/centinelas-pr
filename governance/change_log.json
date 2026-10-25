@@ -34,6 +34,18 @@
         ".federation/docs-sync.json",
         "governance/change_log.json"
       ]
+    },
+    {
+      "date": "2026-10-25",
+      "summary": "The four workflows that commit straight to main (el-yunque-access-monitor, handoff-ack, just-security-monitor, signal-ledger-refresh) now check out with secrets.CENTINELAS_BOT_TOKEN, falling back to the Actions token. Since 2026-10-20 main requires docs-sync, which a push from the Actions token can never satisfy, so their pushes were rejected (handoff-ack failed in every run; el-yunque-access-monitor hid the rejection behind `|| echo`, which is removed). A token owned by a repository administrator is covered by the ruleset's admin bypass. The runtime effect needs the secret to be created; README notes it. No dependency, contract or schema change.",
+      "files": [
+        ".github/workflows/el-yunque-access-monitor.yml",
+        ".github/workflows/handoff-ack.yml",
+        ".github/workflows/just-security-monitor.yml",
+        ".github/workflows/signal-ledger-refresh.yml",
+        "README.md",
+        "governance/change_log.json"
+      ]
     }
   ]
 }

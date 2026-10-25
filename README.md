@@ -71,6 +71,16 @@ live pipeline; live RSS intake needs internet and LLM classification needs an
 `ANTHROPIC_API_KEY`. For the double-click desktop app, see
 [`desktop/README.md`](desktop/README.md).
 
+### Scheduled data refreshes
+
+Four workflows commit straight to `main`: `el-yunque-access-monitor.yml`, `handoff-ack.yml`,
+`just-security-monitor.yml` and `signal-ledger-refresh.yml`. `main` requires the `docs-sync`
+check, which a push can never satisfy, so they push with the repository secret
+`CENTINELAS_BOT_TOKEN`: a fine-grained token for this repository, owned by an administrator,
+with *Contents: write*, which the ruleset's admin bypass covers. Without the secret they fall
+back to the Actions token and the push is rejected. The `foia-canary-*` workflows push to a
+canary branch and are not affected.
+
 ## Core concept: Public Matter
 
 A public matter is any public-interest item relevant to Puerto Rico that may evolve over time.
