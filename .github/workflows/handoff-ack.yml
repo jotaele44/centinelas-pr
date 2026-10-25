@@ -16,6 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # This job commits straight to main. The ruleset there requires docs-sync, which
+          # a push from the default Actions token can never satisfy; a push from an
+          # admin-owned token is covered by the ruleset's admin bypass. Until the secret
+          # exists this falls back to the Actions token, i.e. to the old behaviour.
+          token: ${{ secrets.CENTINELAS_BOT_TOKEN || github.token }}
       - env:
           CENTINELAS_ACK: ${{ toJSON(github.event.client_payload) }}
         run: python3 scripts/record_handoff_ack.py
