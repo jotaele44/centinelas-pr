@@ -94,11 +94,15 @@ test("water disruption console is reachable through the app route", async ({ pag
   await expect(consoleFrame.getByText("Shadow mode")).toBeVisible();
 });
 
-test("home program timeline filter, sort, and search controls work", async ({ page }) => {
+test("dashboard program timeline filter, sort, and search controls work", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
+  const dashboardLink = page.locator('a[href="/dashboard"]').first();
+  await expect(dashboardLink).toBeVisible();
+  await dashboardLink.click();
+  await expect(page).toHaveURL(/\/dashboard\/?$/);
   const timeline = page.getByRole("region", { name: "Program timeline and upcoming work" });
   await expect(timeline).toBeVisible();
 
