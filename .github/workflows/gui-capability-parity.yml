@@ -81,7 +81,9 @@ jobs:
           if [[ -f server/backend/requirements.txt ]]; then
             python -m pip install -r server/backend/requirements.txt
           else
-            python -m pip install -e ".[server]"
+            # uv honours [tool.uv.sources]; plain pip cannot resolve those packages.
+            command -v uv >/dev/null 2>&1 || python -m pip install -q uv
+            uv pip install --system -e ".[server]"
           fi
       - run: npm ci
       - run: npx playwright install --with-deps chromium
