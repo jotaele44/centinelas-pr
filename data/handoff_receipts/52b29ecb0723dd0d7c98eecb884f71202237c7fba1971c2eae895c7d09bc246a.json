@@ -1,0 +1,7 @@
+{
+  "duplicate": false,
+  "idempotency_key": "centinelas:usfs-elyunque-e6c7714aba7661bc2dea:b8f7548b0c33285d:aguayluz-pr:153800b8d0b325c3fd1c",
+  "item_id": "usfs-elyunque-e6c7714aba7661bc2dea:b8f7548b0c33285d",
+  "status": "acknowledged",
+  "target": "aguayluz-pr"
+}
