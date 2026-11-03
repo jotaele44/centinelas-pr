@@ -38,7 +38,10 @@ jobs:
         env:
           # Optional: without it the classifier falls back to keyword rules.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python scripts/build_signal_ledger.py --limit 100
+        # All three intake layers (RSS, Federal Register, listing scrapers) with a
+        # per-source cap, so the DRNA/OGPe/JP/EPA permit sources are not crowded
+        # out by high-volume news feeds polled earlier.
+        run: python scripts/build_signal_ledger.py --per-source 10 --limit 300
       - name: Gate on the production export
         run: >-
           python scripts/federation_export.py
@@ -46,6 +49,7 @@ jobs:
           --mode production
           --out "$RUNNER_TEMP/centinelas-export"
       - name: Persist refreshed ledger
+        id: persist
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -54,7 +58,25 @@ jobs:
           git add data/signals/live_signals.jsonl
           if git diff --cached --quiet; then
             echo "No signal ledger changes to persist."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "data: refresh live signal ledger [skip ci]"
             scripts/push_to_main.sh signal-ledger-refresh
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           fi
+      # thehub-pr's federation-ingest.yml listens for centinelas-export; until now
+      # nothing sent it, so a refreshed ledger waited for the Hub's next run.
+      - name: Notify Hub
+        if: ${{ steps.persist.outputs.pushed == 'true' }}
+        env:
+          TOKEN: ${{ secrets.FEDERATION_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::No FEDERATION_DISPATCH_TOKEN; the Hub picks the ledger up on its daily run."
+            exit 0
+          fi
+          body=$(jq -nc --arg sha "$(git rev-parse HEAD)" \
+            '{event_type:"centinelas-export",client_payload:{producer:"centinelas-pr",ledger_commit:$sha}}')
+          curl -sSf -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/jotaele44/thehub-pr/dispatches \
+            -d "$body"

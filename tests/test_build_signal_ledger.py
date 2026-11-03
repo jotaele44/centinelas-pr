@@ -68,3 +68,54 @@ def test_every_engine_feed_has_a_registry_row():
     for name, source_id in source_name_to_id().items():
         assert source_id in registry_ids, f"feed {name!r} missing from source_registry.csv"
         assert source_id == feed_source_id(name)
+
+
+# --- intake layers and per-source cap ---------------------------------------
+
+
+def _raw(item_id: str, source_name: str):
+    from centinelas.models import RawItem
+
+    now = datetime.now(timezone.utc)
+    return RawItem(
+        item_id=item_id,
+        source_url=f"https://example.org/{item_id}",
+        source_name=source_name,
+        title=f"item {item_id}",
+        body_text="",
+        published_at=now,
+        captured_at=now,
+        evidence_tier="T2",
+    )
+
+
+def test_cap_items_keeps_late_sources_under_a_total_cap():
+    import build_signal_ledger as bsl
+
+    # 50 items from a noisy feed polled first, then 3 DRNA permit notices last:
+    # the old first-N cut kept none of the DRNA items.
+    items = [_raw(f"n{i}", "Noisy Feed") for i in range(50)]
+    items += [_raw(f"d{i}", "DRNA Aviso Ambiental") for i in range(3)]
+    capped = bsl.cap_items(items, per_source=10, total=12)
+    sources = [it.source_name for it in capped]
+    assert len(capped) == 12
+    assert sources.count("DRNA Aviso Ambiental") == 3
+    assert sources.count("Noisy Feed") == 9
+
+
+def test_cap_items_without_caps_interleaves_sources():
+    import build_signal_ledger as bsl
+
+    items = [_raw("a1", "A"), _raw("a2", "A"), _raw("b1", "B")]
+    assert [it.item_id for it in bsl.cap_items(items)] == ["a1", "b1", "a2"]
+
+
+def test_collect_raw_items_merges_all_layers(monkeypatch):
+    import build_signal_ledger as bsl
+
+    monkeypatch.setattr(bsl.rss, "poll_all", lambda: [_raw("r1", "RSS"), _raw("dup", "RSS")])
+    monkeypatch.setattr(bsl, "poll_federal_register", lambda: [_raw("f1", "Federal Register")])
+    monkeypatch.setattr(bsl, "poll_scrape_sources", lambda: [_raw("dup", "OGPe"), _raw("s1", "OGPe")])
+    ids = [it.item_id for it in bsl.collect_raw_items()]
+    assert ids == ["r1", "dup", "f1", "s1"]
+    assert [it.item_id for it in bsl.collect_raw_items(rss_only=True)] == ["r1", "dup"]
