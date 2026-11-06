@@ -627,6 +627,27 @@
           "frontend/tests/zip-design.spec.mjs"
         ]
       }
+    },
+    {
+      "id": "signal-ledger-intake-bounding",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Helpers of the scheduled signal-ledger-refresh job: merge the RSS, Federal Register and listing-scraper intake layers and bound the ledger with per-source and round-robin caps. They run unattended in CI and only decide which raw items enter data/signals/live_signals.jsonl; the resulting signals are what users inspect, so there is no separate operator workflow to surface.",
+      "analysis": {
+        "files": [
+          "scripts/build_signal_ledger.py"
+        ],
+        "symbols": [
+          "scripts/build_signal_ledger.py:cap_items",
+          "scripts/build_signal_ledger.py:collect_raw_items"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_build_signal_ledger.py"
+        ]
+      }
     }
   ],
   "exceptions": []
