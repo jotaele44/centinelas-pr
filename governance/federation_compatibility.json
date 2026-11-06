@@ -17,12 +17,12 @@
   "spatial_generation": "federation-spatial-index/1",
   "spatial_note": "Compatible with federation spatial binding v0.2. While Spiderweb's transform is PROVISIONAL, this repository forbids exact Cell_ID ground claims and preserves full content-addressed uncertainty Cell_Set membership; identity remains CANDIDATE_NOT_IDENTITY.",
   "drift_reconciliation": {
-    "cause": "thehub-pr docs/FEDERATION_MAX_AUDIT_2026-09-24.md findings F3 and F7",
-    "cause_change": "hub_callable_commands.setup now also installs httpx and server/backend/requirements.txt (the declared test_suite failed collection without fastapi); federation_readiness_gate.resolved_conditions records the 2026-09-24 ledger refresh and the scheduled signal-ledger-refresh workflow",
-    "reviewed_at": "2026-09-24",
-    "reviewed_head": "e4508291e092b0a43802eedd1f300d899127864e",
+    "cause": "contamination-chain Phase 0 (centinelas-pr PR #190): federation.json intake_doctrine text",
+    "cause_change": "intake_doctrine now describes the three intake layers (RSS/Atom incl. DRNA permit feeds, Federal Register API, OGPe/JP/ASG/EPA Region 2 listing scrapers) that scripts/build_signal_ledger.py polls under a per-source cap",
+    "reviewed_at": "2026-11-06",
+    "reviewed_head": "505be03d9436d8a33cd1d1fad4e55748ec4cbd89",
     "finding": "COMPATIBLE",
-    "rationale": "hub-callable command and readiness-note metadata only; export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; all seven attested contracts remain valid"
+    "rationale": "descriptive manifest text only; hub_callable_commands, export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; the ledger rows still validate against signal.schema.json and the production export gate; all seven attested contracts remain valid"
   },
   "spatial_binding_v0_2": {
     "authority_commit": "bb8463c8d8cf4b54486674ee9b665ce3d2502e8b",

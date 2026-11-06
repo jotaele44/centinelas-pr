@@ -6,14 +6,19 @@ its output (`ClassifiedItem`) never reached `data/signals/` — the federation
 export could only read the synthetic seed ledger, so `--mode production` was
 permanently refused. This bridge closes that gap:
 
-    poll_all() -> classify() -> signal rows -> data/signals/live_signals.jsonl
+    RSS + Federal Register + listing scrapers -> per-source cap -> classify()
+        -> signal rows -> data/signals/live_signals.jsonl
 
 Every emitted row is a REAL public signal (`is_synthetic: false`) captured
-from the configured feeds at run time. These are global topical early signals
-(stage `raw_observation`, one matter per item); the Puerto Rico
-pre-officialization source families in the registry (legislative calendars,
-municipal agendas, procurement notices, ...) remain the named future intake —
-this bridge does not claim them.
+from the configured sources at run time (stage `raw_observation`, one matter
+per item). The ledger polls the same three intake layers as `centinelas run`:
+RSS/Atom feeds (including the DRNA permit and notice categories), the Federal
+Register API (USACE/EPA, Puerto Rico) and the listing scrapers (OGPe, JP, ASG,
+EPA Region 2 NPDES). A per-source cap keeps any single high-volume feed from
+crowding the Puerto Rico permit sources out of a bounded ledger: the old
+first-N cut over RSS alone dropped every DRNA feed, because they are listed
+last in sources.yaml. Other pre-officialization families in the registry
+(legislative calendars, municipal agendas, ...) remain future intake.
 
 Mapping (ClassifiedItem -> signal.schema.json):
   signal_id        CENT-SIG-<item_id>
@@ -28,7 +33,8 @@ Mapping (ClassifiedItem -> signal.schema.json):
 
 Usage:
     python scripts/build_signal_ledger.py                 # live poll + classify
-    python scripts/build_signal_ledger.py --out <path> --limit 100
+    python scripts/build_signal_ledger.py --per-source 10 --limit 300
+    python scripts/build_signal_ledger.py --rss-only --limit 100   # previous behaviour
 """
 from __future__ import annotations
 
@@ -43,6 +49,8 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from centinelas.classify.classifier import classify  # noqa: E402
 from centinelas.ingest import rss  # noqa: E402
+from centinelas.ingest.federal_register import poll_federal_register  # noqa: E402
+from centinelas.ingest.web import poll_scrape_sources  # noqa: E402
 from centinelas.models import ClassifiedItem  # noqa: E402
 
 DEFAULT_OUT = REPO_ROOT / "data" / "signals" / "live_signals.jsonl"
@@ -86,12 +94,56 @@ def item_to_signal(item: ClassifiedItem, source_ids: dict[str, str]) -> dict:
     }
 
 
-def build_ledger(limit: int | None = None) -> list[dict]:
-    raw_items = rss.poll_all()
+def collect_raw_items(rss_only: bool = False) -> list:
+    """Poll every intake layer and merge, deduping by item_id in first-seen order."""
+    layers = [rss.poll_all()]
+    if not rss_only:
+        layers += [poll_federal_register(), poll_scrape_sources()]
+    seen: set[str] = set()
+    merged: list = []
+    for items in layers:
+        for item in items:
+            if item.item_id not in seen:
+                seen.add(item.item_id)
+                merged.append(item)
+    return merged
+
+
+def cap_items(items: list, per_source: int | None = None, total: int | None = None) -> list:
+    """Bound the ledger without letting one source crowd out the rest.
+
+    Keeps at most ``per_source`` items from each source (in poll order), then
+    takes items round-robin across sources until ``total`` is reached, so a
+    total cap removes items from the largest sources first rather than dropping
+    whole sources that happen to be polled last.
+    """
+    by_source: dict[str, list] = {}
+    for item in items:
+        bucket = by_source.setdefault(item.source_name, [])
+        if per_source is None or len(bucket) < per_source:
+            bucket.append(item)
+    queues = list(by_source.values())
+    out: list = []
+    depth = 0
+    while any(depth < len(q) for q in queues):
+        for q in queues:
+            if depth < len(q):
+                if total is not None and len(out) >= total:
+                    return out
+                out.append(q[depth])
+        depth += 1
+    return out
+
+
+def build_ledger(
+    limit: int | None = None,
+    per_source: int | None = None,
+    rss_only: bool = False,
+) -> list[dict]:
+    raw_items = collect_raw_items(rss_only=rss_only)
     if not raw_items:
         raise SystemExit("FAIL — no feeds returned items; refusing to write an empty live ledger")
-    if limit:
-        raw_items = raw_items[:limit]
+    raw_items = cap_items(raw_items, per_source=per_source, total=limit or None)
     source_ids = source_name_to_id()
     signals = []
     for raw in raw_items:
@@ -107,10 +159,13 @@ def build_ledger(limit: int | None = None) -> list[dict]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Materialize real signals into the federation ledger.")
     ap.add_argument("--out", default=str(DEFAULT_OUT))
-    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--limit", type=int, default=None, help="total row cap")
+    ap.add_argument("--per-source", type=int, default=None, help="row cap per source")
+    ap.add_argument("--rss-only", action="store_true",
+                    help="poll RSS feeds only (skip Federal Register and scrapers)")
     args = ap.parse_args(argv)
 
-    signals = build_ledger(limit=args.limit)
+    signals = build_ledger(limit=args.limit, per_source=args.per_source, rss_only=args.rss_only)
     synthetic = [s for s in signals if s.get("is_synthetic")]
     if synthetic:
         raise SystemExit(f"bridge bug: {len(synthetic)} rows flagged synthetic")

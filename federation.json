@@ -22,7 +22,7 @@
     "engine_sources": "src/centinelas/ingest/sources.yaml",
     "seed_ledger": "data/signals/example_signals.jsonl",
     "spatial_grid": "registry/spatial/pr_grid_full_cell_index_saturated.csv",
-    "intake_doctrine": "scripts/build_signal_ledger.py bridges live RSS intake (real, non-synthetic) into the signal ledger; the synthetic seed remains only as a contract fixture. PR pre-officialization source families remain future intake.",
+    "intake_doctrine": "scripts/build_signal_ledger.py bridges live intake (real, non-synthetic) from all three layers - RSS/Atom feeds including the DRNA permit and notice categories, the Federal Register API, and the OGPe/JP/ASG/EPA Region 2 listing scrapers - into the signal ledger under a per-source cap; the synthetic seed remains only as a contract fixture. Other PR pre-officialization source families (legislative calendars, municipal agendas) remain future intake.",
     "live_ledger": "data/signals/live_signals.jsonl"
   },
   "domain_routing": {
