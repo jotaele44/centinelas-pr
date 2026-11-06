@@ -1,0 +1,15 @@
+{
+  "browser-final.log": "450c46ef3b169aa3418be8d57517c47ed0affa6cfe495d88b6d81010d484e247",
+  "browser-receipt.json": "b1b25ed7aabc6cc1098c0fe2680e61fd0bd2e4c2257c7ceeb4bf34511dc28363",
+  "build-final.log": "b9d2d2ca3a3f6e58c64934000f209ea46babae97a3f6484a0f4160a92516a201",
+  "build-manifest.json": "c936185091edc7b986be61236f13c0053090c922bf53187221f4ef3b9d9b0522",
+  "candidate-receipt.json": "df7c7e86fc4086af0a8e15fdbec05d4c5f6bcbf846c3c5abbd23e24b29940dd8",
+  "gui.log": "081817e34e74d019ad65d3f7261c2514fbf74dbf9540abcd0cd97c6828fe4598",
+  "lint.log": "ceabb4b249a4967495773c4f13a89b34e210766a8e69c2c48c2acc6c9325877b",
+  "offline-1440.png": "a159df9938e0f2e58f6eca798ccf61ee3fb393e88570eb846df274e9ddbee90c",
+  "offline-393.png": "7b2d2a8be24a3a86c95e61cf0a9d81bda9396f4ff4af0d2b7135d7bfbf80e73f",
+  "offline-430.png": "6844d0af62a5ebbfe2435516bc7366cf9d15bb6da2a7868f0b9cb73f260f7ded",
+  "parity.log": "57c3780fac52814c5473df46a63e4cbca788d206a549e4a4133fa9c75c009402",
+  "tests.log": "3d77c93d6d0b1426aaa1d9b9317a1a08b887521b689fd6f90862617acc5e9fdb",
+  "typecheck.log": "17fe0ebcf63922b7bf06efaff56e96a0f880a97313d0d133f0bddd3756049115"
+}

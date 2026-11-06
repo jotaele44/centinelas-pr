@@ -1,0 +1,13 @@
+{
+  "browser-receipt.json": "6a59c030ce9ef8ebae83bcf01ca9548aeb5d85018efbaeac05fe0d02b9df2a41",
+  "build-manifest.json": "4d1047eb3f97934f061b0836cf3d483fd1992f2d044826fb8d10f7602cf9160c",
+  "candidate-receipt.json": "e254fe6ce2204ab23ed2c5aa8c51ae8fd476525fb4b47ea8c2c7d783d510ed66",
+  "centinelas-pr-offline-browser-closure.log": "450c46ef3b169aa3418be8d57517c47ed0affa6cfe495d88b6d81010d484e247",
+  "centinelas-pr-offline-browser-closure2.log": "450c46ef3b169aa3418be8d57517c47ed0affa6cfe495d88b6d81010d484e247",
+  "centinelas-pr-offline-build-closure.log": "328fd051b63ae037f9371cb5ef7acd7ea4ae35de4f50a8c520cd979d6148cd3c",
+  "centinelas-pr-offline-build-closure2.log": "fe1d6d82734ec762f144b3fecd6d8a783017b5e350fd8c5a23b0ec6421ea1baf",
+  "centinelas-pr-offline-docs.log": "eb7949cfbaa2a974b7cc799c2a37b23674e7cf74f038086890b57b10f6d93d54",
+  "offline-1440.png": "7f6bf09551a4b123fc3a916b5dcf1eba7aa076622aeab13e991c67d6dafe3643",
+  "offline-393.png": "7b2d2a8be24a3a86c95e61cf0a9d81bda9396f4ff4af0d2b7135d7bfbf80e73f",
+  "offline-430.png": "95996d9efc37a0eaa1e536eef781aaba08619e66241857a17d6638681be66cd0"
+}
