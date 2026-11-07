@@ -504,7 +504,9 @@ deployable sense:
 **Standalone scheduled monitors**
 - `tools/el_yunque_access_monitor.py`
 - `tools/just_security_monitor.py`
-- `data/monitoring/el_yunque/current.json`, `health.json`, `transitions.jsonl`
+- `data/monitoring/el_yunque/current.json`, `health.json`, `state_repairs.jsonl`
+- `data/monitoring/el_yunque/transitions/YYYY-MM.jsonl` (monthly append-only segments, each capped at 50 MiB before write)
+- `data/monitoring/el_yunque/transitions/legacy/` (frozen 2026-09-20 to 2026-11-02 log and its `MANIFEST.json`)
 - `data/monitoring/just_security/state.json`, `events.jsonl`, `runs.jsonl`, `latest_snapshot.json`
 - `.github/workflows/el-yunque-access-monitor.yml`
 - `.github/workflows/just-security-monitor.yml`
