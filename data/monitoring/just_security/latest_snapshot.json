@@ -14,122 +14,122 @@
     },
     "receipts": [
       {
-        "byte_count": 223618,
-        "content_sha256": "61f37ef72fd7d92108dbb887c9be25aa937997371d195a110a57a8879969556f",
+        "byte_count": 277467,
+        "content_sha256": "6c0eaa50a5e88d9572323d879d79bb6e81058e64d7df0023941698ad5d2f98d5",
         "content_type": "application/rss+xml; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-10T00:39:28Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/feed/"
       },
       {
         "byte_count": 5641,
-        "content_sha256": "6ce05265c22b0c1dc8eec8bed2ef5493e4dfbce789852f39b7060713a36d2daa",
+        "content_sha256": "cccf563b894f01f57751a953c32d316262d1ad1e9e8dfdddfc96961881db2739",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163847/judge-accepts-navy-officer-cole-bombing-case/"
       },
       {
         "byte_count": 5641,
-        "content_sha256": "48a927616e8fae28cc88166bcd6430e3c5ca0bdd0edead4856390cd1ff9faf10",
+        "content_sha256": "b171d46014cfbcc900db5ea732afe49e618c53f4757db49b081bec0132719724",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163273/deference-insurrection-act-statutory-history/"
       },
       {
         "byte_count": 5635,
-        "content_sha256": "4410950257e121ddf3b767cbc7847857c039ae49f31c42fefd3f6823dc761523",
+        "content_sha256": "8fd7a775a5cf23438047a392dfd18e811f8f92c51c0175136fdd73ff018f4654",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163694/department-of-defense-should-keep-its-name/"
       },
       {
         "byte_count": 5577,
-        "content_sha256": "7b181181b232aa2eff9b627139e5b2230a00dbbc9f0a4b415d585167edf1b157",
+        "content_sha256": "3cf0530d77ad498830fbc1edb7f02dc0258b232ebfa5bcfaac0efe5f0c1a4d27",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163609/climate-experts-watching-cop31/"
       },
       {
         "byte_count": 5574,
-        "content_sha256": "7d84a9a3c75adb5c94fd0a7db7d75d8a0d7ff69f75b3786eb54d7d66fdd57014",
+        "content_sha256": "e8a304b6f037974e293ca59059220a89cae5636c062a121122b5fa4e494dfe83",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163775/early-edition-november-9-2026/"
       },
       {
-        "byte_count": 5641,
-        "content_sha256": "1378eccc62bf8ad732887219a6174c545e920dfb2dd17f1fb0ccdcfd9432d762",
+        "byte_count": 5574,
+        "content_sha256": "3054ea6782aef3ae54aeca646fbf2631b185c62ca2d362c1b3173907201f2401",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:17Z",
+        "state": "BLOCKED",
+        "url": "https://www.justsecurity.org/84303/just-securitys-climate-archive/"
+      },
+      {
+        "byte_count": 5641,
+        "content_sha256": "2442fba8f50e4c169dafc32cd1adb21dcba3d7bc69621c61d1aef4d1e034883d",
+        "content_type": "text/html; charset=UTF-8",
+        "error": "HTTP 403",
+        "http_status": 403,
+        "retrieved_at": "2026-11-10T06:30:17Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163228/ifc-secret-agreements-local-communities-dark/"
       },
       {
         "byte_count": 5656,
-        "content_sha256": "367ac91f5990928313f0494de424916c45902132cb939346ea3bad8b2742ce20",
+        "content_sha256": "dccd7fd85c0e19d51432b1e649442dcb77e1cc26440517dcc9a75e30b59dfbac",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:18Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/162701/non-policy-officers-civil-military-responsibility/"
       },
       {
         "byte_count": 5659,
-        "content_sha256": "db770ffdd7aba2313a520df9422e0cf7c2f47a5d7a1ccdd8e845e11765566094",
+        "content_sha256": "6420b89afd1e05c9233d5d059b6f6d1fbe2c9e0337789ebdf8c4372166a843d6",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:29Z",
+        "retrieved_at": "2026-11-10T06:30:18Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163594/after-midterms-what-expect-congressional-oversight/"
       },
       {
         "byte_count": 5574,
-        "content_sha256": "d153d9a05ce0915ab66749f7101e112ab987801d1dabee4510c0351c1e98da7d",
+        "content_sha256": "a1100e64b045403c1c33936f33f1ec42049a5d29a4dad337467947a94a93f63d",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:30Z",
+        "retrieved_at": "2026-11-10T06:30:18Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163619/early-edition-november-6-2026/"
       },
       {
-        "byte_count": 5577,
-        "content_sha256": "ca9f6ed02dc47c6d8030456ccd2cf0d9b0b9cb91334c1659ffa7d075a3f5abc0",
-        "content_type": "text/html; charset=UTF-8",
-        "error": "HTTP 403",
-        "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:30Z",
-        "state": "BLOCKED",
-        "url": "https://www.justsecurity.org/161750/french-perspective-trump-cyber/"
-      },
-      {
         "byte_count": 5505,
-        "content_sha256": "fc1900d3dffd6ea439ed2d401718079f2a37dfb680958730b1c4b9262576d17c",
+        "content_sha256": "3ebc52aa270d2bda39e10ef4356cd91c6ef1d6945cbfaabb537cfb9dd9a0c7e6",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:30Z",
+        "retrieved_at": "2026-11-10T06:30:18Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/tag/puerto-rico/feed/"
       }
@@ -149,12 +149,12 @@
     "parsed_count": 0,
     "receipts": [
       {
-        "byte_count": 5505,
-        "content_sha256": "68643b89bf376abea0cf90e98d7b1a070a9588ac97c0dd1aa8721d9927d65617",
+        "byte_count": 5484,
+        "content_sha256": "0485d4386b8344e2120f021b5cff34e0209e5ea0dd412488041dd1b4ff107e2f",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:30Z",
+        "retrieved_at": "2026-11-10T06:30:18Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/?s=puerto%20rico"
       }
@@ -167,48 +167,48 @@
   "living_page_failures": 4,
   "living_page_receipts": [
     {
-      "byte_count": 5490,
-      "content_sha256": "e319ff7ddd7b272fa600a3aa2223935d95d45e062e3093a9888548f14cf12b3e",
+      "byte_count": 5469,
+      "content_sha256": "0a442533af5f449044264c79d652e1e1ab9ca18ff4c113b53d12b0a6cbd5c71e",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-10T00:39:30Z",
+      "retrieved_at": "2026-11-10T06:30:18Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/tag/puerto-rico/"
     },
     {
-      "byte_count": 5505,
-      "content_sha256": "fcab43b962a482d2263865a6aa0f5f05a7d90df2a6cc8721152ef4af0d1ecda4",
+      "byte_count": 5484,
+      "content_sha256": "720aba20fba05625568a30e1f0553d646c3308139f16cb63a0724a180dfbb04f",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-10T00:39:30Z",
+      "retrieved_at": "2026-11-10T06:30:18Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/?s=puerto%20rico"
     },
     {
-      "byte_count": 5626,
-      "content_sha256": "99e8ea286fce02c082a1f63ee823013a513d4cccf6c386f09fc07a609759e610",
+      "byte_count": 5604,
+      "content_sha256": "ead7b3fc1d95bd405c42d463c5939f9f65d31a744994f217c5e878ee661b124b",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-10T00:39:30Z",
+      "retrieved_at": "2026-11-10T06:30:18Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/124002/timeline-vessel-strikes-related-actions/"
     },
     {
       "byte_count": 5698,
-      "content_sha256": "e72eec159aa421e8526b5f6cbb9f1a7e5e4cad73667a59fdd9224fbe49365bcc",
+      "content_sha256": "00d25225da57d323b4fd94c32fe8a327892fd331b80ba75cfaae552d7183641e",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-10T00:39:30Z",
+      "retrieved_at": "2026-11-10T06:30:18Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/107087/tracker-litigation-legal-challenges-trump-administration/"
     }
   ],
-  "recorded_at": "2026-11-10T00:39:30Z",
-  "run_id": "JUSTSEC-20261110T003928761409Z",
+  "recorded_at": "2026-11-10T06:30:18Z",
+  "run_id": "JUSTSEC-20261110T063017099049Z",
   "schema_version": "just_security_snapshot.v0.1",
   "source_id": "CENT-SRC-RSS-JUST-SECURITY",
   "tag_archive": {
@@ -219,12 +219,12 @@
     "parsed_count": 0,
     "receipts": [
       {
-        "byte_count": 5490,
-        "content_sha256": "e1b3e0c1da222a455f992f782ca7d9d87a201065df53443de52ec798ea35d880",
+        "byte_count": 5469,
+        "content_sha256": "09bc29bfbe418b5846fc4b033748882837ccfea382505e33c0c6d63eaaf94fba",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-10T00:39:30Z",
+        "retrieved_at": "2026-11-10T06:30:18Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/tag/puerto-rico/"
       }
