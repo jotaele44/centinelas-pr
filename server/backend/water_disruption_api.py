@@ -5,6 +5,7 @@ import ipaddress
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -79,6 +80,48 @@ class DeliverRequest(BaseModel):
     consumer_url: str
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _approved_consumer_target(raw_origin: str) -> str:
+    """Require an exact operator-configured HTTPS origin before any network I/O."""
+    configured = os.environ.get("CENTINELAS_WATER_DISRUPTION_CONSUMER_ORIGINS", "")
+    approved = {value.strip() for value in configured.split(",") if value.strip()}
+    try:
+        parsed = urllib.parse.urlsplit(raw_origin)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail="consumer_origin_not_authorized") from exc
+    try:
+        ipaddress.ip_address(hostname or "")
+        is_ip = True
+    except ValueError:
+        is_ip = False
+    if (
+        not approved or raw_origin not in approved
+        or parsed.scheme != "https"
+        or not hostname or is_ip
+        or parsed.username is not None or parsed.password is not None
+        or parsed.path not in ("", "/")
+        or parsed.query or parsed.fragment
+        or not all(c.isalnum() or c in ".-" for c in hostname)
+        or hostname.lower() in {"localhost", "localhost.localdomain"}
+        or hostname.lower().endswith((".localhost", ".local"))
+        or port not in (None, 443)
+    ):
+        raise HTTPException(status_code=503, detail="consumer_origin_not_authorized")
+    return raw_origin.rstrip("/") + "/water-disruption/intake"
+
+
+def _deliver_to_approved_target(req: urllib.request.Request):
+    """No environment proxies or HTTP redirects on a sensitive delivery route."""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+    return opener.open(req, timeout=10)
+
+
 @router.get("/console", response_class=HTMLResponse)
 def console() -> str:
     return """<!doctype html><html><head><meta charset='utf-8'><title>Water Disruption Shadow Queue</title><style>body{font-family:system-ui;margin:2rem;max-width:1100px}nav a{margin-right:1rem}.badge{padding:.2rem .5rem;border:1px solid #999;border-radius:99px}pre{white-space:pre-wrap;background:#f4f4f4;padding:1rem}</style></head><body><h1>Water Disruption Shadow Queue</h1><p><span class='badge'>Shadow mode</span> No live alerts or production promotion.</p><nav><a href='/water-disruption/sources'>Sources</a><a href='/water-disruption/runs'>Run ledger</a><a href='/water-disruption/candidates'>Candidates</a><a href='/water-disruption/outbox'>Outbox</a></nav><h2>Map and evidence view</h2><p>Candidate records expose municipality, asset hint, evidence IDs, source IDs, confidence components, and deterministic deduplication keys. Unresolved geometry remains explicit and is never fabricated.</p></body></html>"""
@@ -139,11 +182,11 @@ def deliver(outbox_id: str, request: DeliverRequest, idempotency_key: str = Head
     prior = service.store.by_key("delivery_receipts", "idempotency_key", idempotency_key)
     if prior:
         return prior
-    target = request.consumer_url.rstrip("/") + "/water-disruption/intake"
+    target = _approved_consumer_target(request.consumer_url)
     payload = json.dumps(envelope["payload"]).encode("utf-8")
     req = urllib.request.Request(target, data=payload, method="POST", headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key, "X-Shadow-Mode": "true"})
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with _deliver_to_approved_target(req) as response:
             body = json.loads(response.read().decode("utf-8"))
             receipt = {"receipt_id": stable_id("DRC", {"outbox_id": outbox_id, "idempotency_key": idempotency_key}), "outbox_id": outbox_id, "idempotency_key": idempotency_key, "status": "acknowledged", "consumer_status": response.status, "consumer_receipt": body, "shadow_mode": True}
             service.store.append("delivery_receipts", receipt)
