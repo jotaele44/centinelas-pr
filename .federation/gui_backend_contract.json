@@ -1,7 +1,7 @@
 {
   "schema_version": "federation.gui-backend-contract/1.0",
   "repository": "Jotaele44/centinelas-pr",
-  "source_commit": "7a44d39e28a5d867178d5ac2643bb00803a10683",
+  "source_commit": "177e9d62040d3ba209c1b008eed84d73c70b7685",
   "policy": {
     "require_zero_material_residue": true,
     "dimensions": [
@@ -100,7 +100,8 @@
   "certification": {
     "state": "OPEN",
     "material_residue": [
-      "Privilege boundary closed for persistent/outbound mutations; lifecycle semantics, runtime parity, provenance and device evidence remain open."
+      "Privilege boundary closed for persistent/outbound mutations; lifecycle semantics, runtime parity, provenance and device evidence remain open.",
+      "Water-disruption outbound consumer origin now restricted by candidate 177e9d6; independent SSRF/DNS-rebinding review, real delivery integration, local/private transport design and rendered-device parity remain OPEN. No release certification."
     ]
   }
 }
