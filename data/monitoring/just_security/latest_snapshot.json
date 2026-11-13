@@ -19,117 +19,117 @@
         "content_type": "application/rss+xml; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-13T06:30:36Z",
+        "retrieved_at": "2026-11-13T12:27:26Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/feed/"
       },
       {
         "byte_count": 5674,
-        "content_sha256": "421ae09d2d3a43ad274cdcf39a4d4aa6dce65376575c39fbd39d05bc48c4f26c",
+        "content_sha256": "2d77b85f2f9e4a089070fd33dec12d9c0d80d031272a3017b02c957ae76c0cca",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/164307/gaza-call-to-action-joint-statement-humanitarian-access/"
       },
       {
         "byte_count": 5592,
-        "content_sha256": "940c12cb01fda3084626c0094112330c765ef64c9e6001771f397ac9cbd54cdc",
+        "content_sha256": "976767462c8ee23ca6cb369a70060eb1b8b7735e5a6b6e9e69c181373d1abdca",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/164302/massie-articles-impeachment-hegseth/"
       },
       {
         "byte_count": 5662,
-        "content_sha256": "aacc293185fd02e60105828690c28679f414c3b982194a0ab01260407805ce6e",
+        "content_sha256": "58d4f806febb8dc872c1efb3dbc95788245c9b1d4eb468fc9e6db28843415b22",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163967/hegseth-ideological-transformation-damaged-military/"
       },
       {
         "byte_count": 5607,
-        "content_sha256": "6c8fa4a711183ce8a83263721dc0316c45b510252e6b156ad83933fa65987dfe",
+        "content_sha256": "88678720b9136a8ec66b6195a8b5361e51396b52895ea02939dc9c4819575d66",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/162692/widespread-corruption-getting-money-back/"
       },
       {
         "byte_count": 5644,
-        "content_sha256": "2c86e691b8be2ccdee5552480697d1c9458878c0a654fcf7d96d43157ce22817",
+        "content_sha256": "cf7639fe411408341e731b199cc53b8ac08cf67a2496326321cc1bb3aa5e17d0",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/112792/trump-administrations-state-power-big-picture/"
       },
       {
         "byte_count": 5577,
-        "content_sha256": "60588d475078801eca2eccd79a1737ef4114da2d64fd594a4cd16bb7c502045e",
+        "content_sha256": "d3c26e96ee41a06255089b7ba525c51f7cd9ce7c0fc08d2d460d70f73180cd7c",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/164226/early-edition-november-12-2026/"
       },
       {
         "byte_count": 5607,
-        "content_sha256": "c6dac00192444dc745928a1aa02a296675fb9a615e38e41586c2e1dd473ddbf4",
+        "content_sha256": "b5c29e3baeb5a0a11e86bc37ef27f0ecb6d8ac47e75a388d83ee608d21734cb8",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/82513/just-securitys-russia-ukraine-war-archive/"
       },
       {
         "byte_count": 5604,
-        "content_sha256": "288737109e27c44a25c3260599aa8644dc32e918d75f1b726d3322bae46cb2da",
+        "content_sha256": "13575e2567585a4a219908b0c252e1673a0db9caa7bb0527211980cbc988dc61",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:37Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163904/veterans-day-restore-trust-institutions/"
       },
       {
         "byte_count": 5641,
-        "content_sha256": "f01d5abbe79e3b894277e62e7e556c49cdc74daf759477246defe2bd35f34365",
+        "content_sha256": "26bb1127643e099d150a9db1c437a025210c365e2c52e7d45a1bc884101e5a98",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:38Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163835/democratic-congress-likely-do-foreign-policy/"
       },
       {
         "byte_count": 5595,
-        "content_sha256": "9ade0dcfe12474b51be62fc3448351b449c5c25062d910d21ccc83efb333be2b",
+        "content_sha256": "f6e43341a0cab49123e7601cb74213cc620076d44a2af84713bb101e24dc4b95",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:38Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/163602/climate-crisis-rule-of-law-emergency/"
       },
       {
         "byte_count": 5505,
-        "content_sha256": "31efe099d885ca0433f3b3b868e00de6d3a953cdfc52498ac7b092fd4d8ba011",
+        "content_sha256": "d076b42a093d7619f292321fb7ae3d5f8bb11a5359b6238039e549e8e51226b9",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:38Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/tag/puerto-rico/feed/"
       }
@@ -150,11 +150,11 @@
     "receipts": [
       {
         "byte_count": 5484,
-        "content_sha256": "62db971408d59480ea4313d6ec3c406f9e7b2eff5b812cd8782bcf09472c55ad",
+        "content_sha256": "93090e6fd67d5ce66c21e5e553d255a9ffe0aa5049cf27839da88b4fc2587fce",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:38Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/?s=puerto%20rico"
       }
@@ -168,47 +168,47 @@
   "living_page_receipts": [
     {
       "byte_count": 5469,
-      "content_sha256": "b0535b8b27b8598be00a21e7f95f513d3d50be218383e893b7108da8394c54fa",
+      "content_sha256": "f933ef8522ff935961fdc9b12ece41011524b98c9107abd75f9fde29db7054c9",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-13T06:30:38Z",
+      "retrieved_at": "2026-11-13T12:27:28Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/tag/puerto-rico/"
     },
     {
       "byte_count": 5484,
-      "content_sha256": "f17b89b4ab7b4263bbdd70eb6ad3a8ad1465e216afaa4595e3186156339d2cfa",
+      "content_sha256": "4f4d3454eddef416d674c6c251f22b3b78748457a733d5201070c3ac80eca5e9",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-13T06:30:38Z",
+      "retrieved_at": "2026-11-13T12:27:28Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/?s=puerto%20rico"
     },
     {
       "byte_count": 5604,
-      "content_sha256": "51292fff9e91f48cbe06006bc952c1ee21dca1ee1e6ca446e0742aae7c4ccbe4",
+      "content_sha256": "9a9204432736e5337dd4d850d7b68a29dfefb893273d70235944330211ffc1a1",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-13T06:30:38Z",
+      "retrieved_at": "2026-11-13T12:27:28Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/124002/timeline-vessel-strikes-related-actions/"
     },
     {
       "byte_count": 5677,
-      "content_sha256": "730eb4deac8bd6abc466de17c58722530a4780f55dca68ee5e2f267ae06fd229",
+      "content_sha256": "7ca8a6038430b1f1c16c55623e8fa2814b4fb5053edc0c6d73c8c9128078621d",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-13T06:30:38Z",
+      "retrieved_at": "2026-11-13T12:27:28Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/107087/tracker-litigation-legal-challenges-trump-administration/"
     }
   ],
-  "recorded_at": "2026-11-13T06:30:38Z",
-  "run_id": "JUSTSEC-20261113T063036891798Z",
+  "recorded_at": "2026-11-13T12:27:28Z",
+  "run_id": "JUSTSEC-20261113T122726648286Z",
   "schema_version": "just_security_snapshot.v0.1",
   "source_id": "CENT-SRC-RSS-JUST-SECURITY",
   "tag_archive": {
@@ -220,11 +220,11 @@
     "receipts": [
       {
         "byte_count": 5469,
-        "content_sha256": "eb1cd87050b37e84d9eee49b0185d0d3d154dcb43d5ab1705727b48b2068b64f",
+        "content_sha256": "c73c72a404bac5c0ab8bea2bdc056477cbc609fa1fd1ddb41f5cdef914b35846",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-13T06:30:38Z",
+        "retrieved_at": "2026-11-13T12:27:27Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/tag/puerto-rico/"
       }
