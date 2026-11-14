@@ -9,10 +9,13 @@ Maps the Centinelas signal/matter model onto the Hub's canonical contract:
   * each signal                                 -> one `observations` row (observation_type=<signal_type>)
   * matter -> agency                            -> one `relationships` row (involves_agency)
   * matter -> municipality                      -> one `relationships` row (located_in)
+  * each source in data/reference/source_registry.csv -> one `source_monitors` row
+    (thehub-pr ADR 0013): when the source last succeeded, read from the newest
+    non-synthetic `captured_at` it has in the ledger (OUTPUT_DERIVED), else NOT_RECORDED
 
-Writes `exports/federation/{sources,entities,relationships,observations}.jsonl`
-+ a Hub-conformant `manifest.json` (federation_export_manifest). Stdlib only,
-consistent with the sibling OVNIS producer.
+Writes `exports/federation/{sources,entities,relationships,observations,source_monitors}.jsonl`
++ a Hub-conformant `manifest.json` (federation_export_manifest). Stdlib plus the
+pinned `prii-export-utils` helpers (through scripts/prii_export_utils.py).
 
 Rows carry `synthetic` = the signal's `is_synthetic` flag. Production mode is
 fail-closed: it rejects synthetic rows, an empty ledger, missing/invalid capture
@@ -31,6 +34,7 @@ from typing import Any
 
 from prii_export_utils import fid as _fid
 from prii_export_utils import norm as _norm
+from prii_export_utils import resolve_last_success, source_monitor_row
 from prii_export_utils import sha256 as _sha256
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -46,7 +50,13 @@ STREAM_SCHEMA = {
     "entities": "federation_entity.schema.json",
     "relationships": "federation_relationship.schema.json",
     "observations": "federation_observation.schema.json",
+    "source_monitors": "federation_source_monitor.schema.json",
 }
+
+# `active` in the source registry -> source_monitors declared_status. The same
+# mapping thehub-pr's registry reader applies, so a source's label does not change
+# when the Hub switches from reading the registry to reading this stream.
+_DECLARED_STATUS = {"active": "active", "manual": "manual", "yes": "active", "no": "inactive"}
 
 
 def _lineage(phase: str) -> dict[str, Any]:
@@ -263,11 +273,74 @@ def _relationship(rel_id, source_id, src_ent, tgt_ent, rtype, confidence, synthe
     }
 
 
+def _repo_relative(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _latest_captures(signals: list[dict[str, Any]]) -> dict[str, str]:
+    """Newest ``captured_at`` per ``source_id`` among the ledger's non-synthetic signals.
+
+    The ledger builder stamps ``captured_at`` when a source returns items, and each
+    refresh rewrites the ledger, so this is the latest run in which the source
+    yielded a signal. A source missing from the ledger may still have been polled.
+    """
+    latest: dict[str, tuple[datetime, str]] = {}
+    for signal in signals:
+        if signal.get("is_synthetic") is not False:
+            continue
+        source_id, raw = signal.get("source_id"), signal.get("captured_at")
+        parsed = _parse_utc_timestamp(raw)
+        if not isinstance(source_id, str) or parsed is None:
+            continue
+        if source_id not in latest or parsed > latest[source_id][0]:
+            latest[source_id] = (parsed, raw)
+    return {source_id: raw for source_id, (_, raw) in latest.items()}
+
+
+def build_source_monitors(
+    signals: list[dict[str, Any]],
+    registry: dict[str, dict[str, str]],
+    now: str,
+    *,
+    registry_path: str = "data/reference/source_registry.csv",
+    ledger_path: str = "data/signals/live_signals.jsonl",
+) -> list[dict[str, Any]]:
+    """The ``source_monitors`` stream: one row per registered source, sorted by id.
+
+    ``last_success_at`` is the source's newest non-synthetic ``captured_at`` in the
+    ledger (OUTPUT_DERIVED), or null with NOT_RECORDED. Nothing is inferred from file
+    dates, and a source absent from the ledger is not reported as failed.
+    """
+    captures = _latest_captures(signals)
+    lineage = {
+        "producer_script": PRODUCER_SCRIPT,
+        "producer_phase": "SOURCE_MONITOR",
+        "source_inputs": [registry_path, ledger_path],
+        "extraction_method": "registry_projection",
+    }
+    rows = []
+    for source_id in sorted(registry):
+        entry = registry[source_id]
+        at, basis = resolve_last_success(None, captures.get(source_id))
+        manual = (entry.get("scrape_method") or "").strip().lower() == "manual"
+        rows.append(source_monitor_row(
+            producer=PRODUCER, source_ref=source_id, name=(entry.get("name") or "").strip() or source_id,
+            declared_status=_DECLARED_STATUS.get((entry.get("active") or "").strip().lower(), "unknown"),
+            cadence="manual" if manual else "unknown", last_success_at=at, last_success_basis=basis,
+            producer_family=(entry.get("source_family") or "").strip() or None,
+            registry_path=registry_path, lineage=lineage, created_at=now, extracted_at=now,
+        ))
+    return rows
+
+
 def write_package(streams: dict[str, list[dict[str, Any]]], out_dir: Path, mode: str, now: str) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     files = []
-    for stream in ("sources", "entities", "relationships", "observations"):
-        rows = streams[stream]
+    for stream in ("sources", "entities", "relationships", "observations", "source_monitors"):
+        rows = streams.get(stream) or []
         if not rows:
             continue
         fpath = out_dir / f"{stream}.jsonl"
@@ -326,6 +399,10 @@ def main() -> int:
             return 1
 
     streams = build_streams(signals, registry, now)
+    streams["source_monitors"] = build_source_monitors(
+        signals, registry, now,
+        registry_path=_repo_relative(Path(args.sources)), ledger_path=_repo_relative(Path(args.ledger)),
+    )
 
     if args.mode == "production":
         synthetic = [r for s in streams.values() for r in s if r.get("synthetic")]

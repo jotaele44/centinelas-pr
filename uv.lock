@@ -184,7 +184,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "jsonschema", specifier = ">=4.21.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.0" },
-    { name = "prii-export-utils", url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_export_utils" },
+    { name = "prii-export-utils", url = "https://github.com/jotaele44/thehub-pr/archive/0f62e4bdde10b5ac82787a329d6f15481ab9c7f0.zip", subdirectory = "packages/prii_export_utils" },
     { name = "prii-maintenance", url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_maintenance" },
     { name = "pydantic", specifier = ">=2.6.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
@@ -345,7 +345,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -407,8 +407,8 @@ name = "httpcore2"
 version = "2.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11", marker = "python_full_version < '3.12' or python_full_version >= '3.15' or sys_platform != 'emscripten'" },
-    { name = "truststore", marker = "python_full_version < '3.12' or python_full_version >= '3.15' or sys_platform != 'emscripten'" },
+    { name = "h11" },
+    { name = "truststore" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/be/ad/f4f0e57345f1870f3e8cb624e058d7eca6e5a27d33bcc3311d9b618734cd/httpcore2-2.12.0.tar.gz", hash = "sha256:9293522bba0aa7c4c8e9e3f040c16575bd8868e155a77fa30c7a9085a5eae648", size = 67548, upload-time = "2026-08-18T13:22:08.211Z" }
 wheels = [
@@ -907,9 +907,9 @@ wheels = [
 
 [[package]]
 name = "prii-export-utils"
-version = "0.1.0"
-source = { url = "https://github.com/jotaele44/thehub-pr/archive/f2b81769924689b4d959554928810b1d7b7ef3d6.zip", subdirectory = "packages/prii_export_utils" }
-sdist = { hash = "sha256:08fac371dd2b08ec87f6e6cfec50dea628170dd8d5d3982e260217c9bfe42dcf" }
+version = "0.2.0"
+source = { url = "https://github.com/jotaele44/thehub-pr/archive/0f62e4bdde10b5ac82787a329d6f15481ab9c7f0.zip", subdirectory = "packages/prii_export_utils" }
+sdist = { hash = "sha256:66cdbfe33a472332c9bf96e69d9b5be0df04e57ab430d9601b1b28c1b2e950cb" }
 
 [package.metadata]
 requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" }]

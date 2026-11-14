@@ -17,12 +17,12 @@
   "spatial_generation": "federation-spatial-index/1",
   "spatial_note": "Compatible with federation spatial binding v0.2. While Spiderweb's transform is PROVISIONAL, this repository forbids exact Cell_ID ground claims and preserves full content-addressed uncertainty Cell_Set membership; identity remains CANDIDATE_NOT_IDENTITY.",
   "drift_reconciliation": {
-    "cause": "contamination-chain Phase 0 (centinelas-pr PR #190): federation.json intake_doctrine text",
-    "cause_change": "intake_doctrine now describes the three intake layers (RSS/Atom incl. DRNA permit feeds, Federal Register API, OGPe/JP/ASG/EPA Region 2 listing scrapers) that scripts/build_signal_ledger.py polls under a per-source cap",
-    "reviewed_at": "2026-11-06",
-    "reviewed_head": "505be03d9436d8a33cd1d1fad4e55748ec4cbd89",
+    "cause": "source_monitors emitter (centinelas-pr PR #194): federation.json federation_readiness_gate text",
+    "cause_change": "the resolved_conditions note on the canonical export adapter now lists source_monitors next to sources/entities/relationships/observations, because scripts/federation_export.py also emits the source_monitors stream (thehub-pr ADR 0013)",
+    "reviewed_at": "2026-11-13",
+    "reviewed_head": "3df93cd5f1020ec56fcfc9d3333e834cdab50d88",
     "finding": "COMPATIBLE",
-    "rationale": "descriptive manifest text only; hub_callable_commands, export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; the ledger rows still validate against signal.schema.json and the production export gate; all seven attested contracts remain valid"
+    "rationale": "descriptive manifest text only; hub_callable_commands, export_canonical, canonical_outputs and generation federation-spatial-index/1 unchanged; the package adds the optional source_monitors stream that federation_export_manifest 1.1.0 (still @1) allows, its rows validate against thehub-pr federation_source_monitor 1.0.0 and hub validate-package returns VALID; all seven attested contracts remain valid"
   },
   "spatial_binding_v0_2": {
     "authority_commit": "bb8463c8d8cf4b54486674ee9b665ce3d2502e8b",

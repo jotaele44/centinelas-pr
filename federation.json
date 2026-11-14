@@ -62,7 +62,7 @@
     "ready_for_hub_live_execution": true,
     "resolved_conditions": [
       "root federation.json manifest present and Hub-schema conformant",
-      "canonical export adapter (scripts/federation_export.py) emits sources/entities/relationships/observations + manifest.json",
+      "canonical export adapter (scripts/federation_export.py) emits sources/entities/relationships/observations/source_monitors + manifest.json",
       "source registry and signal schema defined; CI manifest gate present",
       "universal intake engine (src/centinelas) merged: ingest/classify/route across six domains with hub_parent logging",
       "real (non-synthetic) signal intake and canonical production export are implemented",

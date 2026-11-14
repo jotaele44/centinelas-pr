@@ -75,7 +75,7 @@ def test_test_mode_writes_conformant_manifest(tmp_path, monkeypatch):
     assert manifest["producer"] == "centinelas-pr"
     assert manifest["federation"]["hub_parent"] == "thehub-pr"
     assert manifest["files"], "manifest must list exported files"
-    valid_streams = {"sources", "entities", "relationships", "observations"}
+    valid_streams = {"sources", "entities", "relationships", "observations", "source_monitors"}
     for entry in manifest["files"]:
         assert entry["stream"] in valid_streams
         assert re.fullmatch(r"[a-f0-9]{64}", entry["sha256"])
