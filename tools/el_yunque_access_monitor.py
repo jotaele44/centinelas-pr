@@ -28,8 +28,12 @@ LISTING_URL = "https://www.fs.usda.gov/r08/elyunque/alerts"
 CONFIG = REPO / "config" / "el_yunque_access_monitor.json"
 SCHEMA = REPO / "schemas" / "access_condition.v1.schema.json"
 STATE = REPO / "data" / "monitoring" / "el_yunque" / "current.json"
-TRANSITIONS = REPO / "data" / "monitoring" / "el_yunque" / "transitions.jsonl"
+TRANSITIONS_DIR = REPO / "data" / "monitoring" / "el_yunque" / "transitions"
+STATE_REPAIRS = REPO / "data" / "monitoring" / "el_yunque" / "state_repairs.jsonl"
 HEALTH = REPO / "data" / "monitoring" / "el_yunque" / "health.json"
+# Each monthly segment must stay far below GitHub's 100 MB hard per-file limit.
+SEGMENT_BYTE_LIMIT = 50 * 1024 * 1024
+REMOVAL_MARKER = " [official alert absent from latest listing; reopening not inferred]"
 OUTBOX = REPO / ".centinelas" / "outbound" / "el_yunque_access"
 GITHUB_API = "https://api.github.com"
 _HEADERS = {"User-Agent": "centinelas-monitor/1.0", "Accept": "text/html,application/xhtml+xml"}
@@ -197,24 +201,100 @@ def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def jsonl_lines(rows: list[dict]) -> list[str]:
+    return [json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n" for row in rows]
+
+
+def transitions_segment(now: datetime) -> Path:
+    """Monthly append-only segment; one unbounded file outgrew GitHub's 100 MB limit."""
+    return TRANSITIONS_DIR / f"{now.astimezone(timezone.utc):%Y-%m}.jsonl"
+
+
+def ensure_segment_capacity(path: Path, lines: list[str], limit: int = SEGMENT_BYTE_LIMIT) -> None:
+    """Fail closed before any state is written if an append would cross the segment ceiling."""
+    existing = path.stat().st_size if path.exists() else 0
+    added = sum(len(line.encode("utf-8")) for line in lines)
+    if existing + added > limit:
+        raise RuntimeError(
+            f"transition segment {path.name} would reach {existing + added} bytes (limit {limit}); "
+            "refusing to persist a run that cannot be pushed"
+        )
+
+
 def append_jsonl(path: Path, rows: list[dict]) -> None:
     if not rows:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n")
+        for line in jsonl_lines(rows):
+            handle.write(line)
+
+
+def strip_removal_markers(text: str) -> tuple[str, int]:
+    """Remove every trailing removal marker; return the base text and how many were removed."""
+    count = 0
+    while text.endswith(REMOVAL_MARKER):
+        text = text[: -len(REMOVAL_MARKER)]
+        count += 1
+    return text, count
 
 
 def removed_unknown(previous: dict, now: datetime) -> dict:
+    """Mark an alert absent from the listing as unknown, exactly once.
+
+    The marker is appended to the base text a single time. A condition that is already
+    recorded as removal_unconfirmed with that text is returned unchanged, so repeated
+    absence is not a new semantic state and produces no transition or handoff.
+    """
+    base, _ = strip_removal_markers(previous.get("restriction_text") or "")
+    text = base + REMOVAL_MARKER
+    if (
+        previous.get("status") == "unknown"
+        and previous.get("status_basis") == "removal_unconfirmed"
+        and previous.get("restriction_text") == text
+    ):
+        return previous
     row = dict(previous)
     row.update({
         "status": "unknown", "status_basis": "removal_unconfirmed",
         "observed_at": now.isoformat(), "confidence": 1.0,
-        "restriction_text": previous.get("restriction_text", "") + " [official alert absent from latest listing; reopening not inferred]",
+        "restriction_text": text,
     })
     row["semantic_hash"] = semantic_hash(row)
     return row
+
+
+def normalize_state(previous: dict[str, dict], now: datetime) -> tuple[dict[str, dict], list[dict]]:
+    """Collapse removal markers that earlier, non-idempotent runs stacked onto persisted state.
+
+    Returns the repaired state and one explicit receipt per repaired condition. Receipts are
+    written to STATE_REPAIRS rather than the transition log: the repair corrects this
+    monitor's own derived state, not an official observation, so it is never handed off.
+    """
+    repaired: dict[str, dict] = {}
+    receipts: list[dict] = []
+    for condition_id, row in previous.items():
+        text = row.get("restriction_text") or ""
+        base, count = strip_removal_markers(text)
+        if count <= 1:
+            repaired[condition_id] = row
+            continue
+        fixed = dict(row)
+        fixed["restriction_text"] = base + REMOVAL_MARKER
+        fixed["semantic_hash"] = semantic_hash(fixed)
+        repaired[condition_id] = fixed
+        receipts.append({
+            "repaired_at": now.isoformat(),
+            "condition_id": condition_id,
+            "reason": "collapse_stacked_removal_markers",
+            "markers_before": count,
+            "markers_after": 1,
+            "restriction_text_bytes_before": len(text.encode("utf-8")),
+            "restriction_text_bytes_after": len(fixed["restriction_text"].encode("utf-8")),
+            "semantic_hash_before": row.get("semantic_hash"),
+            "semantic_hash_after": fixed["semantic_hash"],
+        })
+    return repaired, receipts
 
 
 def time_activate(row: dict, now: datetime) -> dict:
@@ -319,7 +399,7 @@ def main() -> int:
     parser.add_argument("--no-dispatch", action="store_true")
     args = parser.parse_args()
     now = datetime.now(timezone.utc)
-    previous = read_json(STATE, {})
+    previous, repairs = normalize_state(read_json(STATE, {}), now)
     try:
         observed = poll(now, previous)
     except Exception as exc:
@@ -327,9 +407,17 @@ def main() -> int:
         print(f"monitor stale; preserved {len(previous)} condition(s): {exc}")
         return 2
     current, transitions = compute_transitions(previous, observed, now)
+    segment = transitions_segment(now)
+    try:
+        ensure_segment_capacity(segment, jsonl_lines(transitions))
+    except RuntimeError as exc:
+        write_json(HEALTH, {"status": "stale", "checked_at": now.isoformat(), "last_error": str(exc), "preserved_condition_count": len(previous)})
+        print(f"monitor stale; {exc}")
+        return 3
+    append_jsonl(STATE_REPAIRS, repairs)
     write_json(STATE, current)
-    append_jsonl(TRANSITIONS, transitions)
-    write_json(HEALTH, {"status": "healthy", "checked_at": now.isoformat(), "condition_count": len(current), "transition_count": len(transitions)})
+    append_jsonl(segment, transitions)
+    write_json(HEALTH, {"status": "healthy", "checked_at": now.isoformat(), "condition_count": len(current), "transition_count": len(transitions), "state_repair_count": len(repairs)})
     staged = stage(transitions)
     if staged and not args.no_dispatch:
         dispatch(staged, dry_run=args.dry_run)
