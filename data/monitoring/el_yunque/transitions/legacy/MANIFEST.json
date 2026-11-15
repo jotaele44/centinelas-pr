@@ -1,0 +1,20 @@
+{
+  "byte_count": 104857154,
+  "classification": {
+    "other": 26,
+    "spurious_marker_restack": 3142
+  },
+  "classification_rule": "spurious_marker_restack = previous and current share status and status_basis, and current.restriction_text equals previous.restriction_text plus one more removal marker",
+  "defect": "removed_unknown() re-appended the removal marker on every poll for alerts absent from the listing, changing semantic_hash each run; fixed by making the removal state idempotent.",
+  "distinct_conditions": 17,
+  "distinct_runs": 451,
+  "first_transition_at": "2026-09-20T16:18:03.119158+00:00",
+  "kind": "frozen_transition_log_segment",
+  "last_transition_at": "2026-11-02T21:32:10.369313+00:00",
+  "line_count": 3168,
+  "path": "transitions-2026-09-20--2026-11-02.jsonl",
+  "preservation": "Bytes unchanged; moved by git rename only (same blob). Not rewritten or compacted: rows remain the as-emitted record, including the spurious ones.",
+  "previous_path": "data/monitoring/el_yunque/transitions.jsonl",
+  "schema_version": "1.0",
+  "sha256": "9dbd8d5a9ab6eb671451ac0b470644001c248ded1a9aa839d6bfffdd29d59c39"
+}
