@@ -185,3 +185,46 @@ def test_zero_results_without_declared_denominator_fails_closed():
     assert snapshot["parsed_count"] == 0
     assert snapshot["declared_count"] is None
     assert snapshot["residue"] == "zero_results_without_declared_denominator"
+
+
+# --- ARTICLE_VERSION_CHANGE must follow the readable text, not the raw bytes ---
+#
+# content_sha256 is the hash of the raw response. Just Security serves different
+# bytes on every request for an unchanged article, so comparing that hash alone
+# logged a version change for every retained article on every run.
+
+
+def _article(sha: str, body: str = "Unchanged article text about Puerto Rico.") -> dict:
+    return {
+        "canonical_url": "https://www.justsecurity.org/1/article/",
+        "title": "Article",
+        "body_text": body,
+        "content_sha256": sha,
+    }
+
+
+def test_new_raw_bytes_with_identical_text_is_not_a_version_change():
+    state: dict = {}
+    assert [e["event_type"] for e in monitor._item_events(state, [_article("a" * 64)], "r1")] == [
+        "NEW_RELEVANT_ITEM"
+    ]
+    for run, sha in enumerate(("b" * 64, "c" * 64, "d" * 64), start=2):
+        assert monitor._item_events(state, [_article(sha)], f"r{run}") == []
+    # The latest raw receipt hash is still recorded.
+    assert state["items"]["https://www.justsecurity.org/1/article/"]["content_sha256"] == "d" * 64
+
+
+def test_changed_text_is_a_version_change():
+    state: dict = {}
+    monitor._item_events(state, [_article("a" * 64)], "r1")
+    events = monitor._item_events(state, [_article("b" * 64, body="Corrected text.")], "r2")
+    assert [e["event_type"] for e in events] == ["ARTICLE_VERSION_CHANGE"]
+    assert events[0]["previous_content_sha256"] == "a" * 64
+
+
+def test_failed_detail_fetch_does_not_report_a_version_change():
+    state: dict = {}
+    monitor._item_events(state, [_article("a" * 64)], "r1")
+    # Detail fetch failed: no hash, and body_text fell back to the feed summary.
+    fallback = _article(None, body="Feed summary only.")
+    assert monitor._item_events(state, [fallback], "r2") == []
