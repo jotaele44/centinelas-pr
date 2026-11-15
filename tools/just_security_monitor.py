@@ -75,6 +75,10 @@ def _item_events(state: dict, items: list[dict], run_id: str) -> list[dict]:
         elif (
             item.get("content_sha256")
             and previous.get("content_sha256") not in (None, item["content_sha256"])
+            # content_sha256 hashes the raw response bytes, which differ on every
+            # fetch of an unchanged article (per-request markup). The article has
+            # a new version only when its readable text changed as well.
+            and previous.get("body_text") != item.get("body_text")
         ):
             events.append(
                 {

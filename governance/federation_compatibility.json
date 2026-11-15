@@ -17,12 +17,12 @@
   "spatial_generation": "federation-spatial-index/1",
   "spatial_note": "Compatible with federation spatial binding v0.2. While Spiderweb's transform is PROVISIONAL, this repository forbids exact Cell_ID ground claims and preserves full content-addressed uncertainty Cell_Set membership; identity remains CANDIDATE_NOT_IDENTITY.",
   "drift_reconciliation": {
-    "cause": "source_monitors emitter (centinelas-pr PR #194): federation.json federation_readiness_gate text",
-    "cause_change": "the resolved_conditions note on the canonical export adapter now lists source_monitors next to sources/entities/relationships/observations, because scripts/federation_export.py also emits the source_monitors stream (thehub-pr ADR 0013)",
-    "reviewed_at": "2026-11-13",
-    "reviewed_head": "3df93cd5f1020ec56fcfc9d3333e834cdab50d88",
+    "cause": "ledger enrichment and Puerto Rico scoping (centinelas-pr PR #195): federation.json intake_doctrine text",
+    "cause_change": "intake_doctrine now states that ledger rows carry the classifier enrichment (agencies, awardees, estimated value, rfp_open / officialization_pending stage) and that, before the per-source cap, items from scope: global feeds are kept only when they name Puerto Rico and items published more than 90 days ago are dropped",
+    "reviewed_at": "2026-11-15",
+    "reviewed_head": "6c1c43efbb5ac05266d76849ee7b5bd56bcf20c2",
     "finding": "COMPATIBLE",
-    "rationale": "descriptive manifest text only; hub_callable_commands, export_canonical, canonical_outputs and generation federation-spatial-index/1 unchanged; the package adds the optional source_monitors stream that federation_export_manifest 1.1.0 (still @1) allows, its rows validate against thehub-pr federation_source_monitor 1.0.0 and hub validate-package returns VALID; all seven attested contracts remain valid"
+    "rationale": "descriptive manifest text only; hub_callable_commands, export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; the populated agencies/entities/estimated_value fields and the rfp_open / officialization_pending stages are already in signal.schema.json and the rows validate against it; all seven attested contracts remain valid"
   },
   "spatial_binding_v0_2": {
     "authority_commit": "bb8463c8d8cf4b54486674ee9b665ce3d2502e8b",

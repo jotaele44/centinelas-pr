@@ -4,7 +4,7 @@ from __future__ import annotations
 import csv
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -119,3 +119,115 @@ def test_collect_raw_items_merges_all_layers(monkeypatch):
     ids = [it.item_id for it in bsl.collect_raw_items()]
     assert ids == ["r1", "dup", "f1", "s1"]
     assert [it.item_id for it in bsl.collect_raw_items(rss_only=True)] == ["r1", "dup"]
+
+
+# --- enrichment, Puerto Rico relevance and publication-age window ------------
+
+
+def _dated(item_id: str, source_name: str, title: str, published_at: datetime, body: str = ""):
+    from centinelas.models import RawItem
+
+    return RawItem(
+        item_id=item_id,
+        source_url=f"https://example.org/{item_id}",
+        source_name=source_name,
+        title=title,
+        body_text=body,
+        published_at=published_at,
+        captured_at=datetime.now(timezone.utc),
+        evidence_tier="T2",
+    )
+
+
+def test_enrichment_reaches_the_ledger_row(monkeypatch):
+    from centinelas.classify import classifier
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    raw = _dated(
+        "award1",
+        "Del Valle Group",
+        "Del Valle Group announces the award of a $12.5 million contract",
+        datetime.now(timezone.utc),
+        body="The contract was awarded by PRASA for aqueduct rehabilitation in Puerto Rico.",
+    )
+    row = item_to_signal(classifier.build_classified_item(raw), source_name_to_id())
+    assert row["agencies"] == ["PRASA"]
+    assert row["entities"] == ["Del Valle Group"]
+    assert row["estimated_value"] == 12_500_000
+    # An announced award is not an official record: pending, never finalized.
+    assert row["signal_stage"] == "officialization_pending"
+    pytest.importorskip("jsonschema").validate(row, SIGNAL_SCHEMA)
+
+
+def test_open_solicitation_maps_to_rfp_open():
+    item = _classified({"title": "x", "body_text": ""}).model_copy(
+        update={"signal_stage": "rfp_open"}
+    )
+    assert item_to_signal(item, {})["signal_stage"] == "rfp_open"
+
+
+def test_unknown_enrichment_stage_falls_back_to_raw_observation():
+    item = _classified({"title": "x", "body_text": ""}).model_copy(
+        update={"signal_stage": "not_in_schema"}
+    )
+    assert item_to_signal(item, {})["signal_stage"] == "raw_observation"
+
+
+def test_global_feeds_are_marked_and_pr_sources_are_not():
+    import build_signal_ledger as bsl
+
+    global_sources = bsl.global_source_names()
+    assert {"BBC World", "Financial Times", "OSHA News Releases"} <= global_sources
+    assert not [name for name in global_sources if name.startswith(("DRNA", "Del Valle"))]
+
+
+def test_relevance_filter_only_applies_to_global_feeds():
+    import build_signal_ledger as bsl
+
+    now = datetime.now(timezone.utc)
+    items = [
+        _dated("g1", "BBC World", "Markets rally in Asia", now),
+        _dated("g2", "BBC World", "Huracán amenaza a los puertorriqueños", now),
+        _dated("g3", "BBC World", "Storm season", now, body="Landfall near Vieques expected."),
+        # A Puerto Rico source never has to name the island to be kept.
+        _dated("p1", "DRNA — Avisos", "Aviso de vista pública", now),
+    ]
+    kept, dropped = bsl.filter_items(items, global_sources={"BBC World"}, max_age_days=None)
+    assert [it.item_id for it in kept] == ["g2", "g3", "p1"]
+    assert dropped == {"not_pr_relevant": 1, "older_than_window": 0}
+
+
+def test_age_window_drops_old_items_but_keeps_future_dated_ones():
+    import build_signal_ledger as bsl
+
+    now = datetime(2026, 11, 14, tzinfo=timezone.utc)
+    items = [
+        _dated("old", "DRNA — Reglamentos", "Reglamento", now - timedelta(days=91)),
+        _dated("edge", "DRNA — Avisos", "Aviso", now - timedelta(days=90)),
+        # ASG dates a listing by its bid opening: a pending event, not a bad date.
+        _dated("bid", "ASG — Licitaciones (Subastas)", "Subasta Formal", now + timedelta(days=45)),
+    ]
+    kept, dropped = bsl.filter_items(items, max_age_days=90, now=now)
+    assert [it.item_id for it in kept] == ["edge", "bid"]
+    assert dropped == {"not_pr_relevant": 0, "older_than_window": 1}
+    assert len(bsl.filter_items(items, max_age_days=0, now=now)[0]) == 3
+
+
+def test_build_ledger_filters_before_capping_and_refuses_an_empty_result(monkeypatch, capsys):
+    import build_signal_ledger as bsl
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    now = datetime.now(timezone.utc)
+    noise = [_dated(f"n{i}", "BBC World", "World news", now) for i in range(5)]
+    stale = _dated("s1", "DRNA — Avisos", "Aviso viejo", now - timedelta(days=400))
+    fresh = _dated("f1", "DRNA — Avisos", "Aviso de vista pública", now)
+    monkeypatch.setattr(bsl, "collect_raw_items", lambda rss_only=False: [*noise, stale, fresh])
+    # With a total cap of 1 the single slot must go to the surviving DRNA item,
+    # not to a filtered-out item polled earlier.
+    rows = bsl.build_ledger(limit=1, per_source=10)
+    assert [row["signal_id"] for row in rows] == ["CENT-SIG-f1"]
+    assert "dropped_not_pr_relevant=5 dropped_older_than_window=1" in capsys.readouterr().out
+
+    monkeypatch.setattr(bsl, "collect_raw_items", lambda rss_only=False: noise)
+    with pytest.raises(SystemExit, match="filtered out"):
+        bsl.build_ledger()
