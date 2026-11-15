@@ -17,12 +17,12 @@
   "spatial_generation": "federation-spatial-index/1",
   "spatial_note": "Compatible with federation spatial binding v0.2. While Spiderweb's transform is PROVISIONAL, this repository forbids exact Cell_ID ground claims and preserves full content-addressed uncertainty Cell_Set membership; identity remains CANDIDATE_NOT_IDENTITY.",
   "drift_reconciliation": {
-    "cause": "thehub-pr docs/FEDERATION_MAX_AUDIT_2026-09-24.md findings F3 and F7",
-    "cause_change": "hub_callable_commands.setup now also installs httpx and server/backend/requirements.txt (the declared test_suite failed collection without fastapi); federation_readiness_gate.resolved_conditions records the 2026-09-24 ledger refresh and the scheduled signal-ledger-refresh workflow",
-    "reviewed_at": "2026-09-24",
-    "reviewed_head": "e4508291e092b0a43802eedd1f300d899127864e",
+    "cause": "ledger enrichment and Puerto Rico scoping (centinelas-pr PR #195): federation.json intake_doctrine text",
+    "cause_change": "intake_doctrine now states that ledger rows carry the classifier enrichment (agencies, awardees, estimated value, rfp_open / officialization_pending stage) and that, before the per-source cap, items from scope: global feeds are kept only when they name Puerto Rico and items published more than 90 days ago are dropped",
+    "reviewed_at": "2026-11-15",
+    "reviewed_head": "6c1c43efbb5ac05266d76849ee7b5bd56bcf20c2",
     "finding": "COMPATIBLE",
-    "rationale": "hub-callable command and readiness-note metadata only; export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; all seven attested contracts remain valid"
+    "rationale": "descriptive manifest text only; hub_callable_commands, export_canonical, canonical_outputs, export contract schemas and generation federation-spatial-index/1 unchanged; the populated agencies/entities/estimated_value fields and the rfp_open / officialization_pending stages are already in signal.schema.json and the rows validate against it; all seven attested contracts remain valid"
   },
   "spatial_binding_v0_2": {
     "authority_commit": "bb8463c8d8cf4b54486674ee9b665ce3d2502e8b",
