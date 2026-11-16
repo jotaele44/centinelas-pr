@@ -15,9 +15,38 @@ The **first run** needs an internet connection once: it creates a private
 instantly and **works offline** — the app serves the data committed in this
 repository from a local server and shows it in a native window.
 
+## The Launch Pad
+
+`desktop/config.py` declares a **Launch Pad**: a screen the shared desktop
+runtime shows after setup and before Centinelas starts. On it you choose:
+
+- **Guest or Operator.** Guest is read-only: you can browse signals, matters
+  and the pipeline, and the app refuses handoffs, pipeline runs and
+  water-disruption actions. Operator allows them from this computer. Operator
+  can be protected with a passphrase. Neither mode changes the API's own write
+  guard (`server/backend/auth.py`); Guest only adds a refusal in front of it.
+- **Open on**: Home, Dashboard, or any page from the navigation.
+- **Launch options** (Operator only): the routing confidence threshold, a
+  GitHub dispatch token so Handoff can notify the receiving repository, and an
+  optional Anthropic API key for language-model classification. The two
+  secrets are used for that session and never saved.
+
+It also reports readiness: how many signals are classified, queued, routed and
+handed off in the selected data directory. Use the **Launch Pad** button beside
+the gear to come back and change the mode or options; the app restarts on the
+page.
+
+Guest mode keeps a shared desktop tidy. It does not stop someone who can already
+run programs under your account.
+
+The Launch Pad appears once `requirements-desktop.txt` pins a `prii-desktop`
+that includes it (0.3.0 or later). With an older runtime the declaration is
+ignored and the app opens directly, as before.
+
 ## How it works
 
-- `desktop/config.py` — the only per-repo file (title, paths, requirements).
+- `desktop/config.py` — the only per-repo file (title, paths, requirements, and
+  the `LAUNCHPAD` declaration).
 - `desktop/setup.py` — idempotent one-time setup (`--force` to redo): creates
   the `.venv`, installs the backend + desktop requirements, and builds the
   frontend for same-origin serving.
