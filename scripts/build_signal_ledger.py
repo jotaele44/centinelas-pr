@@ -44,7 +44,8 @@ Mapping (ClassifiedItem -> signal.schema.json):
   signal_stage     rfp_open / officialization_pending when classify/enrich.py
                    detects an open solicitation / an announced award, else
                    raw_observation
-  agencies         enrich.extract_agencies
+  agencies         enrich.extract_agencies, plus the contracting agency parsed
+                   from ASG bid listing titles
   entities         enrich.extract_recipients (the awardee, not the funder)
   estimated_value  enrich.extract_estimated_value
   municipalities   [] (nothing in this repo resolves them for ledger rows yet)
@@ -94,6 +95,46 @@ PR_TERMS = (
     "culebra",
 )
 
+# Listing sources whose titles name the contracting agency in a fixed position.
+# ASG's bid listing renders each entry as "<bid id> — <procedure> — <agency>",
+# e.g. "27J-07773 — Subasta Formal — Compañía de Fomento Industrial- (PRIDCO)".
+# classify/enrich.py matches agencies by keyword against a short list that
+# names none of these, so without this every ASG row reached the export with no
+# agency and no involves_agency relationship.
+_ASG_LISTING_SOURCES = frozenset({"ASG — Licitaciones (Subastas)"})
+_TITLE_SEPARATOR = re.compile(r"\s+[—–]\s+")
+_TRAILING_ACRONYM = re.compile(r"\(([A-Z][A-Z0-9&]{1,11})\)\s*$")
+
+
+def _clean_listing_agency(segment: str) -> str | None:
+    """The agency as the listing names it, without inferring identity.
+
+    A parenthesised acronym the listing itself gives is used ("Compañía de
+    Fomento Industrial- (PRIDCO)" and "PRIDCO" both become "PRIDCO"); centralized
+    ASG procurement ("ASG- Contratos Centralizados") becomes "ASG". Any other
+    name is kept as written: two spellings of one agency are NOT merged here,
+    because name similarity is not proof of identity.
+    """
+    text = segment.strip()
+    match = _TRAILING_ACRONYM.search(text)
+    if match:
+        return match.group(1)
+    text = re.sub(r"[\s\-–—]+$", "", text)
+    if re.match(r"^ASG(?:$|[\s\-–])", text):
+        return "ASG"
+    return text or None
+
+
+def _listing_agencies(source_name: str, title: str) -> list[str]:
+    if source_name not in _ASG_LISTING_SOURCES:
+        return []
+    parts = _TITLE_SEPARATOR.split(title or "")
+    if len(parts) < 3:
+        return []
+    agency = _clean_listing_agency(parts[-1])
+    return [agency] if agency else []
+
+
 # classify/enrich.py stage vocabulary -> schemas/signal.schema.json enum. An
 # announced award is not yet an official record, so it is "pending
 # officialization", never a finalized stage.
@@ -128,7 +169,9 @@ def item_to_signal(item: ClassifiedItem, source_ids: dict[str, str]) -> dict:
         "signal_stage": _STAGE_MAP.get(item.signal_stage or "", "raw_observation"),
         "beat": primary,
         "municipalities": list(item.municipalities),
-        "agencies": list(item.agencies),
+        "agencies": list(
+            dict.fromkeys([*item.agencies, *_listing_agencies(item.source_name, item.title)])
+        ),
         "entities": list(item.recipients),
         "estimated_value": item.estimated_value,
         "deadline_date": None,

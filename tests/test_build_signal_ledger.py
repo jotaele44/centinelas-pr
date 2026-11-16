@@ -231,3 +231,63 @@ def test_build_ledger_filters_before_capping_and_refuses_an_empty_result(monkeyp
     monkeypatch.setattr(bsl, "collect_raw_items", lambda rss_only=False: noise)
     with pytest.raises(SystemExit, match="filtered out"):
         bsl.build_ledger()
+
+
+# --- contracting agency from ASG bid listing titles -----------------------------
+
+
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        # Real titles from the 2026-11-16 ledger.
+        ("27J-07773 — Subasta Formal — Compañía de Fomento Industrial- (PRIDCO)", ["PRIDCO"]),
+        ("27J-07157 — Subasta Formal — COMPAÑÍA DE FOMENTO INDUSTRIAL (PRIDCO)", ["PRIDCO"]),
+        ("27J-07397 — Subasta Formal — PRIDCO", ["PRIDCO"]),
+        (
+            "27J-06599 — Solicitud de Propuesta (RFP) — DEPARTAMENTO DE CORRECCIÓN Y REHABILITACION (DCR)",
+            ["DCR"],
+        ),
+        (
+            "26J-16246-R1 — Subasta Informal — DEPARTAMENTO DE CORRECCION Y REHABILITACION",
+            ["DEPARTAMENTO DE CORRECCION Y REHABILITACION"],
+        ),
+        ("26J-07967-R1 — Subasta Formal — DEPARTAMENTO DE EDUCACION", ["DEPARTAMENTO DE EDUCACION"]),
+        ("27J-04435 — Solicitud de Propuesta (RFP) — ASG- Contratos Centralizados", ["ASG"]),
+        ("27J-00642 — Solicitud de Propuesta (RFP) — ASG- Subasta Centralizada", ["ASG"]),
+        # Not the listing format: nothing is guessed.
+        ("Aviso de subasta", []),
+    ],
+)
+def test_asg_listing_title_names_the_contracting_agency(title, expected):
+    import build_signal_ledger as bsl
+
+    assert bsl._listing_agencies("ASG — Licitaciones (Subastas)", title) == expected
+
+
+def test_listing_agency_parse_applies_only_to_asg():
+    import build_signal_ledger as bsl
+
+    title = "Casa Castañer Wastewater Treatment Plant — PR0024333 — Draft"
+    assert bsl._listing_agencies("EPA Region 2 — Puerto Rico NPDES Permits", title) == []
+
+
+def test_listing_agency_merges_with_enrichment_without_duplicates():
+    item = _classified(
+        {
+            "title": "27J-07397 — Subasta Formal — PRIDCO",
+            "body_text": "",
+            "source_name": "ASG — Licitaciones (Subastas)",
+        }
+    ).model_copy(update={"agencies": ["FEMA", "PRIDCO"]})
+    row = item_to_signal(item, source_name_to_id())
+    assert row["agencies"] == ["FEMA", "PRIDCO"]
+    pytest.importorskip("jsonschema").validate(row, SIGNAL_SCHEMA)
+
+
+def test_asg_listing_source_name_matches_the_scrape_config():
+    import build_signal_ledger as bsl
+    import yaml
+
+    config = yaml.safe_load((REPO_ROOT / "src/centinelas/ingest/sources.yaml").read_text())
+    scrape_names = {entry.get("name") for entry in config["scrape"]["sources"]}
+    assert scrape_names >= bsl._ASG_LISTING_SOURCES
