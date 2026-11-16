@@ -22,10 +22,10 @@
 
 **Backend: Thin FastAPI surface over substantial `src/centinelas/` logic** — `server/backend/` itself is thin: only 5 Python files (8.6KB main.py). But `main.py` directly imports and depends on `src/centinelas/` — a much larger package (`classify/`, `ingest/`, `route/`, `releases/`, `space_observations/`, plus top-level modules like `space_discovery.py` at 21KB, `foia_disposition.py` at 13.6KB, `water_disruption.py` at 10KB) — which is real, substantial backend logic, not a thin stub. The 5-file/8.6KB figure describes `server/backend/` only, not the backend as a whole.
 
-Files: `server/backend/main.py` (8.6KB), `water_disruption_api.py` (6.9KB), `auth.py` (1.5KB — stub), `email_review_contract.py` (1.6KB)
+Files: `server/backend/main.py` (8.6KB), `water_disruption_api.py` (6.9KB), `auth.py` (1.5KB — write boundary; see correction below), `email_review_contract.py` (1.6KB)
 
 **Critical gaps:**
-- `auth.py` is 1.5KB — authentication appears to be a stub
+- ~~`auth.py` is 1.5KB — authentication appears to be a stub~~ **Corrected 2026-11-16:** `auth.py` is a small but working write boundary, not a stub. With `CENTINELAS_WRITE_TOKEN` set, every write route requires that bearer token; unset, writes are accepted only from loopback/private addresses and refused from public ones. Covered by `tests/test_backend_write_auth.py`. There is still no user login, which is what the frontend's decorative sign-in pages implied.
 - No backend modules for Entities, Matters, Signals, Sources — 4 of 14 frontend pages have no backend coverage. (Pipeline and Handoff, previously listed here too, are backed by `main.py`'s `GET /items`, `GET /items/{item_id}`, `GET /queue`, `GET /status`, `GET /handoffs`, and `POST /handoffs/{item_id}`, which call into `src/centinelas/route/dispatch.py`, `classify/classifier.py`, and `ingest/*`.)
 - `email_review_contract.py` (1.6KB) suggests review workflow is early stage
 
@@ -39,7 +39,7 @@ API layer: `appClient.js` (11KB) + `pipelineClient.js`
 
 ## Priority Actions for centinelas
 
-1. **HIGH** — Implement auth.py properly (currently 1.5KB stub)
+1. ~~**HIGH** — Implement auth.py properly (currently 1.5KB stub)~~ Withdrawn 2026-11-16: the write boundary exists (see above). A user-login system is a separate product decision.
 2. **HIGH** — Add backend API modules for Entities, Matters, Signals, Sources
 3. **HIGH** — Flesh out email_review_contract.py review workflow
 
