@@ -19,107 +19,107 @@
         "content_type": "application/rss+xml; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:23Z",
+        "retrieved_at": "2026-11-17T06:32:41Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/feed/"
       },
       {
-        "byte_count": 209767,
-        "content_sha256": "f56d4a6311c095c275bc3c8fd2e5e9875f571a111ee1594bb269de04ea0af788",
+        "byte_count": 209929,
+        "content_sha256": "3d41614d0649064d99daee26d7b8a2f0daefe1e9d1ca237f5e115b893419622b",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:23Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164854/first-marine-uss-cole-jury/"
       },
       {
         "byte_count": 218016,
-        "content_sha256": "593107631320f08aea4c7ef08caf8c24d7178a8fe84c02f5c584226d36bb0718",
+        "content_sha256": "38e2b2db5a31055fa63c01a54ed3c297213cf840e2dcd759e4c35bd0b593791f",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164725/gaiser-nomination/"
       },
       {
-        "byte_count": 227223,
-        "content_sha256": "c0d042b3e6295a6789e4bde4d78816ff35279ec83849d0b45bd2e6afc5883763",
+        "byte_count": 227401,
+        "content_sha256": "41365b95930f83e874db42abf9e5c70a2d0e8a5a8738510ef315883019e6b81d",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164505/state-department-israel-leahy-laws/"
       },
       {
         "byte_count": 224958,
-        "content_sha256": "76705301c8cf89ec8d868b2b316aadcf97584e025891df692c2313237f799001",
+        "content_sha256": "7cb90a2f2fa130e94c367884e0e682d9c9393aabd5606772ceaf932127c33168",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164424/putin-goal-dividing-europe-us-open-door/"
       },
       {
         "byte_count": 226070,
-        "content_sha256": "cee444006a7e68274d810983dabd1ca051f94c7fd36b065dc2151eb4200a5178",
+        "content_sha256": "f5661123737b817bfbd3d62a6f39152ca5b2581ae12abc4fde7103fa8d456b36",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164727/early-edition-november-16-2026/"
       },
       {
-        "byte_count": 209254,
-        "content_sha256": "590d9b2e0e861fb5b25977042196972a98c46888fc40760a54145397ec0bf4c5",
+        "byte_count": 209471,
+        "content_sha256": "ef1787d1c79bab9dfb8cea34a8b1474aec514a9ae070f7752d0c3e53ca86b751",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164494/nonprofits-lawsuit-freeze-frontier-ai-development/"
       },
       {
         "byte_count": 210173,
-        "content_sha256": "1743f72ac0923ea7d1763ffaae0eb50ee94d17241125701c3506b1fe2837d7e7",
+        "content_sha256": "f44a1b150c686e8648400e35853024a235ebda956ffe970e79f6e7c59198aa64",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:42Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164471/treasury-state-guatemala-cartels-terrorist-designations/"
       },
       {
-        "byte_count": 212531,
-        "content_sha256": "f6caa21f6dd1ae8885b3af73a061dbd52eba3403e9702de79954816c25dc017c",
+        "byte_count": 212743,
+        "content_sha256": "fc15decf9ad1b011adc5d215bea7fd51e378cc032f600ec529b2fb2fd6469fa9",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:24Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/164450/six-jurors-chosen-death-penalty-tribunal-guantanamo/"
       },
       {
-        "byte_count": 231773,
-        "content_sha256": "64212eac4c757bb4909997ba185694debcc2437f6e0b79f8b88bbe0cb1e57dd4",
+        "byte_count": 231955,
+        "content_sha256": "5eb8d54497b22400da4424772d05c8141f35ff4f18f9fa10d6cf582c8ea8ecc1",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:25Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/163851/preparing-2029-reconversion-strategy/"
       },
       {
-        "byte_count": 224852,
-        "content_sha256": "bab28c25d69942c39aa0fad04a3e6b90201cb0792cc96c896b194f67a63684b2",
+        "byte_count": 225060,
+        "content_sha256": "fbbc66382e029e86ac71a4c8697769625fc4326c91e85b50e6a0455d74d0d07e",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:25Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/163908/breaking-cycle-corruption-congress-accountability/"
       },
@@ -129,47 +129,47 @@
         "content_type": "application/rss+xml; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:25Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/tag/puerto-rico/feed/"
       },
       {
         "byte_count": 214775,
-        "content_sha256": "68cbd83b519f0e07ce215089e8a22b3efe55581e6be6f3b069b6ef41066e455e",
+        "content_sha256": "78f8fded927979ec1b70d787b946aefab17244c37f52e59b7382496d9a94a944",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:25Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/131120/podcast-us-territories/"
       },
       {
         "byte_count": 242745,
-        "content_sha256": "5134f9fda13dc98ae0c2760faa98f3757de270bdf6595fc16c3a7c5832b68a13",
+        "content_sha256": "b115fa13b654632de18bb540a48a9768d46f3a301003179e8783e9c24a8a29e8",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:26Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/130478/greenland-denmark-shortcomings-us-territory/"
       },
       {
-        "byte_count": 223972,
-        "content_sha256": "159c7e1d30c328bcc356cd596345b977db402b6d22cdbca78864a60dfc2407b6",
+        "byte_count": 223964,
+        "content_sha256": "cbea9b36e66ec0f46cc5cf80be7379e980d40412f0911d23f89a95b8f6ff6f5b",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:26Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/108031/more-territory-problems-greenland/"
       },
       {
         "byte_count": 220108,
-        "content_sha256": "a287868c208d1513cd9e5ac1c9a3dd7bb3bd81dc2ea02d3fc738834291474696",
+        "content_sha256": "6c25da6e4c1e5053848d05966c8e5110109a2ea8d9866f0c98e819caa0ea80be",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:26Z",
+        "retrieved_at": "2026-11-17T06:32:43Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/45575/posse-comitatus-immediately-applicable-militarys-humanitarian-assistance-mission-puerto-rico/"
       }
@@ -184,7 +184,7 @@
     {
       "author_raw": "Adi Mart\u00ednez-Rom\u00e1n, Neil Weare, Tess Bridgeman",
       "byte_count": 214775,
-      "content_sha256": "22aff2545727f2c06ab551a86ea0a44520e9e4ce66beb95f00991986afc46657",
+      "content_sha256": "5f7f62c5b13db297be905dc35ca481952543c0b204a6cb6491fc8d757879c049",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -192,7 +192,7 @@
       "normalized_content_sha256": "dc1f34ea1c9d7ce3a7974f2cdc64f6e15922ede92fa1fbc15ab53a053c9e98fe",
       "published_at_raw": "2026-02-10T13:33:30+00:00",
       "result_position": 1,
-      "retrieved_at": "2026-11-17T00:42:27Z",
+      "retrieved_at": "2026-11-17T06:32:44Z",
       "state": "PASS",
       "title_raw": "Podcast: What Does it Really Means to be a U.S. Territory?",
       "url": "https://www.justsecurity.org/131120/podcast-us-territories/"
@@ -200,7 +200,7 @@
     {
       "author_raw": "Neil Weare, Adi Mart\u00ednez-Rom\u00e1n",
       "byte_count": 242745,
-      "content_sha256": "d142c1d422979a56c9c291a1dedfc25c245ba09e0c7354aa99c04fb9d4a24abd",
+      "content_sha256": "8d233f82018939d418c543de8f69b8a160787179585e5c877db5876c41724bf2",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -208,15 +208,15 @@
       "normalized_content_sha256": "db55e75b9e210ec50305308bc4a379cb85b8e855c9133821d1c9d781195bd114",
       "published_at_raw": "2026-02-03T13:50:53+00:00",
       "result_position": 2,
-      "retrieved_at": "2026-11-17T00:42:27Z",
+      "retrieved_at": "2026-11-17T06:32:44Z",
       "state": "PASS",
       "title_raw": "The Shortcomings of Being a \u201cU.S. Territory\u201d",
       "url": "https://www.justsecurity.org/130478/greenland-denmark-shortcomings-us-territory/"
     },
     {
       "author_raw": "Kal Raustiala",
-      "byte_count": 223972,
-      "content_sha256": "bba3a49a7488ef09bfb0ef85a82b5ab6d18340aeae9a41d6857141187635a4db",
+      "byte_count": 223964,
+      "content_sha256": "612294fb04482fb1f174fdb03e32bdbfe041db605c7a99fd06d2b29dda8c8280",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -224,7 +224,7 @@
       "normalized_content_sha256": "d0d407d9192f7b7067a12306f868ceffa2335bcf96d4d9573fc34bb2a5e81584",
       "published_at_raw": "2025-02-19T13:50:31+00:00",
       "result_position": 3,
-      "retrieved_at": "2026-11-17T00:42:28Z",
+      "retrieved_at": "2026-11-17T06:32:45Z",
       "state": "PASS",
       "title_raw": "More Territory, More Problems: Can Trump Seize Greenland?",
       "url": "https://www.justsecurity.org/108031/more-territory-problems-greenland/"
@@ -232,7 +232,7 @@
     {
       "author_raw": "Mark Nevitt",
       "byte_count": 220108,
-      "content_sha256": "1bf7215ed42c76a7ed3f6d06a07dfb40e55ed321e0df6537ff0b896a7cb55efd",
+      "content_sha256": "033a4a3f06cca9eea755f9e57e2d49f32bdb15189a8b49fc2c392c0f51ab67f1",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -240,7 +240,7 @@
       "normalized_content_sha256": "5d7f8bbb3148e7f16c53bccdcfd0e03fa035c88fcea76462b0cf1ab13f72731f",
       "published_at_raw": "2017-10-03T16:53:00+00:00",
       "result_position": 4,
-      "retrieved_at": "2026-11-17T00:42:28Z",
+      "retrieved_at": "2026-11-17T06:32:45Z",
       "state": "PASS",
       "title_raw": "Why Posse Comitatus is Not Immediately Applicable to the Military\u2019s Mission in Puerto Rico",
       "url": "https://www.justsecurity.org/45575/posse-comitatus-immediately-applicable-militarys-humanitarian-assistance-mission-puerto-rico/"
@@ -255,11 +255,11 @@
     "receipts": [
       {
         "byte_count": 5641,
-        "content_sha256": "5391e1903525afd6ce4b9a22a5db2f33afc6ea137a464d24a6f5253c1ef3477a",
+        "content_sha256": "201767ffcf04b21dd8ec70ce27808f37d84a47d83f622f364bf38e92db108b8d",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-17T00:42:27Z",
+        "retrieved_at": "2026-11-17T06:32:44Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/?s=puerto%20rico"
       }
@@ -273,46 +273,46 @@
   "living_page_receipts": [
     {
       "byte_count": 184988,
-      "content_sha256": "7d55dc3395fdab619d67a6eada451c63fe330e829c8729c61e420dbe90b08c8e",
+      "content_sha256": "57155d8747a0d843a67576c7dcfa179a0bf57602af0c3ec376cddac0aaeba901",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
-      "retrieved_at": "2026-11-17T00:42:28Z",
+      "retrieved_at": "2026-11-17T06:32:45Z",
       "state": "PASS",
       "url": "https://www.justsecurity.org/tag/puerto-rico/"
     },
     {
       "byte_count": 5641,
-      "content_sha256": "7c431bd967566895c28734e965fb71025574383d11265428487f9aeac4c5fcb7",
+      "content_sha256": "9a3604a9b1985c65529d47704447dbf1fe28336b16ce574689d2bbb73191f02e",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-17T00:42:28Z",
+      "retrieved_at": "2026-11-17T06:32:45Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/?s=puerto%20rico"
     },
     {
       "byte_count": 464323,
-      "content_sha256": "9bf5465653d545a83214976067056b5bc76960b782f7418f5ef3fb61b66f40a7",
+      "content_sha256": "dc724983be0e799cfe3c710ecdf14a287937bc902180c25f1daeb3d4a8c47e94",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
-      "retrieved_at": "2026-11-17T00:42:28Z",
+      "retrieved_at": "2026-11-17T06:32:45Z",
       "state": "PASS",
       "url": "https://www.justsecurity.org/124002/timeline-vessel-strikes-related-actions/"
     },
     {
-      "byte_count": 5298476,
+      "byte_count": 5299296,
       "content_sha256": null,
       "error": "payload_too_large",
       "http_status": 200,
-      "retrieved_at": "2026-11-17T00:42:28Z",
+      "retrieved_at": "2026-11-17T06:32:45Z",
       "state": "FAIL",
       "url": "https://www.justsecurity.org/107087/tracker-litigation-legal-challenges-trump-administration/"
     }
   ],
-  "recorded_at": "2026-11-17T00:42:29Z",
-  "run_id": "JUSTSEC-20261117T004223444987Z",
+  "recorded_at": "2026-11-17T06:32:45Z",
+  "run_id": "JUSTSEC-20261117T063241819143Z",
   "schema_version": "just_security_snapshot.v0.1",
   "source_id": "CENT-SRC-RSS-JUST-SECURITY",
   "tag_archive": {
@@ -324,11 +324,11 @@
     "receipts": [
       {
         "byte_count": 184988,
-        "content_sha256": "50932dd01fb49b5580ec24aff0897ef239f970d25f09fe07777bec1f783e7d49",
+        "content_sha256": "e98c4c9446a7f1ffa3dbb54eda43ce4d9228596528725b464f95838c4cf9fe65",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-17T00:42:27Z",
+        "retrieved_at": "2026-11-17T06:32:44Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/tag/puerto-rico/"
       }
