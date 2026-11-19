@@ -14,11 +14,11 @@
     },
     "receipts": [
       {
-        "byte_count": 5410969,
+        "byte_count": 5410924,
         "content_sha256": null,
         "error": "payload_too_large",
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:03Z",
+        "retrieved_at": "2026-11-19T12:28:22Z",
         "state": "FAIL",
         "url": "https://www.justsecurity.org/feed/"
       },
@@ -28,47 +28,47 @@
         "content_type": "application/rss+xml; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:06Z",
+        "retrieved_at": "2026-11-19T12:28:24Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/tag/puerto-rico/feed/"
       },
       {
-        "byte_count": 214562,
-        "content_sha256": "0bbf10a23ab066f0afdcae33768227a6161f639ff369b4919fc155a744b27705",
+        "byte_count": 214554,
+        "content_sha256": "df24f4d8176a0cffe96d8719d8b2a4c5520f165ed62ddabcdaf67185a73d7282",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:06Z",
+        "retrieved_at": "2026-11-19T12:28:24Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/131120/podcast-us-territories/"
       },
       {
         "byte_count": 242587,
-        "content_sha256": "140c5d72949c49217b51cf1d3397aba85a7c727796d190aee1ebd64f839288ad",
+        "content_sha256": "4f73052024f581e5b3a62e30128368351794d670cc31ad04a2865d0562c0a878",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:06Z",
+        "retrieved_at": "2026-11-19T12:28:24Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/130478/greenland-denmark-shortcomings-us-territory/"
       },
       {
-        "byte_count": 223626,
-        "content_sha256": "40bf1f6bcfeb0c28fcab29d23eafec65d2b61583bc6d186d8153a97905477f6a",
+        "byte_count": 223713,
+        "content_sha256": "6ee15aacf398b425c7499a9034e9138df7315e9cba4977aa376d90fc86b7bc73",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:07Z",
+        "retrieved_at": "2026-11-19T12:28:25Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/108031/more-territory-problems-greenland/"
       },
       {
-        "byte_count": 218942,
-        "content_sha256": "f6d36b610434d26c1f45e4e930f35a31c57c82a10f039348145cf87bf133d057",
+        "byte_count": 218934,
+        "content_sha256": "d1b7f576d1c565534b36f61e4a3e412cf9a9a796156d5310ff739b2ef3e1d122",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:07Z",
+        "retrieved_at": "2026-11-19T12:28:25Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/45575/posse-comitatus-immediately-applicable-militarys-humanitarian-assistance-mission-puerto-rico/"
       }
@@ -82,8 +82,8 @@
   "listing_article_receipts": [
     {
       "author_raw": "Adi Mart\u00ednez-Rom\u00e1n, Neil Weare, Tess Bridgeman",
-      "byte_count": 214562,
-      "content_sha256": "1092dc8efacd29fe789b11213a18e446d8c36a3564f987d1a6abd0294b9a2a3a",
+      "byte_count": 214554,
+      "content_sha256": "f585b6fe498533a66818cb1c0930105d8a3fe67e1bd9c5be31e703f4d77941e2",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -91,7 +91,7 @@
       "normalized_content_sha256": "d7cc59d344925e3ecad740fb99e0d3b1b3dcd4e01a0875963e2564940d1d34ab",
       "published_at_raw": "2026-02-10T13:33:30+00:00",
       "result_position": 1,
-      "retrieved_at": "2026-11-19T06:33:08Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "PASS",
       "title_raw": "Podcast: What Does it Really Means to be a U.S. Territory?",
       "url": "https://www.justsecurity.org/131120/podcast-us-territories/"
@@ -99,7 +99,7 @@
     {
       "author_raw": "Neil Weare, Adi Mart\u00ednez-Rom\u00e1n",
       "byte_count": 242587,
-      "content_sha256": "bcc21bf21d03c8d9a334f8a59388ee05b4e82e8e9fa7a09efd773e68af8e188c",
+      "content_sha256": "76a2394fb99f9796cdf7b946a03def6a205401c08d186dc444558029cd4551a0",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -107,31 +107,31 @@
       "normalized_content_sha256": "afdd0b8180fa4d0939b3d99c95ec894247a839cb212cd6fc34f99a74770e84ca",
       "published_at_raw": "2026-02-03T13:50:53+00:00",
       "result_position": 2,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "PASS",
       "title_raw": "The Shortcomings of Being a \u201cU.S. Territory\u201d",
       "url": "https://www.justsecurity.org/130478/greenland-denmark-shortcomings-us-territory/"
     },
     {
       "author_raw": "Kal Raustiala",
-      "byte_count": 223626,
-      "content_sha256": "bd01d636fc3932477b59849dbb78ceaa49b3c8f94e3ef37ac98edf4e7b9b8742",
+      "byte_count": 223713,
+      "content_sha256": "b222956376b7be70a4eb16a98aee5043658a7a7901e599c21831cad3f71cf749",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
       "modified_at_raw": "2026-06-25T19:35:28+00:00",
-      "normalized_content_sha256": "b7746c83732667812cdf97c5b41bf898eff4a0fb3fe948dfd745fadf6392e8eb",
+      "normalized_content_sha256": "6854dded19d95d71be4b7c4a0ac5c062e1c9f19c1ae5e284283e6dc21a39be1a",
       "published_at_raw": "2025-02-19T13:50:31+00:00",
       "result_position": 3,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "PASS",
       "title_raw": "More Territory, More Problems: Can Trump Seize Greenland?",
       "url": "https://www.justsecurity.org/108031/more-territory-problems-greenland/"
     },
     {
       "author_raw": "Mark Nevitt",
-      "byte_count": 218942,
-      "content_sha256": "5f4b40a14ad103b70ea691cc9aca37d8beed19fdf0d507dcef13f8931422141f",
+      "byte_count": 218934,
+      "content_sha256": "7f372342a141d630a5f806770274cabc2b1d8a3d25d90e26a64f842ab5613047",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
@@ -139,7 +139,7 @@
       "normalized_content_sha256": "d6775e21e647fee76d223433e9a80735face973c31cad87fbc1e5dcdb3185042",
       "published_at_raw": "2017-10-03T16:53:00+00:00",
       "result_position": 4,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "PASS",
       "title_raw": "Why Posse Comitatus is Not Immediately Applicable to the Military\u2019s Mission in Puerto Rico",
       "url": "https://www.justsecurity.org/45575/posse-comitatus-immediately-applicable-militarys-humanitarian-assistance-mission-puerto-rico/"
@@ -154,11 +154,11 @@
     "receipts": [
       {
         "byte_count": 5641,
-        "content_sha256": "761d1b28b7e9b779a0081684fa81cbbb53b7f09e12003ee7d563bbe3301aab4e",
+        "content_sha256": "66e37e664a1db2653e31dd0afa5e7682f96ac2712b42aa4842a799419b94c71b",
         "content_type": "text/html; charset=UTF-8",
         "error": "HTTP 403",
         "http_status": 403,
-        "retrieved_at": "2026-11-19T06:33:08Z",
+        "retrieved_at": "2026-11-19T12:28:26Z",
         "state": "BLOCKED",
         "url": "https://www.justsecurity.org/?s=puerto%20rico"
       }
@@ -172,46 +172,46 @@
   "living_page_receipts": [
     {
       "byte_count": 184988,
-      "content_sha256": "255217957b82a8ca5ede3759536609e1a71421f5806d41a74b2bf0dd4b088580",
+      "content_sha256": "f5767f350876d1b4f82e63a9111a7375d6007232a6fca6d0f3a6561fbd05716a",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "PASS",
       "url": "https://www.justsecurity.org/tag/puerto-rico/"
     },
     {
       "byte_count": 5641,
-      "content_sha256": "a8eab529a499be4122a3a75c0b792bfe7cc3f8e446646000b7b37527459ab39e",
+      "content_sha256": "fc0508256ba698a1cf67ad6c9328cdd901deee24d937d8993beee95d90ca1e54",
       "content_type": "text/html; charset=UTF-8",
       "error": "HTTP 403",
       "http_status": 403,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "BLOCKED",
       "url": "https://www.justsecurity.org/?s=puerto%20rico"
     },
     {
       "byte_count": 464134,
-      "content_sha256": "c2ab7e6b81a2bde1507e47e45e14ab683ac1c2cd916e76b9b4bbd47227bef4d2",
+      "content_sha256": "854adf73bb182a47a9f2c078b4900c71b2fafee4cd507c31d67a2e982dc8ec0d",
       "content_type": "text/html; charset=UTF-8",
       "error": null,
       "http_status": 200,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "PASS",
       "url": "https://www.justsecurity.org/124002/timeline-vessel-strikes-related-actions/"
     },
     {
-      "byte_count": 5328581,
+      "byte_count": 5328351,
       "content_sha256": null,
       "error": "payload_too_large",
       "http_status": 200,
-      "retrieved_at": "2026-11-19T06:33:09Z",
+      "retrieved_at": "2026-11-19T12:28:26Z",
       "state": "FAIL",
       "url": "https://www.justsecurity.org/107087/tracker-litigation-legal-challenges-trump-administration/"
     }
   ],
-  "recorded_at": "2026-11-19T06:33:10Z",
-  "run_id": "JUSTSEC-20261119T063303974759Z",
+  "recorded_at": "2026-11-19T12:28:27Z",
+  "run_id": "JUSTSEC-20261119T122822512867Z",
   "schema_version": "just_security_snapshot.v0.1",
   "source_id": "CENT-SRC-RSS-JUST-SECURITY",
   "tag_archive": {
@@ -223,11 +223,11 @@
     "receipts": [
       {
         "byte_count": 184988,
-        "content_sha256": "815d2028ac917d6df060a02468ad294f76e565ca31fd9d2231a6deded0e7481f",
+        "content_sha256": "4e9e53e20cd54a3b57e8b5339875022afa41c7d5672103b9818afa0272f27343",
         "content_type": "text/html; charset=UTF-8",
         "error": null,
         "http_status": 200,
-        "retrieved_at": "2026-11-19T06:33:07Z",
+        "retrieved_at": "2026-11-19T12:28:25Z",
         "state": "PASS",
         "url": "https://www.justsecurity.org/tag/puerto-rico/"
       }
