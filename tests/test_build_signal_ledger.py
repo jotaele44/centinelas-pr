@@ -13,9 +13,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from build_signal_ledger import feed_source_id, item_to_signal, source_name_to_id  # noqa: E402
+from build_signal_ledger import (  # noqa: E402
+    _signal_source_id,
+    feed_source_id,
+    item_to_signal,
+    source_name_to_id,
+)
 
 from centinelas.classify.rules import keyword_classify  # noqa: E402
+from centinelas.ingest import federal_register, rss, web  # noqa: E402
 from centinelas.models import ClassifiedItem, DomainLabel  # noqa: E402
 
 FIXTURES = json.loads((REPO_ROOT / "tests" / "fixtures" / "sample_items.json").read_text())
@@ -62,12 +68,45 @@ def test_signal_ids_and_stage_are_derived():
     assert 0 <= row["confidence_score"] <= 100
 
 
-def test_every_engine_feed_has_a_registry_row():
-    with open(REPO_ROOT / "data" / "reference" / "source_registry.csv") as fh:
-        registry_ids = {r["source_id"] for r in csv.DictReader(fh)}
+def _registry_ids() -> set[str]:
+    with open(REPO_ROOT / "data" / "reference" / "source_registry.csv", encoding="utf-8") as fh:
+        return {r["source_id"] for r in csv.DictReader(fh)}
+
+
+def test_every_configured_intake_source_has_a_registry_row():
+    # Covers all three intake layers: RSS feeds, listing scrapers, Federal Register.
+    registry_ids = _registry_ids()
+    rss_names = {src["name"] for src in rss._load_sources()}
     for name, source_id in source_name_to_id().items():
-        assert source_id in registry_ids, f"feed {name!r} missing from source_registry.csv"
-        assert source_id == feed_source_id(name)
+        assert source_id in registry_ids, f"{name!r} -> {source_id} missing from source_registry.csv"
+        if name in rss_names:
+            assert source_id == feed_source_id(name)
+
+
+def test_scrapers_and_the_federal_register_name_their_registry_row():
+    # Without `source_id` a non-RSS source falls back to a derived CENT-SRC-RSS-*
+    # id that duplicates its curated registry row instead of pointing at it.
+    for src in web._load_scrape_config().get("sources", []):
+        assert src.get("source_id"), f"scrape source {src['name']!r} has no source_id"
+    assert federal_register._load_config().get("source_id")
+
+
+@pytest.mark.parametrize("doc_type", ["Notice", "Proposed Rule", "Rule", "Presidential Document"])
+def test_any_federal_register_document_type_maps_to_the_poller_row(doc_type):
+    row = item_to_signal(
+        _classified({**FIXTURES[0], "source_name": f"Federal Register — {doc_type}"}),
+        source_name_to_id(),
+    )
+    assert row["source_id"] == "CENT-SRC-API-FEDREG-PR"
+
+
+def test_scraped_items_carry_their_curated_registry_id():
+    ids = source_name_to_id()
+    assert _signal_source_id("Federal Register", ids) == "CENT-SRC-API-FEDREG-PR"
+    assert _signal_source_id("OGPe — Fuentes de Información", ids) == "CENT-SRC-SCRAPE-OGPE-FUENTES"
+    assert _signal_source_id("ASG — Licitaciones (Subastas)", ids) == "CENT-SRC-PROCUREMENT-ASG"
+    # A name no intake layer configures still gets the deterministic derived id.
+    assert _signal_source_id("Unlisted Feed", ids) == feed_source_id("Unlisted Feed")
 
 
 # --- intake layers and per-source cap ---------------------------------------
