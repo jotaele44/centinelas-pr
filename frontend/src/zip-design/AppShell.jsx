@@ -36,7 +36,9 @@ export const AppShell = ({ children }) => {
   return (
     <div className={`zip-surface ${styles.shell}`}>
       <aside className={styles.sidebar}>
-        <Link to="/" className={styles.brand} aria-label={t("Centinelas overview", "Resumen de Centinelas")}>
+        {/* No aria-label: the link's name is its visible text, so speech control
+            ("click Centinelas") matches what is on screen. */}
+        <Link to="/" className={styles.brand}>
           <div className={styles.brandMark} aria-hidden="true">
             <RadioTower size={18} />
           </div>
@@ -76,7 +78,7 @@ export const AppShell = ({ children }) => {
           </div>
           <div className={styles.topActions}>
             <span className={styles.clockLabel}>{t("PRE-OFFICIAL SIGNAL PLANE", "PLANO DE SEÑALES PREOFICIALES")}</span>
-            <button type="button" className={styles.languageToggle} onClick={toggleLang} aria-label={t("Change language", "Cambiar idioma")}>{lang === "en" ? "ES" : "EN"}</button>
+            <button type="button" className={styles.languageToggle} onClick={toggleLang} aria-label={`${lang === "en" ? "ES" : "EN"}: ${t("Change language", "Cambiar idioma")}`}>{lang === "en" ? "ES" : "EN"}</button>
             <button type="button" className={styles.languageToggle} onClick={toggleTheme} aria-label={t("Change theme", "Cambiar tema")}>{theme === "dark" ? "☀" : "☾"}</button>
           </div>
         </header>
