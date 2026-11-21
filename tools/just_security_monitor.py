@@ -50,6 +50,74 @@ def _load_state(path: Path) -> dict:
     return state
 
 
+# A run's outcome without its identity: two runs with equal signatures observed
+# the same thing. Timestamps and raw response hashes are excluded on purpose;
+# they change on every fetch of an unchanged page. event_count is excluded too:
+# a run with events is persisted for that reason alone, and counting it here
+# would also persist the first quiet run after every eventful one.
+_RUN_IDENTITY_KEYS = frozenset({"run_id", "recorded_at", "event_count"})
+DEFAULT_PERSIST_EVERY_HOURS = 24.0
+
+
+def _run_signature(run: dict | None) -> dict | None:
+    if run is None:
+        return None
+    return {key: value for key, value in run.items() if key not in _RUN_IDENTITY_KEYS}
+
+
+def _last_run(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    last = None
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                last = line
+    return json.loads(last) if last else None
+
+
+def _parse_utc(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def persist_reason(
+    *,
+    events: list[dict],
+    run: dict,
+    previous_run: dict | None,
+    state_exists: bool,
+    now: datetime,
+    persist_every_hours: float = DEFAULT_PERSIST_EVERY_HOURS,
+) -> str | None:
+    """Why this run must be persisted, or None when it observed nothing new.
+
+    A run is persisted when it produced events, when its outcome (certifications
+    and counts) differs from the last persisted run, when there is no state yet,
+    or when the last persisted run is older than ``persist_every_hours`` (a
+    liveness heartbeat; 0 persists every run). Skipping a run loses nothing that
+    later runs compare against: item, listing and living-page events are all
+    derived from content, not from the timestamps a skipped run would refresh.
+    """
+    if events:
+        return "events"
+    if not state_exists or previous_run is None:
+        return "no_prior_state"
+    if _run_signature(run) != _run_signature(previous_run):
+        return "outcome_changed"
+    if persist_every_hours <= 0:
+        return "persist_every_run"
+    last = _parse_utc(previous_run.get("recorded_at"))
+    if last is None or (now - last).total_seconds() >= persist_every_hours * 3600:
+        return "heartbeat"
+    return None
+
+
 def _append_jsonl(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
@@ -164,6 +232,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-detail", action="store_true")
     parser.add_argument("--strict-search", action="store_true")
     parser.add_argument("--expanded-audit", action="store_true")
+    parser.add_argument(
+        "--persist-every-hours",
+        type=float,
+        default=DEFAULT_PERSIST_EVERY_HOURS,
+        help="persist an unchanged run at least this often as a liveness record; "
+        f"0 persists every run (default: {DEFAULT_PERSIST_EVERY_HOURS:g})",
+    )
     args = parser.parse_args(argv)
 
     state = _load_state(args.state)
@@ -231,36 +306,35 @@ def main(argv: list[str] | None = None) -> int:
         ),
     }
 
-    for path in (args.state, args.snapshot):
-        path.parent.mkdir(parents=True, exist_ok=True)
-    args.state.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    args.snapshot.write_text(
-        json.dumps(snapshot, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    run = {
+        "run_id": run_id,
+        "recorded_at": now_utc(),
+        "event_count": len(events),
+        "tag_certification": tag["certification"],
+        "search_certification": search["certification"],
+        "feed_certification": feed_run["certification"],
+        "listing_article_failures": article_failures,
+        "living_page_failures": living_failures,
+        **feed_run["counts"],
+    }
+    reason = persist_reason(
+        events=events,
+        run=run,
+        previous_run=_last_run(args.runs),
+        state_exists=args.state.exists(),
+        now=datetime.now(timezone.utc),
+        persist_every_hours=args.persist_every_hours,
     )
-    _append_jsonl(args.events, events)
-    _append_jsonl(
-        args.runs,
-        [
-            {
-                "run_id": run_id,
-                "recorded_at": now_utc(),
-                "event_count": len(events),
-                "tag_certification": tag["certification"],
-                "search_certification": search["certification"],
-                "feed_certification": feed_run["certification"],
-                "listing_article_failures": article_failures,
-                "living_page_failures": living_failures,
-                **feed_run["counts"],
-            }
-        ],
-    )
+    if reason is not None:
+        _persist(args, state, snapshot, events, run)
 
     print(
         json.dumps(
             {
                 "run_id": run_id,
                 "events": len(events),
+                "persisted": reason is not None,
+                "persist_reason": reason or "unchanged",
                 "tag": tag["certification"],
                 "search": search["certification"],
                 "feed": feed_run["certification"],
@@ -272,6 +346,18 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 2 if args.strict_search and search["certification"] != "PASS" else 0
+
+
+def _persist(args, state: dict, snapshot: dict, events: list[dict], run: dict) -> None:
+    for path in (args.state, args.snapshot):
+        path.parent.mkdir(parents=True, exist_ok=True)
+    args.state.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.snapshot.write_text(
+        json.dumps(snapshot, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _append_jsonl(args.events, events)
+    _append_jsonl(args.runs, [run])
 
 
 if __name__ == "__main__":
