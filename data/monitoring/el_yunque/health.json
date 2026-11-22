@@ -1,7 +1,7 @@
 {
-  "checked_at": "2026-11-15T03:41:09.734647+00:00",
+  "checked_at": "2026-11-20T18:17:36.507420+00:00",
   "condition_count": 17,
-  "state_repair_count": 7,
+  "state_repair_count": 0,
   "status": "healthy",
-  "transition_count": 7
+  "transition_count": 1
 }
