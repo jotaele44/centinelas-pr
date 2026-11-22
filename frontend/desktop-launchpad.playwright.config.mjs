@@ -1,7 +1,7 @@
 // Playwright config for the Launch Pad end-to-end test
 // (tests/desktop-launchpad.spec.mjs). The harness serves the runtime's real
 // Launch Pad, its bridge and the real backend; it needs the packages in
-// server/backend/requirements.txt and requirements-desktop.txt, plus httpx.
+// server/backend/requirements.txt, requirements-desktop.txt and the package itself.
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";

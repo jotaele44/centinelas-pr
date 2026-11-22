@@ -52,7 +52,7 @@ replaced. It checks the readiness rows, start pages, that Guest is refused a
 write and Operator is not, and that an Operator option reaches the backend's
 environment. To run it, with the backend, desktop and package requirements
 installed (`pip install -e . -r server/backend/requirements.txt -r
-requirements-desktop.txt httpx`):
+requirements-desktop.txt`):
 
 ```bash
 cd frontend && npm run test:desktop-launchpad

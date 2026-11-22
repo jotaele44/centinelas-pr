@@ -10,8 +10,8 @@ stands in for the window only. Everything else is the shipped code:
   ``DesktopBridge`` (the spec's ``window.pywebview.api`` shim forwards to it);
 * after a launch, the session is applied with the runtime's ``apply_session``
   exactly as the desktop launcher does, and the real Centinelas backend, built
-  by ``make_desktop_app`` (which installs the Guest guard), answers under
-  ``/app``;
+  by ``make_desktop_app`` (which installs the Guest guard), is mounted at
+  ``/app`` and answers requests directly;
 * ``GET /session`` reports what the launch produced: mode, start route and the
   non-secret variables the session set. Secret values are never returned.
 
@@ -61,7 +61,6 @@ def build(state_dir: Path) -> FastAPI:
     option_envs = {option.env for option in spec.options if option.kind != "secret"}
 
     harness = FastAPI()
-    state: dict[str, Any] = {"app": None}
 
     @harness.get("/", response_class=HTMLResponse)
     def page() -> str:
@@ -74,8 +73,10 @@ def build(state_dir: Path) -> FastAPI:
         args = await request.json()
         try:
             result = getattr(bridge, method)(*args)
-        except ValueError as error:  # the page shows these to the user
-            return JSONResponse({"error": str(error)}, status_code=400)
+        except ValueError:
+            # The runtime refused the call (for example, a wrong passphrase). The
+            # page only needs to know it failed; no detail is passed back.
+            return JSONResponse({"error": "The Launch Pad refused this request."}, status_code=400)
         if method == "launchpad_launch":
             # The desktop launcher does exactly this before the backend starts.
             apply_session(spec, bridge.session())
@@ -93,27 +94,25 @@ def build(state_dir: Path) -> FastAPI:
             "env": {name: os.environ[name] for name in sorted(option_envs) if name in os.environ},
         }
 
-    @harness.api_route("/app/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
-    async def app(path: str, request: Request) -> Any:
-        if bridge.session() is None:
-            raise HTTPException(409, "launch first")
-        if state["app"] is None:
-            from prii_desktop.appserver import make_desktop_app
+    class Backend:
+        """The real backend as an ASGI app, built on the first request after a
+        launch, as the desktop launcher builds it after the session is applied."""
 
-            config.attach_frontend = False  # the API only; the SPA is not under test here
-            state["app"] = make_desktop_app(config)
-        from httpx import ASGITransport, AsyncClient
+        def __init__(self) -> None:
+            self.app: Any = None
 
-        # Loopback client, as the desktop window is.
-        transport = ASGITransport(app=state["app"], client=("127.0.0.1", 50000))
-        async with AsyncClient(transport=transport, base_url="http://127.0.0.1") as client:
-            response = await client.request(
-                request.method,
-                "/" + path,
-                content=await request.body(),
-                headers={"content-type": request.headers.get("content-type", "application/json")},
-            )
-        return JSONResponse(response.json(), status_code=response.status_code)
+        async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+            if bridge.session() is None:
+                await JSONResponse({"detail": "launch first"}, status_code=409)(scope, receive, send)
+                return
+            if self.app is None:
+                from prii_desktop.appserver import make_desktop_app
+
+                config.attach_frontend = False  # the API only; the SPA is not under test here
+                self.app = make_desktop_app(config)
+            await self.app(scope, receive, send)
+
+    harness.mount("/app", Backend())
 
     @harness.get("/ready")
     def ready() -> dict[str, bool]:
