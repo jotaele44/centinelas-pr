@@ -13,9 +13,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from build_signal_ledger import feed_source_id, item_to_signal, source_name_to_id  # noqa: E402
+from build_signal_ledger import (  # noqa: E402
+    _signal_source_id,
+    feed_source_id,
+    item_to_signal,
+    source_name_to_id,
+)
 
 from centinelas.classify.rules import keyword_classify  # noqa: E402
+from centinelas.ingest import federal_register, rss, web  # noqa: E402
 from centinelas.models import ClassifiedItem, DomainLabel  # noqa: E402
 
 FIXTURES = json.loads((REPO_ROOT / "tests" / "fixtures" / "sample_items.json").read_text())
@@ -62,12 +68,45 @@ def test_signal_ids_and_stage_are_derived():
     assert 0 <= row["confidence_score"] <= 100
 
 
-def test_every_engine_feed_has_a_registry_row():
-    with open(REPO_ROOT / "data" / "reference" / "source_registry.csv") as fh:
-        registry_ids = {r["source_id"] for r in csv.DictReader(fh)}
+def _registry_ids() -> set[str]:
+    with open(REPO_ROOT / "data" / "reference" / "source_registry.csv", encoding="utf-8") as fh:
+        return {r["source_id"] for r in csv.DictReader(fh)}
+
+
+def test_every_configured_intake_source_has_a_registry_row():
+    # Covers all three intake layers: RSS feeds, listing scrapers, Federal Register.
+    registry_ids = _registry_ids()
+    rss_names = {src["name"] for src in rss._load_sources()}
     for name, source_id in source_name_to_id().items():
-        assert source_id in registry_ids, f"feed {name!r} missing from source_registry.csv"
-        assert source_id == feed_source_id(name)
+        assert source_id in registry_ids, f"{name!r} -> {source_id} missing from source_registry.csv"
+        if name in rss_names:
+            assert source_id == feed_source_id(name)
+
+
+def test_scrapers_and_the_federal_register_name_their_registry_row():
+    # Without `source_id` a non-RSS source falls back to a derived CENT-SRC-RSS-*
+    # id that duplicates its curated registry row instead of pointing at it.
+    for src in web._load_scrape_config().get("sources", []):
+        assert src.get("source_id"), f"scrape source {src['name']!r} has no source_id"
+    assert federal_register._load_config().get("source_id")
+
+
+@pytest.mark.parametrize("doc_type", ["Notice", "Proposed Rule", "Rule", "Presidential Document"])
+def test_any_federal_register_document_type_maps_to_the_poller_row(doc_type):
+    row = item_to_signal(
+        _classified({**FIXTURES[0], "source_name": f"Federal Register — {doc_type}"}),
+        source_name_to_id(),
+    )
+    assert row["source_id"] == "CENT-SRC-API-FEDREG-PR"
+
+
+def test_scraped_items_carry_their_curated_registry_id():
+    ids = source_name_to_id()
+    assert _signal_source_id("Federal Register", ids) == "CENT-SRC-API-FEDREG-PR"
+    assert _signal_source_id("OGPe — Fuentes de Información", ids) == "CENT-SRC-SCRAPE-OGPE-FUENTES"
+    assert _signal_source_id("ASG — Licitaciones (Subastas)", ids) == "CENT-SRC-PROCUREMENT-ASG"
+    # A name no intake layer configures still gets the deterministic derived id.
+    assert _signal_source_id("Unlisted Feed", ids) == feed_source_id("Unlisted Feed")
 
 
 # --- intake layers and per-source cap ---------------------------------------
@@ -231,3 +270,63 @@ def test_build_ledger_filters_before_capping_and_refuses_an_empty_result(monkeyp
     monkeypatch.setattr(bsl, "collect_raw_items", lambda rss_only=False: noise)
     with pytest.raises(SystemExit, match="filtered out"):
         bsl.build_ledger()
+
+
+# --- contracting agency from ASG bid listing titles -----------------------------
+
+
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        # Real titles from the 2026-11-16 ledger.
+        ("27J-07773 — Subasta Formal — Compañía de Fomento Industrial- (PRIDCO)", ["PRIDCO"]),
+        ("27J-07157 — Subasta Formal — COMPAÑÍA DE FOMENTO INDUSTRIAL (PRIDCO)", ["PRIDCO"]),
+        ("27J-07397 — Subasta Formal — PRIDCO", ["PRIDCO"]),
+        (
+            "27J-06599 — Solicitud de Propuesta (RFP) — DEPARTAMENTO DE CORRECCIÓN Y REHABILITACION (DCR)",
+            ["DCR"],
+        ),
+        (
+            "26J-16246-R1 — Subasta Informal — DEPARTAMENTO DE CORRECCION Y REHABILITACION",
+            ["DEPARTAMENTO DE CORRECCION Y REHABILITACION"],
+        ),
+        ("26J-07967-R1 — Subasta Formal — DEPARTAMENTO DE EDUCACION", ["DEPARTAMENTO DE EDUCACION"]),
+        ("27J-04435 — Solicitud de Propuesta (RFP) — ASG- Contratos Centralizados", ["ASG"]),
+        ("27J-00642 — Solicitud de Propuesta (RFP) — ASG- Subasta Centralizada", ["ASG"]),
+        # Not the listing format: nothing is guessed.
+        ("Aviso de subasta", []),
+    ],
+)
+def test_asg_listing_title_names_the_contracting_agency(title, expected):
+    import build_signal_ledger as bsl
+
+    assert bsl._listing_agencies("ASG — Licitaciones (Subastas)", title) == expected
+
+
+def test_listing_agency_parse_applies_only_to_asg():
+    import build_signal_ledger as bsl
+
+    title = "Casa Castañer Wastewater Treatment Plant — PR0024333 — Draft"
+    assert bsl._listing_agencies("EPA Region 2 — Puerto Rico NPDES Permits", title) == []
+
+
+def test_listing_agency_merges_with_enrichment_without_duplicates():
+    item = _classified(
+        {
+            "title": "27J-07397 — Subasta Formal — PRIDCO",
+            "body_text": "",
+            "source_name": "ASG — Licitaciones (Subastas)",
+        }
+    ).model_copy(update={"agencies": ["FEMA", "PRIDCO"]})
+    row = item_to_signal(item, source_name_to_id())
+    assert row["agencies"] == ["FEMA", "PRIDCO"]
+    pytest.importorskip("jsonschema").validate(row, SIGNAL_SCHEMA)
+
+
+def test_asg_listing_source_name_matches_the_scrape_config():
+    import build_signal_ledger as bsl
+    import yaml
+
+    config = yaml.safe_load((REPO_ROOT / "src/centinelas/ingest/sources.yaml").read_text())
+    scrape_names = {entry.get("name") for entry in config["scrape"]["sources"]}
+    assert scrape_names >= bsl._ASG_LISTING_SOURCES

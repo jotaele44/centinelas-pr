@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "jotaele44/centinelas-pr",
+  "audit_date": "2026-11-16",
+  "supersedes": "docs/unfinished_implementation_ledger.v1.json",
+  "normalized_score": null,
+  "normalized_score_note": "Not re-measured. The v1 figure (75.35, 2026-08-19) is historical; this version reconciles item states only.",
+  "evidence_rule": "Only evidence on main closes an item; open PRs remain candidates.",
+  "items": [
+    {"id": "CEN-001", "title": "Land isolated-clone runtime", "state": "complete", "evidence": ["pull/78"], "note": "Unchanged since v1."},
+    {"id": "CEN-002", "title": "Reconcile workspace policy authority", "state": "closed_superseded", "evidence": ["pull/77 closed unmerged 2026-08-27", "pull/78"], "note": "Any remaining policy-only text belongs in thehub-pr."},
+    {"id": "CEN-003", "title": "Disposition rescued frontend and signal history", "state": "closed", "evidence": ["pull/79 closed unmerged 2026-09-03"], "note": "No rescued data was imported."},
+    {"id": "CEN-004", "title": "Decide producer-contract skill removal", "state": "closed", "evidence": ["pull/80 closed unmerged 2026-08-11", "skills/prii-check-producer-contract/SKILL.md"], "note": "The skill stays."},
+    {"id": "CEN-005", "title": "Build Puerto Rico pre-official source tranche", "state": "partial", "evidence": ["scripts/build_signal_ledger.py", "src/centinelas/ingest/web.py", "pull/190", "pull/195", "pull/197"], "note": "Polled daily since 2026-11-03: DRNA RSS categories, Federal Register (Puerto Rico), and the OGPe, JP, ASG and EPA Region 2 NPDES listing scrapers. Since #195 the ledger keeps only Puerto Rico-relevant items published in the last 90 days; the 2026-11-16 refresh wrote 90 rows from 13 sources. Still manual: legislative calendars, municipal agendas, PREB, AAA and COR3 board agendas.", "exit_criteria": "Every P0 source family is polled with acquisition accounting, or explicitly excluded with a reason."},
+    {"id": "CEN-006", "title": "Implement Matter stages 0-6 and MoneySweep handoff", "state": "local_foundation_complete_cross_repo_certification_open", "evidence": ["frontend/src/lib/lifecycle.js", "server/backend/main.py", "tests/test_handoff_endpoint.py"], "note": "Unchanged. Ledger matter_id is still 1:1 with signal_id, so no matter groups several signals yet.", "exit_criteria": "Deterministic matter grouping, then cross-repository certification with moneysweep-pr."},
+    {"id": "CEN-007", "title": "Refresh production ledger and validate Hub export", "state": "complete_locally_hub_receipt_open", "evidence": [".github/workflows/signal-ledger-refresh.yml", "federation.json federation_readiness_gate"], "note": "The ledger has been refreshed daily since #160 and each refresh commits only after the production export accepts it. Still open: the durable hub receipt re-pin (thehub X-04)."},
+    {"id": "CEN-008", "title": "Ledger rows carry agencies and relationships", "state": "in_progress", "evidence": ["pull/195", "pull/197"], "note": "#195 carried the classifier enrichment onto rows, but its agency keyword list matched none of the kept rows (0 agencies on 2026-11-16). #197 reads the contracting agency from ASG bid listings; replayed on the 2026-11-16 ledger, 10 rows gain one.", "exit_criteria": "The production export emits involves_agency relationships from the live ledger."},
+    {"id": "CEN-009", "title": "Scheduled monitors run and persist", "state": "in_progress", "evidence": ["pull/189", "pull/195", "pull/197"], "note": "El Yunque failed every run from 2026-11-02 to 2026-11-15 (transition log over GitHub's 100 MB limit); fixed by #189. Just Security logged spurious article version changes (fixed in #195) and committed every run (#197, open, persists only changed runs plus a daily heartbeat).", "exit_criteria": "#197 merged and Just Security commits to main only when a run observed something new."}
+  ]
+}

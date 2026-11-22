@@ -228,3 +228,119 @@ def test_failed_detail_fetch_does_not_report_a_version_change():
     # Detail fetch failed: no hash, and body_text fell back to the feed summary.
     fallback = _article(None, body="Feed summary only.")
     assert monitor._item_events(state, [fallback], "r2") == []
+
+
+# --- persist only runs that observed something new ----------------------------
+#
+# Every run used to rewrite state.json, latest_snapshot.json and runs.jsonl, so the
+# workflow committed to main every 6 hours even when nothing had changed.
+
+from datetime import datetime, timezone  # noqa: E402
+
+_NOW = datetime(2026, 11, 16, 12, 0, tzinfo=timezone.utc)
+
+
+def _run(recorded_at: str = "2026-11-16T06:00:00Z", **overrides) -> dict:
+    run = {
+        "run_id": "JUSTSEC-1",
+        "recorded_at": recorded_at,
+        "event_count": 0,
+        "tag_certification": "PASS",
+        "search_certification": "BLOCKED",
+        "feed_certification": "PROVISIONAL",
+        "listing_article_failures": 0,
+        "living_page_failures": 2,
+        "seen": 4,
+        "relevant": 4,
+    }
+    run.update(overrides)
+    return run
+
+
+def _reason(previous, run=None, events=(), state_exists=True, hours=24.0):
+    return monitor.persist_reason(
+        events=list(events),
+        run=run or _run(recorded_at="2026-11-16T12:00:00Z", run_id="JUSTSEC-2"),
+        previous_run=previous,
+        state_exists=state_exists,
+        now=_NOW,
+        persist_every_hours=hours,
+    )
+
+
+def test_unchanged_run_is_not_persisted():
+    assert _reason(_run()) is None
+
+
+def test_events_force_persistence():
+    assert _reason(_run(), events=[{"event_type": "NEW_RELEVANT_ITEM"}]) == "events"
+
+
+def test_outcome_change_forces_persistence():
+    changed = _run(recorded_at="2026-11-16T12:00:00Z", search_certification="PASS")
+    assert _reason(_run(), run=changed) == "outcome_changed"
+
+
+def test_first_run_is_persisted():
+    assert _reason(None) == "no_prior_state"
+    assert _reason(_run(), state_exists=False) == "no_prior_state"
+
+
+def test_heartbeat_persists_an_unchanged_run_once_a_day():
+    assert _reason(_run(recorded_at="2026-11-15T11:59:00Z")) == "heartbeat"
+    assert _reason(_run(), hours=0) == "persist_every_run"
+
+
+def test_last_run_reads_the_final_row(tmp_path):
+    path = tmp_path / "runs.jsonl"
+    assert monitor._last_run(path) is None
+    path.write_text(
+        json.dumps(_run(run_id="a")) + "\n" + json.dumps(_run(run_id="b")) + "\n\n",
+        encoding="utf-8",
+    )
+    assert monitor._last_run(path)["run_id"] == "b"
+
+
+def _stub_network(monkeypatch, *, body: str, search: str = "BLOCKED"):
+    item = {
+        "canonical_url": "https://www.justsecurity.org/1/article/",
+        "title": "Article",
+        "body_text": body,
+        "content_sha256": body.encode().hex()[:64].ljust(64, "0"),
+    }
+    feed_run = {"certification": "PROVISIONAL", "counts": {"seen": 1, "relevant": 1}}
+    monkeypatch.setattr(monitor, "poll_relevant_feeds", lambda client, fetch_detail=True: ([item], feed_run))
+
+    def listing(client, manifestation, url):
+        cert = search if manifestation == "PUERTO_RICO_LITERAL_SEARCH" else "PASS"
+        return {"manifestation": manifestation, "certification": cert, "result_urls": []}
+
+    monkeypatch.setattr(monitor, "snapshot_listing", listing)
+    monkeypatch.setattr(monitor, "acquire_article_receipts", lambda client, urls: [])
+    monkeypatch.setattr(monitor, "_living_events", lambda client, state, run_id: ([], []))
+
+
+def test_main_skips_an_unchanged_run_and_persists_a_changed_one(tmp_path, monkeypatch, capsys):
+    paths = {name: tmp_path / f"{name}.json" for name in ("state", "snapshot")}
+    paths["events"] = tmp_path / "events.jsonl"
+    paths["runs"] = tmp_path / "runs.jsonl"
+    argv = [f"--{name}={path}" for name, path in paths.items()]
+
+    _stub_network(monkeypatch, body="Text v1")
+    assert monitor.main(argv) == 0  # first run: new item
+    first = {name: path.read_bytes() for name, path in paths.items()}
+    assert len(paths["runs"].read_text().splitlines()) == 1
+
+    assert monitor.main(argv) == 0  # second run: identical outcome
+    assert {name: path.read_bytes() for name, path in paths.items()} == first
+    assert '"persisted": false' in capsys.readouterr().out.splitlines()[-1]
+
+    _stub_network(monkeypatch, body="Text v1", search="PASS")
+    assert monitor.main(argv) == 0  # certification changed
+    assert len(paths["runs"].read_text().splitlines()) == 2
+    assert '"persist_reason": "outcome_changed"' in capsys.readouterr().out
+
+
+def test_quiet_run_after_an_eventful_one_is_not_persisted():
+    previous = _run(event_count=4)
+    assert _reason(previous) is None

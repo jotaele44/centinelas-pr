@@ -30,6 +30,9 @@ _API_URL = "https://www.federalregister.gov/api/v1/documents.json"
 _TIMEOUT = 20.0
 # Only the fields we map onto RawItem — keeps the response small.
 _FIELDS = ("document_number", "title", "publication_date", "html_url", "abstract", "type")
+# Every item is named "<SOURCE_NAME> — <document type>" (or just SOURCE_NAME when
+# the API omits the type); build_signal_ledger maps them all to one registry row.
+SOURCE_NAME = "Federal Register"
 
 
 def _load_config() -> dict:
@@ -70,7 +73,7 @@ def _result_to_raw_item(result: dict, tier: str) -> RawItem | None:
     return RawItem(
         item_id=RawItem.make_id(url, published_at),
         source_url=url,
-        source_name=f"Federal Register — {doc_type}" if doc_type else "Federal Register",
+        source_name=f"{SOURCE_NAME} — {doc_type}" if doc_type else SOURCE_NAME,
         title=title,
         body_text=body,
         published_at=published_at,

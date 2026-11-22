@@ -44,11 +44,14 @@ Mapping (ClassifiedItem -> signal.schema.json):
   signal_stage     rfp_open / officialization_pending when classify/enrich.py
                    detects an open solicitation / an announced award, else
                    raw_observation
-  agencies         enrich.extract_agencies
+  agencies         enrich.extract_agencies, plus the contracting agency parsed
+                   from ASG bid listing titles
   entities         enrich.extract_recipients (the awardee, not the funder)
   estimated_value  enrich.extract_estimated_value
   municipalities   [] (nothing in this repo resolves them for ledger rows yet)
-  source_id        CENT-SRC-RSS-<feed slug>    (rows added to the source registry)
+  source_id        the source's source_registry.csv row: CENT-SRC-RSS-<feed slug>
+                   for RSS feeds, the `source_id` sources.yaml gives each
+                   listing scraper and the Federal Register poller
   confidence_score confidence * 100
   evidence_tier    verbatim (same T1-T4 enum)
   is_synthetic     false
@@ -73,7 +76,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from centinelas.classify.classifier import build_classified_item  # noqa: E402
-from centinelas.ingest import rss  # noqa: E402
+from centinelas.ingest import federal_register, rss, web  # noqa: E402
 from centinelas.ingest.federal_register import poll_federal_register  # noqa: E402
 from centinelas.ingest.web import poll_scrape_sources  # noqa: E402
 from centinelas.models import ClassifiedItem  # noqa: E402
@@ -94,6 +97,46 @@ PR_TERMS = (
     "culebra",
 )
 
+# Listing sources whose titles name the contracting agency in a fixed position.
+# ASG's bid listing renders each entry as "<bid id> — <procedure> — <agency>",
+# e.g. "27J-07773 — Subasta Formal — Compañía de Fomento Industrial- (PRIDCO)".
+# classify/enrich.py matches agencies by keyword against a short list that
+# names none of these, so without this every ASG row reached the export with no
+# agency and no involves_agency relationship.
+_ASG_LISTING_SOURCES = frozenset({"ASG — Licitaciones (Subastas)"})
+_TITLE_SEPARATOR = re.compile(r"\s+[—–]\s+")
+_TRAILING_ACRONYM = re.compile(r"\(([A-Z][A-Z0-9&]{1,11})\)\s*$")
+
+
+def _clean_listing_agency(segment: str) -> str | None:
+    """The agency as the listing names it, without inferring identity.
+
+    A parenthesised acronym the listing itself gives is used ("Compañía de
+    Fomento Industrial- (PRIDCO)" and "PRIDCO" both become "PRIDCO"); centralized
+    ASG procurement ("ASG- Contratos Centralizados") becomes "ASG". Any other
+    name is kept as written: two spellings of one agency are NOT merged here,
+    because name similarity is not proof of identity.
+    """
+    text = segment.strip()
+    match = _TRAILING_ACRONYM.search(text)
+    if match:
+        return match.group(1)
+    text = re.sub(r"[\s\-–—]+$", "", text)
+    if re.match(r"^ASG(?:$|[\s\-–])", text):
+        return "ASG"
+    return text or None
+
+
+def _listing_agencies(source_name: str, title: str) -> list[str]:
+    if source_name not in _ASG_LISTING_SOURCES:
+        return []
+    parts = _TITLE_SEPARATOR.split(title or "")
+    if len(parts) < 3:
+        return []
+    agency = _clean_listing_agency(parts[-1])
+    return [agency] if agency else []
+
+
 # classify/enrich.py stage vocabulary -> schemas/signal.schema.json enum. An
 # announced award is not yet an official record, so it is "pending
 # officialization", never a finalized stage.
@@ -110,7 +153,32 @@ def feed_source_id(feed_name: str) -> str:
 
 
 def source_name_to_id() -> dict[str, str]:
-    return {src["name"]: feed_source_id(src["name"]) for src in rss._load_sources()}
+    """Map each intake layer's ``source_name`` to its source_registry.csv row.
+
+    RSS feeds use the derived ``feed_source_id``. Listing scrapers and the Federal
+    Register poller name a curated registry row through ``source_id`` in
+    sources.yaml; the derived id is only a fallback for a source that omits it.
+    """
+    ids = {src["name"]: feed_source_id(src["name"]) for src in rss._load_sources()}
+    for src in web._load_scrape_config().get("sources", []):
+        ids[src["name"]] = src.get("source_id") or feed_source_id(src["name"])
+    fr_name = federal_register.SOURCE_NAME
+    ids[fr_name] = federal_register._load_config().get("source_id") or feed_source_id(fr_name)
+    return ids
+
+
+def _signal_source_id(source_name: str, source_ids: dict[str, str]) -> str:
+    """Registry id for an item's ``source_name``.
+
+    Federal Register items carry their document type in the name
+    ("Federal Register — Notice"), so any typed name resolves to the poller's row.
+    """
+    if source_name in source_ids:
+        return source_ids[source_name]
+    fr_name = federal_register.SOURCE_NAME
+    if source_name.startswith(f"{fr_name} — ") and fr_name in source_ids:
+        return source_ids[fr_name]
+    return feed_source_id(source_name)
 
 
 def item_to_signal(item: ClassifiedItem, source_ids: dict[str, str]) -> dict:
@@ -121,14 +189,16 @@ def item_to_signal(item: ClassifiedItem, source_ids: dict[str, str]) -> dict:
         "signal_type": f"{primary}_signal",
         "title": item.title,
         "summary": (item.body_text or "")[:500],
-        "source_id": source_ids.get(item.source_name, feed_source_id(item.source_name)),
+        "source_id": _signal_source_id(item.source_name, source_ids),
         "source_url": item.source_url,
         "captured_at": item.captured_at.isoformat(),
         "published_at": item.published_at.isoformat(),
         "signal_stage": _STAGE_MAP.get(item.signal_stage or "", "raw_observation"),
         "beat": primary,
         "municipalities": list(item.municipalities),
-        "agencies": list(item.agencies),
+        "agencies": list(
+            dict.fromkeys([*item.agencies, *_listing_agencies(item.source_name, item.title)])
+        ),
         "entities": list(item.recipients),
         "estimated_value": item.estimated_value,
         "deadline_date": None,
