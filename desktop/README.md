@@ -43,6 +43,26 @@ run programs under your account.
 (0.3.0). If you set the app up before that pin moved, run
 `python desktop/setup.py --force` once to install the newer runtime.
 
+The Launch Pad is registered as `desktop-launch-pad` in
+`.federation/gui-capabilities.json`. Its end-to-end test,
+`frontend/tests/desktop-launchpad.spec.mjs`, opens the runtime's real page in a
+browser and drives the real bridge and backend through
+`frontend/tests/support/launchpad_harness.py`; only the native window is
+replaced. It checks the readiness rows, start pages, that Guest is refused a
+write and Operator is not, and that an Operator option reaches the backend's
+environment. To run it, with the backend, desktop and package requirements
+installed (`pip install -e . -r server/backend/requirements.txt -r
+requirements-desktop.txt httpx`):
+
+```bash
+cd frontend && npm run test:desktop-launchpad
+```
+
+It runs in CI in the GUI Reachability E2E job. One known runtime defect is
+asserted rather than hidden: in Guest, the runtime dims Operator-only options
+below the WCAG contrast minimum; the test fails if any other accessibility
+violation appears.
+
 ## How it works
 
 - `desktop/config.py` — the only per-repo file (title, paths, requirements, and
