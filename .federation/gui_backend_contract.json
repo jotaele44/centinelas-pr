@@ -1,7 +1,7 @@
 {
   "schema_version": "federation.gui-backend-contract/1.0",
   "repository": "Jotaele44/centinelas-pr",
-  "source_commit": "c9743e3a2a372653050d4224fc8ea7d2dbd80d88",
+  "source_commit": "4b4cfc119cbb85975a3dbfa79d940d0c76c77a2a",
   "policy": {
     "require_zero_material_residue": true,
     "dimensions": [
