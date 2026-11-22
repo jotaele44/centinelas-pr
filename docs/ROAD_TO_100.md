@@ -3,7 +3,13 @@
 **Audit date:** 2026-08-19
 **Scoring model:** code completeness 20%; main-branch availability 15%; CI enforcement 15%; data materialization 15%; operator verification 15%; GUI completeness 10%; federation readiness 10%.
 
-## Current normalized score: 75.35 / 100
+> **Reconciled 2026-11-16.** The score and state below are from the 2026-08-19 audit and were
+> not re-measured. Since then: PRs #77, #79 and #80 are closed (CEN-002/003/004); the ledger
+> refreshes daily and passes the production export (CEN-007, except the hub receipt re-pin);
+> the PR source tranche is partly automated (CEN-005). The current item states are in
+> `docs/unfinished_implementation_ledger.v2.json`.
+
+## Normalized score as of 2026-08-19: 75.35 / 100
 
 | Dimension | Weight | Score | Weighted |
 |---|---:|---:|---:|
@@ -38,4 +44,4 @@ The former ~90% figure measured offline code completeness. It is historical and 
 
 ## Machine-readable authority
 
-See `docs/unfinished_implementation_ledger.v1.json`. Only evidence on `main` closes an item; draft PRs remain candidates.
+See `docs/unfinished_implementation_ledger.v2.json` (2026-11-16), which supersedes v1. Only evidence on `main` closes an item; draft PRs remain candidates.
