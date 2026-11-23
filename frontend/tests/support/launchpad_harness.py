@@ -110,6 +110,12 @@ def build(state_dir: Path) -> FastAPI:
 
                 config.attach_frontend = False  # the API only; the SPA is not under test here
                 self.app = make_desktop_app(config)
+            # In the desktop app the backend is served at "/", and the Guest
+            # guard matches its allow-list against the request path. Hand the
+            # backend that same view: the path without the "/app" mount prefix.
+            prefix = scope.get("root_path", "")
+            path = scope["path"][len(prefix):] if prefix and scope["path"].startswith(prefix) else scope["path"]
+            scope = {**scope, "path": path or "/", "raw_path": (path or "/").encode(), "root_path": ""}
             await self.app(scope, receive, send)
 
     harness.mount("/app", Backend())
