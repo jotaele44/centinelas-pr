@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: write
+  # scripts/push_to_main.sh records docs-sync on the data commit before pushing it.
+  statuses: write
 
 concurrency:
   group: just-security-puerto-rico-monitor
@@ -50,6 +52,8 @@ jobs:
           python tools/just_security_monitor.py "${args[@]}"
       - name: Persist state and receipts
         if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "centinelas-monitor-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -58,7 +62,7 @@ jobs:
             echo "No Just Security state changes to persist."
           else
             git commit -m "data: refresh Just Security PR monitor [skip ci]"
-            git push
+            scripts/push_to_main.sh just-security-monitor
           fi
       - name: Upload monitor receipts
         if: ${{ always() }}

@@ -1,88 +1,108 @@
 feeds:
   # ── Military & Aerospace ──────────────────────────────
   - name: "The Drive - War Zone"
+    scope: global
     url: "https://www.thedrive.com/the-war-zone/feed"
     tier: "T1"
 
   - name: "FlightGlobal"
+    scope: global
     url: "https://www.flightglobal.com/rss"
     tier: "T1"
 
   - name: "Defense News"
+    scope: global
     url: "https://www.defensenews.com/arc/outboundfeeds/rss/"
     tier: "T1"
 
   - name: "Space News"
+    scope: global
     url: "https://spacenews.com/feed/"
     tier: "T1"
 
   # ── Environmental ─────────────────────────────────────
   - name: "NOAA News"
+    scope: global
     url: "https://www.noaa.gov/news-release/feed"
     tier: "T1"
 
   - name: "Inside Climate News"
+    scope: global
     url: "https://insideclimatenews.org/feed/"
     tier: "T1"
 
   - name: "Yale Environment 360"
+    scope: global
     url: "https://e360.yale.edu/feed"
     tier: "T1"
 
   # ── Geology & Geography ───────────────────────────────
   - name: "USGS Earthquakes"
+    scope: global
     url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.atom"
     tier: "T1"
 
   - name: "Volcano Discovery"
+    scope: global
     url: "https://www.volcanodiscovery.com/volcanoes/rss.xml"
     tier: "T2"
 
   - name: "AGU EOS"
+    scope: global
     url: "https://eos.org/feed"
     tier: "T1"
 
   # ── Anomalous ─────────────────────────────────────────
   - name: "The Black Vault"
+    scope: global
     url: "https://www.theblackvault.com/documentdb/feed/"
     tier: "T3"
 
   - name: "Earthfiles"
+    scope: global
     url: "https://www.earthfiles.com/feed/"
     tier: "T3"
 
   - name: "MUFON"
+    scope: global
     url: "https://www.mufon.com/blog-feed.xml"
     tier: "T3"
 
   # ── Financial ─────────────────────────────────────────
   - name: "Reuters Business"
+    scope: global
     url: "https://feeds.reuters.com/reuters/businessNews"
     tier: "T1"
 
   - name: "Financial Times"
+    scope: global
     url: "https://www.ft.com/rss/home"
     tier: "T1"
 
   # ── Political / Geopolitical ──────────────────────────
   - name: "Associated Press Top News"
+    scope: global
     url: "https://rsshub.app/apnews/topics/apf-topnews"
     tier: "T1"
 
   - name: "Reuters World"
+    scope: global
     url: "https://feeds.reuters.com/reuters/worldNews"
     tier: "T1"
 
   - name: "Foreign Policy"
+    scope: global
     url: "https://foreignpolicy.com/feed/"
     tier: "T1"
 
   # ── Cross-domain / Wire ───────────────────────────────
   - name: "BBC World"
+    scope: global
     url: "https://feeds.bbci.co.uk/news/world/rss.xml"
     tier: "T1"
 
   - name: "Science Daily"
+    scope: global
     url: "https://www.sciencedaily.com/rss/all.xml"
     tier: "T2"
 
@@ -103,22 +123,27 @@ feeds:
   # OSHA publishes no webhooks; these are its poll-friendly RSS feeds (XML, no key).
   # Classified SAFETY_COMPLIANCE → routed to aguayluz-pr's INDUSTRIAL alert module.
   - name: "OSHA News Releases"
+    scope: global
     url: "https://www.osha.gov/news/newsreleases.xml"
     tier: "T1"
 
   - name: "OSHA Federal Register Notices"
+    scope: global
     url: "https://www.osha.gov/laws-regs/federalregisters.xml"
     tier: "T1"
 
   - name: "OSHA Standard Interpretations"
+    scope: global
     url: "https://www.osha.gov/laws-regs/standardinterpretations.xml"
     tier: "T1"
 
   - name: "OSHA Directives"
+    scope: global
     url: "https://www.osha.gov/enforcement/directives.xml"
     tier: "T1"
 
   - name: "OSHA QuickTakes"
+    scope: global
     url: "https://www.osha.gov/sites/default/files/quicktakes.xml"
     tier: "T2"
 
@@ -244,6 +269,9 @@ feeds:
 # federal sources (USACE Jacksonville notices, EPA Region 2 NPDES).
 federal_register:
   enabled: true
+  # Registry row the signal ledger stamps on every Federal Register item,
+  # whatever its document type ("Federal Register — Notice", "— Rule", ...).
+  source_id: "CENT-SRC-API-FEDREG-PR"
   term: "Puerto Rico"
   order: "newest"
   per_page: 50
@@ -257,6 +285,9 @@ federal_register:
 # Planificación (jp.pr.gov) — plus EPA Region 2's PR NPDES listing publish no
 # RSS. All of them are server-rendered (content is in the raw HTML; no JS
 # execution needed), so ingest/web.py parses them with httpx + BeautifulSoup.
+# Each source names its row in data/reference/source_registry.csv via
+# `source_id`; scripts/build_signal_ledger.py stamps that id on the source's
+# signals (RSS feeds instead use the derived CENT-SRC-RSS-<slug> id).
 # Consumed by web.poll_scrape_sources(). Each source names a `parser`:
 #   webflow_cms — Webflow CMS collection lists (.w-dyn-item), optionally
 #                 restricted to named tab panes via `tabs`
@@ -271,6 +302,7 @@ scrape:
   enabled: true
   sources:
     - name: "OGPe — Fuentes de Información"
+      source_id: "CENT-SRC-SCRAPE-OGPE-FUENTES"
       url: "https://permisos.pr.gov/fuentes-de-informacion"
       parser: webflow_cms
       tier: "T1"
@@ -295,18 +327,21 @@ scrape:
     # short code ("VP - Poblado Castañer"), so without it the item carries no
     # word the classifier can act on.
     - name: "JP — Vistas Públicas"
+      source_id: "CENT-SRC-SCRAPE-JP-VISTAS"
       url: "https://jp.pr.gov/vistas-publicas"
       parser: webflow_cms
       tier: "T1"
       section: "Vista pública de la Junta de Planificación"
 
     - name: "JP — Resoluciones Especiales"
+      source_id: "CENT-SRC-SCRAPE-JP-RESOLUCIONES"
       url: "https://jp.pr.gov/resoluciones-especiales"
       parser: webflow_cms
       tier: "T2"
       section: "Resolución especial de la Junta de Planificación"
 
     - name: "JP — Noticias y Comunicados"
+      source_id: "CENT-SRC-SCRAPE-JP-NOTICIAS"
       url: "https://jp.pr.gov/noticias-comunicados"
       parser: webflow_cms
       tier: "T2"
@@ -318,6 +353,7 @@ scrape:
     # a nine-tile navigation page with no records of its own; these two are the
     # leaves under it that actually publish.
     - name: "ASG — Licitaciones (Subastas)"
+      source_id: "CENT-SRC-PROCUREMENT-ASG"
       url: "https://asg.pr.gov/subastas?order_by=-creado"
       parser: asg_cards
       tier: "T1"
@@ -333,6 +369,7 @@ scrape:
       max_pages: 2
 
     - name: "ASG — Noticias"
+      source_id: "CENT-SRC-SCRAPE-ASG-NOTICIAS"
       url: "https://asg.pr.gov/noticias/"
       parser: asg_cards
       tier: "T2"
@@ -349,6 +386,7 @@ scrape:
       max_pages: 2
 
     - name: "EPA Region 2 — Puerto Rico NPDES Permits"
+      source_id: "CENT-SRC-SCRAPE-EPA-R2-NPDES"
       url: "https://www.epa.gov/npdes-permits/puerto-rico-npdes-permits"
       parser: html_table
       tier: "T1"
@@ -359,6 +397,7 @@ scrape:
       date_column: "Public Notice Date"
 
     - name: "USACE Jacksonville — Regulatory Public Notices"
+      source_id: "CENT-SRC-SCRAPE-USACE-SAJ"
       url: "https://www.saj.usace.army.mil/DesktopModules/ArticleCS/RSS.ashx?ContentType=4&Site=435&isdashboardselected=0&max=20"
       parser: rss_detail
       # DISABLED: saj.usace.army.mil sits behind an Akamai edge that refuses

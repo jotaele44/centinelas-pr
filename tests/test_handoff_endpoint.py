@@ -15,7 +15,6 @@ from server.backend import auth, main
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(auth, "WRITE_TOKEN", "")
-    monkeypatch.setattr(auth, "_is_local_network", lambda host: host == "testclient")
     data = tmp_path / ".centinelas"
     classified = data / "classified"
     classified.mkdir(parents=True)
@@ -40,7 +39,7 @@ def client(tmp_path, monkeypatch):
         "centinelas.route.dispatch._repository_dispatch",
         lambda target, body, token: 204,
     )
-    with TestClient(main.app) as test_client:
+    with TestClient(main.app, client=("127.0.0.1", 12345)) as test_client:
         yield test_client, tmp_path
 
 
@@ -81,3 +80,31 @@ def test_handoff_list_includes_history(client):
     rows = test_client.get("/handoffs").json()
     assert rows[0]["item_id"] == "handoff-001"
     assert rows[0]["handoffs"][0]["status"] == "pending_ack"
+
+
+def test_handoff_route_id_cannot_escape_record_directory(client):
+    test_client, tmp_path = client
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"item_id":"outside"}', encoding="utf-8")
+
+    response = test_client.post(
+        "/handoffs/..%5Coutside",
+        json={"targets": ["spiderweb-pr"]},
+    )
+
+    assert response.status_code == 404
+    assert outside.read_text(encoding="utf-8") == '{"item_id":"outside"}'
+
+
+def test_handoff_retry_id_cannot_escape_record_directory(client):
+    test_client, tmp_path = client
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"receipt_id":"outside"}', encoding="utf-8")
+
+    response = test_client.post(
+        "/handoffs/handoff-001",
+        json={"targets": ["spiderweb-pr"], "retry_receipt_id": "../outside"},
+    )
+
+    assert response.status_code == 404
+    assert outside.read_text(encoding="utf-8") == '{"receipt_id":"outside"}'

@@ -8,6 +8,22 @@ import secrets
 from fastapi import Depends, HTTPException, Request
 
 WRITE_TOKEN = os.environ.get("CENTINELAS_WRITE_TOKEN", "")
+LOCAL_WRITE_REQUIRED_DETAIL = (
+    "Centinelas writes require a local client while CENTINELAS_WRITE_TOKEN is unset"
+)
+_LOCAL_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in (
+        "127.0.0.0/8",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16",
+        "::1/128",
+        "fc00::/7",
+        "fe80::/10",
+    )
+)
 
 
 def _is_local_network(host: str) -> bool:
@@ -19,7 +35,7 @@ def _is_local_network(host: str) -> bool:
         ip = ipaddress.ip_address(host)
     except ValueError:
         return False
-    return ip.is_loopback or ip.is_private or ip.is_link_local
+    return any(network.version == ip.version and ip in network for network in _LOCAL_NETWORKS)
 
 
 def require_write_access(request: Request) -> None:
@@ -38,7 +54,7 @@ def require_write_access(request: Request) -> None:
     if not _is_local_network(host):
         raise HTTPException(
             status_code=403,
-            detail="Centinelas writes require a local client while CENTINELAS_WRITE_TOKEN is unset",
+            detail=LOCAL_WRITE_REQUIRED_DETAIL,
         )
 
 

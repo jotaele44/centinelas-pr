@@ -1,0 +1,39 @@
+{
+  "archive": "Centinelas PR.zip",
+  "archive_sha256": "e88541667f8e5369d6925e72bc1282c546b15d67721062e768ad2494200ea629",
+  "repository_remote": "https://github.com/jotaele44/centinelas-pr.git",
+  "base_head": "caf086598a4f99e2eb0ca4aac6d51e2d9bd46321",
+  "mode": "frontend adaptation; existing data and auth retained",
+  "source_members": [
+    {
+      "path": "components/AppShell.module.css",
+      "size": 4193,
+      "sha256": "7956991ce3d42f799ce606e2496f03ff2ee6c5ffbd2bc30918abcf8e9fe59260"
+    },
+    {
+      "path": "pages/_index.module.css",
+      "size": 7373,
+      "sha256": "96bd9aaabd9dcad13d5332b4f4bfecb2a559d40afabf35f5b5294aab8cd8d558"
+    },
+    {
+      "path": "global.css",
+      "size": 4090,
+      "sha256": "35edb704172deb05c2a4cd8508b07dbeaf9dae8d7d8f2bfe37f8d65e2fbc9549"
+    }
+  ],
+  "excluded": "Archive server, credentials, database and certification claims are not imported as authority.",
+  "integration_scope": "Archive-derived design tokens, app navigation/chrome and responsive dashboard layout; existing production pages, data clients and auth remain the functional implementation.",
+  "not_claimed": [
+    "Full ZIP application replacement",
+    "Floot server/database migration",
+    "Pixel-identical archive reproduction",
+    "New backend feature parity",
+    "Federation-wide certification"
+  ],
+  "adapted_components": [
+    "src/zip-design/tokens.css",
+    "src/zip-design/adaptation.css",
+    "src/zip-design/AppShell.module.css",
+    "src/zip-design/AppShell.jsx"
+  ]
+}

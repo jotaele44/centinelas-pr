@@ -33,7 +33,7 @@
       "frontend/src/App.jsx"
     ],
     "navigation_files": [
-      "frontend/src/components/Header.jsx"
+      "frontend/src/zip-design/AppShell.jsx"
     ],
     "implicit_routes": [
       {
@@ -51,6 +51,35 @@
   },
   "capabilities": [
     {
+      "id": "pr-grid-v2-runtime-contract",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Fail-closed federation contract utility for validating PR_GRID_GEOGRAPHIC_V2 consumer pins, stamping immutable grid identity, and generating canonical grid deep links. It is an internal runtime/governance primitive, not a standalone operator workflow; user-facing grid identity is surfaced through consuming Cell_Profile/API responses rather than a separate validator GUI.",
+      "analysis": {
+        "files": [
+          "federation/spatial/pr_grid_v2_runtime.py"
+        ],
+        "symbols": [
+          "federation/spatial/pr_grid_v2_runtime.py:GridV2Pin",
+          "federation/spatial/pr_grid_v2_runtime.py:GridV2PinError",
+          "federation/spatial/pr_grid_v2_runtime.py:attach_grid_identity",
+          "federation/spatial/pr_grid_v2_runtime.py:build_grid_deep_link",
+          "federation/spatial/pr_grid_v2_runtime.py:grid_identity",
+          "federation/spatial/pr_grid_v2_runtime.py:load_pin",
+          "federation/spatial/pr_grid_v2_runtime.py:validate_cell_id",
+          "federation/spatial/pr_grid_v2_runtime.py:validate_level",
+          "federation/spatial/pr_grid_v2_runtime.py:validate_pin_payload",
+          "federation/spatial/pr_grid_v2_runtime.py:validate_pin_set"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_pr_grid_v2_runtime.py"
+        ]
+      }
+    },
+    {
       "id": "legislative-monitor",
       "classification": "client_only",
       "status": "active",
@@ -58,6 +87,7 @@
       "frontend": {
         "routes": [
           "/",
+          "/dashboard",
           "/monitor",
           "/signals",
           "/matters",
@@ -69,6 +99,7 @@
         ],
         "e2e_routes": [
           "/",
+          "/dashboard",
           "/monitor",
           "/signals",
           "/matters",
@@ -77,7 +108,9 @@
         ],
         "components": [
           "frontend/src/api/appClient.js",
+          "frontend/src/components/ProgramTimeline.jsx",
           "frontend/src/pages/Home.jsx",
+          "frontend/src/pages/Dashboard.jsx",
           "frontend/src/pages/Monitor.jsx",
           "frontend/src/pages/Signals.jsx",
           "frontend/src/pages/SignalsTable.jsx",
@@ -85,13 +118,14 @@
           "frontend/src/pages/MatterDetail.jsx",
           "frontend/src/pages/Sources.jsx",
           "frontend/src/pages/Entities.jsx",
-          "frontend/src/pages/EntityDetail.jsx"
+          "frontend/src/pages/EntityDetail.jsx",
+          "frontend/src/components/ProgramTimeline.jsx"
         ],
         "discoverability": [
-          "frontend/src/components/Header.jsx",
           "frontend/src/pages/Signals.jsx",
           "frontend/src/pages/Matters.jsx",
-          "frontend/src/pages/Entities.jsx"
+          "frontend/src/pages/Entities.jsx",
+          "frontend/src/zip-design/AppShell.jsx"
         ]
       },
       "tests": {
@@ -100,7 +134,8 @@
           "frontend/src/lib/lifecycle.test.js"
         ],
         "e2e": [
-          "frontend/tests/gui-parity.spec.mjs"
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },
@@ -141,8 +176,8 @@
           "frontend/src/pages/Handoff.jsx"
         ],
         "discoverability": [
-          "frontend/src/components/Header.jsx",
-          "frontend/src/pages/Pipeline.jsx"
+          "frontend/src/pages/Pipeline.jsx",
+          "frontend/src/zip-design/AppShell.jsx"
         ]
       },
       "tests": {
@@ -154,7 +189,8 @@
           "tests/test_gui_parity.py"
         ],
         "e2e": [
-          "frontend/tests/gui-parity.spec.mjs"
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },
@@ -219,7 +255,7 @@
           "frontend/src/pages/WaterDisruption.jsx"
         ],
         "discoverability": [
-          "frontend/src/components/Header.jsx"
+          "frontend/src/zip-design/AppShell.jsx"
         ]
       },
       "tests": {
@@ -232,7 +268,8 @@
           "tests/test_water_disruption_api.py"
         ],
         "e2e": [
-          "frontend/tests/gui-parity.spec.mjs"
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
         ]
       }
     },
@@ -559,6 +596,80 @@
           "tests/test_gui_parity.py",
           "tests/test_run_endpoint.py",
           "tests/test_handoff_endpoint.py"
+        ]
+      }
+    },
+    {
+      "id": "archive-design-navigation-preferences",
+      "classification": "client_only",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Theme and language are existing local preferences, now reachable through the archive-derived shell. No backend authority or data mutation.",
+      "frontend": {
+        "routes": [
+          "/"
+        ],
+        "e2e_routes": [
+          "/"
+        ],
+        "components": [
+          "frontend/src/zip-design/AppShell.jsx",
+          "frontend/src/lib/ThemeContext.jsx",
+          "frontend/src/lib/LanguageContext.jsx"
+        ],
+        "discoverability": [
+          "frontend/src/zip-design/AppShell.jsx"
+        ]
+      },
+      "tests": {
+        "e2e": [
+          "frontend/tests/gui-parity.spec.mjs",
+          "frontend/tests/zip-design.spec.mjs"
+        ]
+      }
+    },
+    {
+      "id": "signal-ledger-intake-bounding",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Helpers of the scheduled signal-ledger-refresh job: merge the RSS, Federal Register and listing-scraper intake layers, drop items from `scope: global` feeds that do not name Puerto Rico and items published before the age window, and bound the ledger with per-source and round-robin caps. They run unattended in CI and only decide which raw items enter data/signals/live_signals.jsonl; the resulting signals are what users inspect, so there is no separate operator workflow to surface.",
+      "analysis": {
+        "files": [
+          "scripts/build_signal_ledger.py"
+        ],
+        "symbols": [
+          "scripts/build_signal_ledger.py:cap_items",
+          "scripts/build_signal_ledger.py:collect_raw_items",
+          "scripts/build_signal_ledger.py:filter_items",
+          "scripts/build_signal_ledger.py:global_source_names",
+          "scripts/build_signal_ledger.py:is_pr_relevant"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_build_signal_ledger.py"
+        ]
+      }
+    },
+    {
+      "id": "federation-source-monitors-export",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Builds this producer's source_monitors federation export stream (thehub-pr ADR 0013): one row per source in data/reference/source_registry.csv, with when it last succeeded taken from the newest non-synthetic captured_at in the signal ledger, or reported as not recorded. It exposes no route, endpoint, control or operator workflow of its own; thehub-pr's Source Monitor renders the stream.",
+      "analysis": {
+        "files": [
+          "scripts/federation_export.py"
+        ],
+        "symbols": [
+          "scripts/federation_export.py:build_source_monitors"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_federation_source_monitors.py",
+          "tests/test_gui_parity.py"
         ]
       }
     }

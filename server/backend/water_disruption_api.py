@@ -1,22 +1,54 @@
 """FastAPI surface for the Centinelas shadow water-disruption producer."""
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from centinelas.water_disruption import SourceRecord, WaterDisruptionProducer, stable_id
 from server.backend.auth import WRITE_GUARD
 
-router = APIRouter(prefix="/water-disruption", tags=["water-disruption"])
+_LOCAL_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in (
+        "127.0.0.0/8",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16",
+        "::1/128",
+        "fc00::/7",
+        "fe80::/10",
+    )
+)
+
+
+def _require_local_request(request: Request) -> None:
+    host = request.client.host if request.client else ""
+    try:
+        ip = ipaddress.ip_address(host)
+        allowed = any(network.version == ip.version and ip in network for network in _LOCAL_NETWORKS)
+    except ValueError:
+        allowed = host in {"localhost", "testclient"}
+    if not allowed:
+        raise HTTPException(status_code=403, detail="water-disruption writes are local-only")
+
+
+router = APIRouter(
+    prefix="/water-disruption",
+    tags=["water-disruption"],
+    dependencies=[Depends(_require_local_request)],
+)
 _ROOT = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas")) / "water-disruption"
 _SOURCES = [
     SourceRecord("prasa", "PRASA", "utility", "T1", "Puerto Rico public water service", (), ()),
@@ -46,6 +78,48 @@ class RetractRequest(BaseModel):
 
 class DeliverRequest(BaseModel):
     consumer_url: str
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _approved_consumer_target(raw_origin: str) -> str:
+    """Require an exact operator-configured HTTPS origin before any network I/O."""
+    configured = os.environ.get("CENTINELAS_WATER_DISRUPTION_CONSUMER_ORIGINS", "")
+    approved = {value.strip() for value in configured.split(",") if value.strip()}
+    try:
+        parsed = urllib.parse.urlsplit(raw_origin)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail="consumer_origin_not_authorized") from exc
+    try:
+        ipaddress.ip_address(hostname or "")
+        is_ip = True
+    except ValueError:
+        is_ip = False
+    if (
+        not approved or raw_origin not in approved
+        or parsed.scheme != "https"
+        or not hostname or is_ip
+        or parsed.username is not None or parsed.password is not None
+        or parsed.path not in ("", "/")
+        or parsed.query or parsed.fragment
+        or not all(c.isalnum() or c in ".-" for c in hostname)
+        or hostname.lower() in {"localhost", "localhost.localdomain"}
+        or hostname.lower().endswith((".localhost", ".local"))
+        or port not in (None, 443)
+    ):
+        raise HTTPException(status_code=503, detail="consumer_origin_not_authorized")
+    return raw_origin.rstrip("/") + "/water-disruption/intake"
+
+
+def _deliver_to_approved_target(req: urllib.request.Request):
+    """No environment proxies or HTTP redirects on a sensitive delivery route."""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+    return opener.open(req, timeout=10)
 
 
 @router.get("/console", response_class=HTMLResponse)
@@ -108,11 +182,11 @@ def deliver(outbox_id: str, request: DeliverRequest, idempotency_key: str = Head
     prior = service.store.by_key("delivery_receipts", "idempotency_key", idempotency_key)
     if prior:
         return prior
-    target = request.consumer_url.rstrip("/") + "/water-disruption/intake"
+    target = _approved_consumer_target(request.consumer_url)
     payload = json.dumps(envelope["payload"]).encode("utf-8")
     req = urllib.request.Request(target, data=payload, method="POST", headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key, "X-Shadow-Mode": "true"})
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with _deliver_to_approved_target(req) as response:
             body = json.loads(response.read().decode("utf-8"))
             receipt = {"receipt_id": stable_id("DRC", {"outbox_id": outbox_id, "idempotency_key": idempotency_key}), "outbox_id": outbox_id, "idempotency_key": idempotency_key, "status": "acknowledged", "consumer_status": response.status, "consumer_receipt": body, "shadow_mode": True}
             service.store.append("delivery_receipts", receipt)
