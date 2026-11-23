@@ -672,6 +672,26 @@
           "tests/test_gui_parity.py"
         ]
       }
+    },
+    {
+      "id": "data-folder-resolver",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Resolves the local data folder (CENTINELAS_DATA_DIR, else the caller's default) for the backend, the dispatcher, the water-disruption API and the desktop seed. A shared helper, not a user workflow: the folder itself is chosen in the desktop runtime's setup, and the pipeline state it holds is shown by the existing Pipeline, Handoff and Water disruptions pages.",
+      "analysis": {
+        "files": [
+          "src/centinelas/paths.py"
+        ],
+        "symbols": [
+          "src/centinelas/paths.py:data_dir"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_paths.py"
+        ]
+      }
     }
   ],
   "exceptions": []

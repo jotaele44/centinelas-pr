@@ -8,13 +8,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from centinelas.paths import data_dir
 from centinelas.water_disruption import SourceRecord, WaterDisruptionProducer, stable_id
 from server.backend.auth import WRITE_GUARD
 
@@ -49,7 +49,7 @@ router = APIRouter(
     tags=["water-disruption"],
     dependencies=[Depends(_require_local_request)],
 )
-_ROOT = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas")) / "water-disruption"
+_ROOT = data_dir(".centinelas") / "water-disruption"
 _SOURCES = [
     SourceRecord("prasa", "PRASA", "utility", "T1", "Puerto Rico public water service", (), ()),
     SourceRecord("municipalities", "Puerto Rico municipalities", "government", "T2", "municipal public notices", (), ()),

@@ -14,12 +14,13 @@ from pathlib import Path
 from jsonschema import ValidationError, validate
 
 from centinelas.models import ClassifiedItem, DispatchRecord
+from centinelas.paths import data_dir
 from centinelas.route.router import route
 
 log = logging.getLogger(__name__)
 
 _REPOS_BASE = Path(os.environ.get("CENTINELAS_REPOS_DIR", str(Path.home() / "Developer")))
-_DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", ".centinelas"))
+_DATA_DIR = data_dir(".centinelas")
 
 # Minimum classifier confidence for an item to be routed/exported. Below this the
 # item is skipped (not dispatched to any repo) — the gate that keeps low-confidence

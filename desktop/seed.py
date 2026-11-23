@@ -13,7 +13,6 @@ never overwritten. Seeded rows carry "seeded_from_ledger": true.
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -22,7 +21,13 @@ LEDGERS = [
     REPO_ROOT / "data" / "signals" / "live_signals.jsonl",
     REPO_ROOT / "data" / "signals" / "example_signals.jsonl",
 ]
-DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", str(REPO_ROOT / ".centinelas")))
+try:
+    from centinelas.paths import data_dir
+except ImportError:  # run as a plain script from a checkout without the package installed
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+    from centinelas.paths import data_dir
+
+DATA_DIR = data_dir(REPO_ROOT / ".centinelas")
 QUEUE_DIR = DATA_DIR / "queue"
 CLASSIFIED_DIR = DATA_DIR / "classified"
 DISPATCHED_DIR = DATA_DIR / "dispatched"
