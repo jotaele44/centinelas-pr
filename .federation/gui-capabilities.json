@@ -672,6 +672,28 @@
           "tests/test_gui_parity.py"
         ]
       }
+    },
+    {
+      "id": "data-directory-resolver",
+      "classification": "internal",
+      "status": "active",
+      "requires_terminal": false,
+      "rationale": "Resolves and checks CENTINELAS_DATA_DIR once for the backend, dispatch, the water-disruption API and the desktop seeder. It is a startup safety check on where local pipeline data lives, not a user workflow; the data it governs is surfaced through the existing pipeline views.",
+      "backend": {
+        "files": [
+          "src/centinelas/paths.py"
+        ],
+        "symbols": [
+          "src/centinelas/paths.py:DataDirNotAllowed",
+          "src/centinelas/paths.py:allowed_roots",
+          "src/centinelas/paths.py:data_dir"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_paths.py"
+        ]
+      }
     }
   ],
   "exceptions": []
