@@ -34,6 +34,17 @@
         ".federation/docs-sync.json",
         "governance/change_log.json"
       ]
+    },
+    {
+      "date": "2026-11-24",
+      "summary": "Re-pinned PRII_TEMPLATE_REF from thehub-pr 0f62e4b to 91769c8 (thehub-pr main, after #446) and re-rendered with render_federation_templates.py --template-ref. CodeQL init/analyze move to codeql-action 33d7b85 and pip-audit's setup-uv moves to v10.3.3 (68559e9). requirements-desktop.txt moves prii-desktop from 1313c77 (0.2.0) to dc79dc0 (0.3.0), which adds the opt-in Launch Pad and a Guest write guard that does nothing unless a Launch Pad session sets a mode; desktop/config.py declares no LAUNCHPAD, so the app still opens straight into the dashboard. prii-export-utils in requirements-desktop.txt moves from f2b8176 to 0f62e4b, the commit pyproject.toml and uv.lock already pin, so the desktop install and the project no longer name two different commits of the same package. prii-maintenance is unchanged. Verified on Linux: desktop install, icon and branding checks, the desktop-build runtime tests, a frozen console build that passes --smoke, pytest, mypy, ruff and the GUI parity gate. No contract, schema or export changed.",
+      "files": [
+        ".github/workflows/template-drift.yml",
+        ".github/workflows/codeql.yml",
+        ".github/workflows/pip-audit.yml",
+        "requirements-desktop.txt",
+        "governance/change_log.json"
+      ]
     }
   ]
 }
