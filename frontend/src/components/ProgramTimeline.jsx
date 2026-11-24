@@ -9,9 +9,12 @@ const PHASE_RANK = { NOW: 0, NEXT: 1, QUEUED: 2, BLOCKED: 3, UNRESOLVED: 4, CONT
 function PhaseBadge({ phase }) {
   const tone = {
     NOW: "border-primary/50 text-primary",
-    NEXT: "border-emerald-500/50 text-emerald-600",
-    QUEUED: "border-blue-500/50 text-blue-600",
-    BLOCKED: "border-amber-500/50 text-amber-600",
+    // 10px bold text needs 4.5:1. The 600 shades fall short on the dark card
+    // (blue 3.3:1) and, for emerald and amber, on the light one too, so each
+    // theme gets a shade that passes on its own background.
+    NEXT: "border-emerald-500/50 text-emerald-700 dark:text-emerald-400",
+    QUEUED: "border-blue-500/50 text-blue-700 dark:text-blue-400",
+    BLOCKED: "border-amber-500/50 text-amber-700 dark:text-amber-400",
   }[phase] || "border-border text-muted-foreground";
   return <span className={`inline-flex min-w-16 justify-center rounded-full border px-2 py-1 text-[10px] font-bold tracking-wide ${tone}`}>{phase}</span>;
 }
