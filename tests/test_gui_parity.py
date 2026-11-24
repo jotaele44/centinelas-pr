@@ -153,11 +153,18 @@ export default function Items() {
         )
 
     def test_discovery_uses_canonical_repo_root(self) -> None:
-        alias_root = self.root.parent / "alias-root"
+        # The alias lives in a temporary folder of its own, outside self.root,
+        # and is removed with it, so no link is left behind for the next run.
+        alias_parent = tempfile.TemporaryDirectory()
+        self.addCleanup(alias_parent.cleanup)
+        alias_root = Path(alias_parent.name) / "alias-root"
         try:
             alias_root.symlink_to(self.root, target_is_directory=True)
-        except OSError:
-            self.skipTest("directory symlinks are unavailable")
+        except FileExistsError:
+            raise  # a leftover link is a test bug, not a missing capability
+        except (NotImplementedError, OSError) as exc:
+            # Windows without the symlink privilege, or a filesystem without links.
+            self.skipTest(f"directory symlinks are unavailable: {exc}")
         files = parity._iter_files(alias_root, ["server/backend"], {".py"}, [])
         self.assertEqual([self.root.resolve() / "server/backend/main.py"], files)
 
