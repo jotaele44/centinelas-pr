@@ -687,6 +687,15 @@
           "src/centinelas/paths.py:DataDirNotAllowed",
           "src/centinelas/paths.py:allowed_roots",
           "src/centinelas/paths.py:data_dir"
+        ]
+      },
+      "tests": {
+        "contract": [
+          "tests/test_paths.py"
+        ]
+      }
+    },
+    {
       "id": "desktop-launch-pad",
       "classification": "operator",
       "status": "active",
@@ -727,7 +736,6 @@
       },
       "tests": {
         "contract": [
-          "tests/test_paths.py"
           "tests/test_desktop_launchpad.py"
         ],
         "e2e": [
