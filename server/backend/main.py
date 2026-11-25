@@ -19,11 +19,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from centinelas.ingest.rss import _load_sources
+from centinelas.paths import data_dir
 from server.backend.auth import WRITE_GUARD
 from server.backend.water_disruption_api import router as water_disruption_router
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = Path(os.environ.get("CENTINELAS_DATA_DIR", str(REPO_ROOT / ".centinelas")))
+DATA_DIR = data_dir()
 QUEUE_DIR = DATA_DIR / "queue"
 CLASSIFIED_DIR = DATA_DIR / "classified"
 DISPATCHED_DIR = DATA_DIR / "dispatched"
