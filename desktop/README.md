@@ -32,7 +32,10 @@ runtime shows after setup and before Centinelas starts. On it you choose:
   secrets are used for that session and never saved.
 
 It also reports readiness: how many signals are classified, queued, routed and
-handed off in the selected data directory. Use the **Launch Pad** button beside
+handed off in the selected data directory. The data directory must be inside
+your home folder, this repository, or a folder listed in
+`CENTINELAS_DATA_ROOTS`; otherwise readiness shows a single failing **Data
+folder** row that says how to allow it. Use the **Launch Pad** button beside
 the gear to come back and change the mode or options; the app restarts on the
 page.
 

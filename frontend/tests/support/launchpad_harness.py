@@ -135,6 +135,9 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix="centinelas-launchpad-") as tmp:
         os.environ.pop(ACCESS_MODE_ENV, None)
+        # The test workspace lives in a temp folder outside home and the
+        # repository; allow it, as centinelas.paths requires.
+        os.environ["CENTINELAS_DATA_ROOTS"] = str(Path(tmp).resolve())
         uvicorn.run(build(Path(tmp)), host="127.0.0.1", port=args.port, log_level="warning")
 
 
