@@ -6,7 +6,6 @@ between repos.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -44,11 +43,40 @@ HEALTH_PATH = "/health"
 EXTRA_PIP_SPECS = ["-e", f"{REPO_ROOT}[server]"]
 
 
+def _paths_module():
+    """centinelas.paths, loaded from this checkout.
+
+    The launcher calls this before the app's environment exists, so the
+    package may not be importable yet; the module is standard library only and
+    is loaded by file path.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_centinelas_paths", REPO_ROOT / "src" / "centinelas" / "paths.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _launchpad_status() -> list[dict[str, str]]:
     """Readiness rows for the Launch Pad. Runs before the backend exists, so it
     counts the pipeline files under the same data directory the backend uses.
     """
-    data_dir = Path(os.environ.get(DATA_ENV_VAR) or REPO_ROOT / ".centinelas")
+    paths = _paths_module()
+    try:
+        data_dir = paths.data_dir()
+    except paths.DataDirNotAllowed as exc:
+        return [
+            {
+                "label": "Data folder",
+                "value": "Not allowed",
+                "status": "fail",
+                "detail": str(exc),
+            }
+        ]
 
     def count(stage: str) -> int:
         folder = data_dir / stage
