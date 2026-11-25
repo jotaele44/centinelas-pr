@@ -65,6 +65,8 @@ def test_options_bind_variables_the_code_reads():
 
 def test_status_counts_the_selected_data_directory(tmp_path, monkeypatch):
     monkeypatch.setenv(config.DATA_ENV_VAR, str(tmp_path))
+    # tmp_path is outside home and the repository, so allow it explicitly.
+    monkeypatch.setenv("CENTINELAS_DATA_ROOTS", str(tmp_path))
     empty = {row["label"]: row for row in config._launchpad_status()}
     assert empty["Classified signals"]["value"] == "Empty"
     assert list(tmp_path.iterdir()) == []  # a readiness check creates nothing
@@ -79,3 +81,13 @@ def test_status_counts_the_selected_data_directory(tmp_path, monkeypatch):
     assert "committed signal ledger" in rows["Classified signals"]["detail"]
     assert rows["Waiting in queue"]["status"] == "warn"
     assert rows["Routed and handed off"]["value"] == "0 routed, 1 handoffs"
+
+
+def test_status_reports_a_data_directory_outside_the_allowed_folders(tmp_path, monkeypatch):
+    monkeypatch.setenv(config.DATA_ENV_VAR, str(tmp_path / "elsewhere"))
+    monkeypatch.delenv("CENTINELAS_DATA_ROOTS", raising=False)
+    rows = config._launchpad_status()
+    assert [row["label"] for row in rows] == ["Data folder"]
+    assert rows[0]["status"] == "fail"
+    assert "CENTINELAS_DATA_ROOTS" in rows[0]["detail"]
+    assert not (tmp_path / "elsewhere").exists()  # refusing creates nothing
