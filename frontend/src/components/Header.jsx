@@ -55,7 +55,7 @@ function LanguageToggle() {
       type="button"
       onClick={toggleLang}
       className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-xs font-semibold uppercase text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      aria-label={t("Cambiar idioma")}
+      aria-label={`${lang === "en" ? "ES" : "EN"}: ${t("Cambiar idioma")}`}
       title={t("Cambiar idioma")}
     >
       {lang === "en" ? "ES" : "EN"}

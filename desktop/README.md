@@ -15,9 +15,61 @@ The **first run** needs an internet connection once: it creates a private
 instantly and **works offline** — the app serves the data committed in this
 repository from a local server and shows it in a native window.
 
+## The Launch Pad
+
+`desktop/config.py` declares a **Launch Pad**: a screen the shared desktop
+runtime shows after setup and before Centinelas starts. On it you choose:
+
+- **Guest or Operator.** Guest is read-only: you can browse signals, matters
+  and the pipeline, and the app refuses handoffs, pipeline runs and
+  water-disruption actions. Operator allows them from this computer. Operator
+  can be protected with a passphrase. Neither mode changes the API's own write
+  guard (`server/backend/auth.py`); Guest only adds a refusal in front of it.
+- **Open on**: Home, Dashboard, or any page from the navigation.
+- **Launch options** (Operator only): the routing confidence threshold, a
+  GitHub dispatch token so Handoff can notify the receiving repository, and an
+  optional Anthropic API key for language-model classification. The two
+  secrets are used for that session and never saved.
+
+It also reports readiness: how many signals are classified, queued, routed and
+handed off in the selected data directory. The data directory must be inside
+your home folder, this repository, or a folder listed in
+`CENTINELAS_DATA_ROOTS`; otherwise readiness shows a single failing **Data
+folder** row that says how to allow it. Use the **Launch Pad** button beside
+the gear to come back and change the mode or options; the app restarts on the
+page.
+
+Guest mode keeps a shared desktop tidy. It does not stop someone who can already
+run programs under your account.
+
+`requirements-desktop.txt` pins a `prii-desktop` that includes the Launch Pad
+(0.3.0). If you set the app up before that pin moved, run
+`python desktop/setup.py --force` once to install the newer runtime.
+
+The Launch Pad is registered as `desktop-launch-pad` in
+`.federation/gui-capabilities.json`. Its end-to-end test,
+`frontend/tests/desktop-launchpad.spec.mjs`, opens the runtime's real page in a
+browser and drives the real bridge and backend through
+`frontend/tests/support/launchpad_harness.py`; only the native window is
+replaced. It checks the readiness rows, start pages, that Guest is refused a
+write and Operator is not, and that an Operator option reaches the backend's
+environment. To run it, with the backend, desktop and package requirements
+installed (`pip install -e . -r server/backend/requirements.txt -r
+requirements-desktop.txt`):
+
+```bash
+cd frontend && npm run test:desktop-launchpad
+```
+
+It runs in CI in the GUI Reachability E2E job. One known runtime defect is
+asserted rather than hidden: in Guest, the runtime dims Operator-only options
+below the WCAG contrast minimum; the test fails if any other accessibility
+violation appears.
+
 ## How it works
 
-- `desktop/config.py` — the only per-repo file (title, paths, requirements).
+- `desktop/config.py` — the only per-repo file (title, paths, requirements, and
+  the `LAUNCHPAD` declaration).
 - `desktop/setup.py` — idempotent one-time setup (`--force` to redo): creates
   the `.venv`, installs the backend + desktop requirements, and builds the
   frontend for same-origin serving.
