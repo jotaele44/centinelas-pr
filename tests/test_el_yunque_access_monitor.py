@@ -228,3 +228,52 @@ def test_segment_capacity_fails_closed(tmp_path):
     monitor.ensure_segment_capacity(segment, ["y" * 10], limit=100)
     with pytest.raises(RuntimeError, match="refusing to persist"):
         monitor.ensure_segment_capacity(segment, ["y" * 11], limit=100)
+
+
+# --- persist only runs that observed something new, plus a daily heartbeat ------
+#
+# Every poll restamps observed_at on unchanged conditions. Writing those runs would
+# commit to main every 15 minutes; not writing them at all left health.json stale.
+
+
+def _health(checked_at: datetime, status: str = "healthy") -> dict:
+    return {"status": status, "checked_at": checked_at.isoformat()}
+
+
+def _reason(**overrides):
+    kwargs = {
+        "transitions": [],
+        "repairs": [],
+        "state_exists": True,
+        "previous_health": _health(NOW - timedelta(hours=1)),
+        "now": NOW,
+    }
+    kwargs.update(overrides)
+    return monitor.persist_reason(**kwargs)
+
+
+def test_quiet_run_with_recent_health_is_not_persisted():
+    assert _reason() is None
+
+
+def test_transitions_and_repairs_force_persistence():
+    assert _reason(transitions=[{"current": {}}]) == "transitions"
+    assert _reason(repairs=[{"condition_id": "x"}]) == "state_repairs"
+
+
+def test_missing_state_or_unhealthy_previous_run_forces_persistence():
+    assert _reason(state_exists=False) == "no_prior_state"
+    assert _reason(previous_health=_health(NOW - timedelta(minutes=15), "stale")) == "recovered"
+    assert _reason(previous_health={}) == "recovered"
+
+
+def test_heartbeat_persists_a_quiet_run_once_a_day():
+    assert _reason(previous_health=_health(NOW - timedelta(hours=24))) == "heartbeat"
+    assert _reason(previous_health={"status": "healthy", "checked_at": "not-a-date"}) == "heartbeat"
+    assert _reason(health_every_hours=0) == "persist_every_run"
+
+
+def test_workflow_stages_monitoring_data_without_the_ignored_outbox():
+    workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/el-yunque-access-monitor.yml").read_text()
+    add_lines = [line.strip() for line in workflow.splitlines() if line.strip().startswith("git add")]
+    assert add_lines == ["git add data/monitoring/el_yunque"]

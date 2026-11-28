@@ -15,7 +15,7 @@ import re
 import unicodedata
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -393,10 +393,56 @@ def poll(now: datetime, previous: dict[str, dict] | None = None) -> list[dict]:
     return records
 
 
+DEFAULT_HEALTH_EVERY_HOURS = 24.0
+
+
+def persist_reason(
+    *,
+    transitions: list[dict],
+    repairs: list[dict],
+    state_exists: bool,
+    previous_health: dict,
+    now: datetime,
+    health_every_hours: float = DEFAULT_HEALTH_EVERY_HOURS,
+) -> str | None:
+    """Why a healthy run must write state and health, or None when it saw nothing new.
+
+    Every poll restamps ``observed_at`` on unchanged conditions, so writing them on
+    a quiet run would commit to main every 15 minutes without new information. A
+    quiet run is written only as a heartbeat, so ``health.json`` on main stays at
+    most ``health_every_hours`` old (0 writes every run). Failed runs always write
+    health; that path does not pass through here.
+    """
+    if transitions:
+        return "transitions"
+    if repairs:
+        return "state_repairs"
+    if not state_exists:
+        return "no_prior_state"
+    if previous_health.get("status") != "healthy":
+        return "recovered"
+    if health_every_hours <= 0:
+        return "persist_every_run"
+    try:
+        last = datetime.fromisoformat(str(previous_health.get("checked_at")))
+    except ValueError:
+        return "heartbeat"
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    if now - last >= timedelta(hours=health_every_hours):
+        return "heartbeat"
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--no-dispatch", action="store_true")
+    parser.add_argument(
+        "--health-every-hours", type=float, default=DEFAULT_HEALTH_EVERY_HOURS,
+        help="write an unchanged healthy run at least this often; 0 writes every run "
+        f"(default: {DEFAULT_HEALTH_EVERY_HOURS:g})",
+    )
     args = parser.parse_args()
     now = datetime.now(timezone.utc)
     previous, repairs = normalize_state(read_json(STATE, {}), now)
@@ -414,14 +460,26 @@ def main() -> int:
         write_json(HEALTH, {"status": "stale", "checked_at": now.isoformat(), "last_error": str(exc), "preserved_condition_count": len(previous)})
         print(f"monitor stale; {exc}")
         return 3
-    append_jsonl(STATE_REPAIRS, repairs)
-    write_json(STATE, current)
-    append_jsonl(segment, transitions)
-    write_json(HEALTH, {"status": "healthy", "checked_at": now.isoformat(), "condition_count": len(current), "transition_count": len(transitions), "state_repair_count": len(repairs)})
+    reason = persist_reason(
+        transitions=transitions,
+        repairs=repairs,
+        state_exists=STATE.exists(),
+        previous_health=read_json(HEALTH, {}),
+        now=now,
+        health_every_hours=args.health_every_hours,
+    )
+    if reason is not None:
+        append_jsonl(STATE_REPAIRS, repairs)
+        write_json(STATE, current)
+        append_jsonl(segment, transitions)
+        write_json(HEALTH, {"status": "healthy", "checked_at": now.isoformat(), "condition_count": len(current), "transition_count": len(transitions), "state_repair_count": len(repairs)})
     staged = stage(transitions)
     if staged and not args.no_dispatch:
         dispatch(staged, dry_run=args.dry_run)
-    print(f"conditions={len(current)} transitions={len(transitions)} staged={len(staged)}")
+    print(
+        f"conditions={len(current)} transitions={len(transitions)} staged={len(staged)} "
+        f"persisted={reason is not None} persist_reason={reason or 'unchanged'}"
+    )
     return 0
 
 
