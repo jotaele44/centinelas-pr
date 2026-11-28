@@ -22,10 +22,10 @@
     "@pr-federation/react": "https://github.com/jotaele44/thehub-pr/releases/download/federation-design-v0.3.0/pr-federation-react-0.3.0.tgz",
     "@radix-ui/react-label": "^2.1.17",
     "@radix-ui/react-slot": "^1.1.2",
-    "@tanstack/react-query": "^5.108.1",
+    "@tanstack/react-query": "^5.108.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.77.0",
+    "lucide-react": "^1.78.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.6",
@@ -33,8 +33,8 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.10.2",
-    "@eslint/js": "^9.19.0",
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "1.65.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^6.9.1",
